@@ -2,6 +2,7 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 """Tests for the queue client helper and the (Qt-free) dashboard HTML renderer."""
+
 from __future__ import annotations
 
 import sys

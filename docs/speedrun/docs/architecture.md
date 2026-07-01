@@ -53,14 +53,26 @@ Swift encodes the same protobuf request, calls `run_command`, and decodes the re
 
 Build commands: `just run` (build + launch desktop), `just check` (Rust + Python tests), `just --list` (all recipes). Develop in a **path with no spaces** — Anki's build fails otherwise.
 
-## 4. iOS engine packaging
+## 4. iOS engine packaging (implemented)
 
-1. Add `rslib-ffi` crate with `crate-type = ["staticlib"]` wrapping `rslib::backend::Backend`.
-2. Generate Swift bindings with **UniFFI** (or a `cbindgen` C header for the single entrypoint).
-3. Build for `aarch64-apple-ios` and a simulator target (`aarch64-apple-ios-sim` on Apple silicon).
-4. `xcodebuild -create-xcframework` → bundle `.a` + headers into an **XCFramework** consumed by the SwiftUI app.
+1. `rslib-ffi/` — a workspace crate (`crate-type = ["staticlib", "cdylib", "rlib"]`)
+   wrapping `anki::backend::Backend`. It exposes a hand-written C ABI in
+   [`rslib-ffi/include/anki_ffi.h`](../../../rslib-ffi/include/anki_ffi.h):
+   `anki_backend_open` / `anki_backend_run_command` (protobuf bytes in/out) /
+   `anki_bytes_free` / `anki_backend_free`, mirroring `pylib/rsbridge`. Host tests
+   (`cargo test -p rslib-ffi`) open a collection and run the schema-weighted queue
+   across the C boundary.
+2. A `module.modulemap` exposes the header as the Swift module `AnkiFFI`.
+3. [`ios/build-xcframework.sh`](../../../ios/build-xcframework.sh) builds
+   `aarch64-apple-ios` + `aarch64-apple-ios-sim` and runs `xcodebuild
+   -create-xcframework` → `ios/AnkiFFI.xcframework`.
+4. [`ios/AnkiKit`](../../../ios/AnkiKit) is a Swift package wrapping the framework
+   (`AnkiBackend`); [`ios/App/ContentView.swift`](../../../ios/App/ContentView.swift)
+   is the sample app.
 
-Reference structure: `ianthetechie/uniffi-starter` (Rust core + Swift package + `build-ios.sh` producing the XCFramework). Re-run the build whenever Rust changes.
+Prerequisite: a full **Xcode** install (the iOS SDK); with only Command Line
+Tools, cross-compilation fails with `SDK "iphonesimulator" cannot be located`.
+See [`ios/README.md`](../../../ios/README.md).
 
 ## 5. Sync and the conflict rule
 

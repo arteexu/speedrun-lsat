@@ -5498,6 +5498,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rslib-ffi"
+version = "0.0.0"
+dependencies = [
+ "anki",
+ "anki_proto",
+ "prost",
+]
+
+[[package]]
 name = "rstest"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

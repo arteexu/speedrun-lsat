@@ -1,0 +1,26 @@
+[package]
+name = "rslib-ffi"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+description = "C/FFI bridge exposing Anki's Rust backend to iOS (Speedrun LSAT)"
+
+[lib]
+name = "anki_ffi"
+crate-type = ["staticlib", "cdylib", "rlib"]
+path = "src/lib.rs"
+
+[dependencies]
+anki.workspace = true
+
+[dev-dependencies]
+anki_proto.workspace = true
+prost.workspace = true
+
+[features]
+default = ["rustls"]
+rustls = ["anki/rustls"]
+native-tls = ["anki/native-tls"]

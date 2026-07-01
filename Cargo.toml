@@ -13,6 +13,7 @@ members = [
   "ftl",
   "pylib/rsbridge",
   "rslib",
+  "rslib-ffi",
   "rslib/i18n",
   "rslib/io",
   "rslib/linkchecker",
