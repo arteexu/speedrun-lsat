@@ -17,6 +17,7 @@ from speedrun.insights import readiness_trajectory
 from speedrun.insights import schema_mastery_map
 from speedrun.insights import wrong_answer_patterns
 from speedrun.study_goals import study_goal_report
+from speedrun.taxonomy.labels import schema_display_html
 from speedrun.timeline import progress_timeline
 
 
@@ -47,7 +48,7 @@ def _mastery_map_html(col) -> str:
             m.status, "#777"
         )
         rows += (
-            f'<tr><td>{_esc(m.schema)}</td>'
+            f'<tr><td>{schema_display_html(m.schema)}</td>'
             f'<td style="color:{color}">{_esc(m.status)}</td>'
             f'<td align="right">{"" if m.memory is None else f"{m.memory:.0%}"}</td>'
             f'<td align="right">{"" if m.performance is None else f"{m.performance:.0%}"}</td></tr>'
@@ -66,7 +67,7 @@ def _wrong_patterns_html(col) -> str:
         return '<p style="color:#777">No Again reviews yet.</p>'
     rows = ""
     for p in patterns:
-        rows += f'<tr><td>{_esc(p.tag)}</td><td align="right">{p.count}</td><td align="right">{p.pct:.0%}</td></tr>'
+        rows += f'<tr><td>{schema_display_html(p.tag)}</td><td align="right">{p.count}</td><td align="right">{p.pct:.0%}</td></tr>'
     return (
         '<table width="100%" cellpadding="4" style="font-size:13px">'
         '<tr style="color:#777"><td>pattern</td><td align="right">count</td><td align="right">%</td></tr>'

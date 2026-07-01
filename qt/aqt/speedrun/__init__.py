@@ -180,7 +180,7 @@ _GEOM_KEY = "speedrunHtml"
 
 def _profile_has_saved_geom(key: str) -> bool:
     import aqt
-    from aqt.utils import _QtStateKeyKind, _qt_state_key
+    from aqt.utils import _qt_state_key, _QtStateKeyKind
 
     assert aqt.mw.pm.profile is not None
     geom_key = _qt_state_key(_QtStateKeyKind.GEOMETRY, key)
@@ -383,16 +383,18 @@ def _show_drill(mw) -> None:
     if not _require_col(mw):
         return
     try:
+        from speedrun.taxonomy.labels import schema_display_html
         from speedrun.tools.schema_drill import schema_drill_queue
 
         schemas, cards = schema_drill_queue(mw.col)
+        schema_labels = ", ".join(schema_display_html(s, compact=True) for s in schemas)
         rows = "".join(
-            f"<tr><td>{c.schema}</td><td align='right'>{c.priority:.3f}</td></tr>"
+            f"<tr><td>{schema_display_html(c.schema)}</td><td align='right'>{c.priority:.3f}</td></tr>"
             for c in cards[:20]
         )
         html = (
             "<div style='font-family:system-ui,sans-serif'>"
-            f"<h3>Weakest schemas: {', '.join(schemas)}</h3>"
+            f"<h3>Weakest schemas: {schema_labels}</h3>"
             f"<table width='100%' cellpadding='4'>{rows}</table></div>"
         )
     except Exception as exc:  # pragma: no cover
@@ -456,9 +458,7 @@ def _health_check(mw) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"Health check error: {exc}")
         return
-    _show_html(
-        mw, html, title="Speedrun health check", minWidth=480, minHeight=320
-    )
+    _show_html(mw, html, title="Speedrun health check", minWidth=480, minHeight=320)
 
 
 def _explain_schema(mw) -> None:
@@ -471,6 +471,7 @@ def _explain_schema(mw) -> None:
     try:
         from aqt.speedrun.reviewer import _schema_from_card
         from speedrun.insights import explain_schema
+        from speedrun.taxonomy.labels import schema_display_html, schema_label
 
         schema = _schema_from_card(reviewer.card)
         if not schema:
@@ -479,8 +480,9 @@ def _explain_schema(mw) -> None:
         text = explain_schema(schema)
         _show_html(
             mw,
-            f"<div style='font-family:system-ui,sans-serif'><b>{schema}</b><p>{text}</p></div>",
-            title="Explain this schema",
+            f"<div style='font-family:system-ui,sans-serif'>"
+            f"{schema_display_html(schema)}<p>{text}</p></div>",
+            title=schema_label(schema),
             minWidth=420,
             minHeight=200,
         )

@@ -26,6 +26,7 @@ from speedrun.scoring.performance import performance_score
 from speedrun.scoring.queue import load_schema_weights, ordered_cards
 from speedrun.scoring.readiness import readiness_score
 from speedrun.study_goals import study_goal_report
+from speedrun.taxonomy.labels import schema_display_html
 from speedrun.timeline import progress_timeline
 
 
@@ -124,8 +125,12 @@ table.sr-table td { padding: 7px 12px; border-top: 1px solid var(--border); }
   border-bottom: 1px solid var(--border); font-size: 0.82rem; }
 .sr-queue-item:last-child { border-bottom: none; }
 .sr-tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: var(--bar-bg);
-  color: var(--muted); font-family: ui-monospace, monospace; max-width: 220px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  color: var(--text); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-schema-cell { display: inline-block; line-height: 1.25; }
+.sr-schema-label { display: block; font-weight: 500; }
+.sr-schema-id { display: block; font-size: 0.68rem; color: var(--muted);
+  font-family: ui-monospace, monospace; margin-top: 1px; }
+.sr-schema-compact { font-size: inherit; font-weight: 500; }
 .sr-priority { margin-left: auto; font-weight: 700; color: var(--accent); }
 .sr-empty { color: var(--muted); font-size: 0.85rem; padding: 12px; }
 .goal-bar { background: var(--bar-bg); height: 10px; border-radius: 5px; margin-top: 6px; max-width: 280px; }
@@ -244,7 +249,7 @@ def _schema_table(table_id: str, rows: list[dict[str, Any]], *, score_label: str
     body = ""
     for r in rows:
         body += (
-            f"<tr><td data-val='{_esc(r['schema'])}'>{_esc(r['schema'])}</td>"
+            f"<tr><td data-val='{_esc(r['schema'])}'>{schema_display_html(r['schema'])}</td>"
             f"<td class='num' data-val='{r.get('score_val', '')}'>{r['score']}</td>"
             f"<td class='num'>{r['range']}</td><td class='num' data-val='{r.get('n', 0)}'>{r['n']}</td>"
             f"<td class='num' data-val='{r.get('weakness', 0)}'>{r['heat']}</td></tr>"
@@ -304,7 +309,7 @@ def _weakness_heatmap(rows: list[dict[str, Any]]) -> str:
         w = r["weakness"]
         bars += (
             f'<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:0.78rem">'
-            f'<span style="width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--muted)">{_esc(r["schema"])}</span>'
+            f'<span style="width:180px;overflow:hidden;text-overflow:ellipsis">{schema_display_html(r["schema"], compact=True)}</span>'
             f'{_heat_bar(1.0 - w)}<span class="num" style="width:36px">{w:.0%}</span></div>'
         )
     return f'<div class="sr-section"><h3>Weakness heatmap</h3>{bars}</div>'
@@ -333,7 +338,7 @@ def _mastery_table(col) -> str:
         c = colors.get(m.status, "var(--muted)")
         mem = "—" if m.memory is None else f"{m.memory:.0%}"
         perf = "—" if m.performance is None else f"{m.performance:.0%}"
-        rows += f"<tr><td>{_esc(m.schema)}</td><td style='color:{c}'>{_esc(m.status)}</td><td class='num'>{mem}</td><td class='num'>{perf}</td></tr>"
+        rows += f"<tr><td>{schema_display_html(m.schema)}</td><td style='color:{c}'>{_esc(m.status)}</td><td class='num'>{mem}</td><td class='num'>{perf}</td></tr>"
     extra = f'<div class="sr-meta">+ {len(items) - 20} more</div>' if len(items) > 20 else ""
     return (
         f'<div class="sr-section"><h3>Schema mastery map</h3>'
@@ -347,7 +352,10 @@ def _wrong_patterns_table(col) -> str:
     patterns = wrong_answer_patterns(col, top_n=8)
     if not patterns:
         return ""
-    rows = "".join(f"<tr><td>{_esc(p.tag)}</td><td class='num'>{p.count}</td><td class='num'>{p.pct:.0%}</td></tr>" for p in patterns)
+    rows = "".join(
+        f"<tr><td>{schema_display_html(p.tag)}</td><td class='num'>{p.count}</td><td class='num'>{p.pct:.0%}</td></tr>"
+        for p in patterns
+    )
     return (
         f'<div class="sr-section"><h3>Wrong-answer patterns</h3>'
         f"<div class='sr-table-wrap'><table class='sr-table'><thead><tr>"
@@ -395,7 +403,7 @@ def _queue_html(col, *, limit: int = 8) -> str:
         w = weights.get(c.schema, c.schema_weight)
         items += (
             f'<div class="sr-queue-item"><span style="color:var(--muted)">{i}</span>'
-            f'<span class="sr-tag">{_esc(c.schema) or "(none)"}</span>'
+            f'<span class="sr-tag">{schema_display_html(c.schema or "", compact=True)}</span>'
             f'<span style="color:var(--muted);font-size:0.75rem">w={w:.2f}</span>'
             f'<span class="sr-priority">{c.priority:.2f} pts</span></div>'
         )

@@ -92,5 +92,6 @@ def test_study_list_html_lists_cards():
     html = render_study_list_html(col, limit=5)
     assert "Schema-weighted queue" in html or "sr-queue-item" in html
     assert "sr:schema" not in html  # tags are stripped to bare schema ids
-    assert "flaw." in html or "qt." in html or "rc." in html
+    assert "sr-schema-cell" in html
+    assert " · " in html  # friendly axis · name labels
     col.close()

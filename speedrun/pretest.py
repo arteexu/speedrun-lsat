@@ -17,6 +17,7 @@ from speedrun.scoring.memory import _schema_from_tags
 from speedrun.scoring.performance import score_from_attempts
 from speedrun.scoring.performance import Attempt
 from speedrun.scoring.queue import ordered_cards
+from speedrun.taxonomy.labels import schema_display_html
 
 
 @dataclass
@@ -98,7 +99,7 @@ def render_pretest_results_html(session: PretestSession, score: dict[str, Any]) 
         mark = "✓" if item.correct else "✗"
         color = "#1a7f37" if item.correct else "#b00"
         rows += (
-            f'<tr><td>{esc(item.schema)}</td><td>{esc(item.section)}</td>'
+            f'<tr><td>{schema_display_html(item.schema)}</td><td>{esc(item.section)}</td>'
             f'<td style="color:{color}">{mark}</td></tr>'
         )
     return (
