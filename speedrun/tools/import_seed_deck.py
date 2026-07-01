@@ -24,7 +24,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -52,6 +54,8 @@ FIELDS = [
     "RunnerUp",
     "WhyRunnerUpWrong",
     "Source",
+    "ParaphraseStimulus",
+    "ParaphraseQuestion",
 ]
 
 FRONT_TEMPLATE = """<div class="section">{{Section}} · {{QuestionType}}</div>
@@ -84,6 +88,18 @@ class ImportResult:
     skipped: int
     notetype_created: bool
     deck_id: int
+    backup_path: str | None = None
+
+
+def backup_collection(col) -> Path | None:
+    """Copy the collection file before a bulk import."""
+    col_path = Path(col.path)
+    if not col_path.is_file():
+        return None
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    dest = col_path.with_name(f"{col_path.stem}.speedrun-backup-{stamp}{col_path.suffix}")
+    shutil.copy2(col_path, dest)
+    return dest
 
 
 def _axis_tags(schema_id: str) -> list[str]:
@@ -155,7 +171,10 @@ def build_tags(item: dict[str, Any]) -> list[str]:
     return out
 
 
-def import_seed_deck(col, deck_json: Path = DEFAULT_DECK_JSON) -> ImportResult:
+def import_seed_deck(
+    col, deck_json: Path = DEFAULT_DECK_JSON, *, backup: bool = True
+) -> ImportResult:
+    backup_path = backup_collection(col) if backup else None
     data = json.loads(Path(deck_json).read_text(encoding="utf-8"))
     nt, created = ensure_notetype(col)
     deck_id = col.decks.id(DECK_NAME)
@@ -185,11 +204,20 @@ def import_seed_deck(col, deck_json: Path = DEFAULT_DECK_JSON) -> ImportResult:
         note["RunnerUp"] = fork.get("runner_up", "")
         note["WhyRunnerUpWrong"] = fork.get("why_runner_up_wrong", "")
         note["Source"] = item.get("source", "")
+        paraphrases = item.get("paraphrases") or []
+        if paraphrases:
+            note["ParaphraseStimulus"] = paraphrases[0].get("stimulus", "")
+            note["ParaphraseQuestion"] = paraphrases[0].get("question", "")
+        else:
+            note["ParaphraseStimulus"] = ""
+            note["ParaphraseQuestion"] = ""
         note.tags = build_tags(item)
         col.add_note(note, deck_id)
         added += 1
 
-    return ImportResult(added, skipped, created, deck_id)
+    return ImportResult(
+        added, skipped, created, deck_id, backup_path=str(backup_path) if backup_path else None
+    )
 
 
 def _open_collection(args):
@@ -212,11 +240,12 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--col", help="path to a collection.anki2 file")
     ap.add_argument("--base", help="an ANKI_BASE profile dir (close Anki first)")
     ap.add_argument("--deck-json", type=Path, default=DEFAULT_DECK_JSON)
+    ap.add_argument("--no-backup", action="store_true", help="skip auto-backup")
     args = ap.parse_args(argv)
 
     col = _open_collection(args)
     try:
-        result = import_seed_deck(col, args.deck_json)
+        result = import_seed_deck(col, args.deck_json, backup=not args.no_backup)
     finally:
         col.close()
     print(
@@ -224,6 +253,8 @@ def main(argv: list[str]) -> int:
         f"skipped (already present). Note type "
         f"{'created' if result.notetype_created else 'reused'}."
     )
+    if result.backup_path:
+        print(f"Backup: {result.backup_path}")
     return 0
 
 

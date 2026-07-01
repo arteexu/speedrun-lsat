@@ -15,13 +15,27 @@ import json
 from pathlib import Path
 from typing import Any
 
+from speedrun.config import interleaving_enabled
+from speedrun.config import section_filter
 from speedrun.scoring.performance import performance_score
 from speedrun.scoring.performance import weakness_map
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TAXONOMY = REPO_ROOT / "speedrun" / "taxonomy" / "lsat_taxonomy.json"
 SCHEMA_TAG_PREFIX = "sr:schema:"
+SECTION_TAG_PREFIX = "sr:section:"
 DEFAULT_DECK_SEARCH = 'deck:"LSAT Speedrun"'
+
+
+def build_search(
+    base: str = DEFAULT_DECK_SEARCH,
+    *,
+    section: str | None = None,
+) -> str:
+    """Append section filter (LR/RC/LG) via sr:section: tags."""
+    if section:
+        return f'{base} tag:"{SECTION_TAG_PREFIX}{section}"'
+    return base
 
 
 def load_schema_weights(path: Path = DEFAULT_TAXONOMY) -> dict[str, float]:
@@ -36,24 +50,64 @@ def weakness_from_collection(col, **performance_kwargs: Any) -> dict[str, float]
     return weakness_map(perf["per_schema"])
 
 
+def plain_due_cards(col, *, limit: int = 20, search: str = DEFAULT_DECK_SEARCH) -> list[Any]:
+    """Anki's default due order (no schema weighting) for interleaving-off mode."""
+    cids = col.find_cards(f"{search} is:due")
+    if not cids:
+        cids = col.find_cards(search)[:limit]
+    out = []
+    for cid in cids[:limit]:
+        card = col.get_card(cid)
+        note = card.note()
+        schema = None
+        for tag in note.tags:
+            if tag.startswith(SCHEMA_TAG_PREFIX):
+                schema = tag[len(SCHEMA_TAG_PREFIX) :]
+                break
+        out.append(
+            type(
+                "PlainCard",
+                (),
+                {
+                    "card_id": cid,
+                    "schema": schema or "",
+                    "priority": 0.0,
+                    "schema_weight": 0.0,
+                    "weakness": 0.0,
+                },
+            )()
+        )
+    return out
+
+
 def ordered_cards(
     col,
     *,
     limit: int = 20,
-    search: str = DEFAULT_DECK_SEARCH,
+    search: str | None = None,
+    section: str | None = None,
+    interleaving: bool | None = None,
     weaknesses: dict[str, float] | None = None,
     time_pressured: list[str] | None = None,
     time_pressure_factor: float = 1.0,
     use_performance_weakness: bool = True,
     **performance_kwargs: Any,
 ) -> list[Any]:
-    """Return cards ordered by schema points-at-stake (list of ScoredCard)."""
+    """Return cards ordered by schema points-at-stake (list of ScoredCard).
+
+    When interleaving is off, returns plain Anki due order instead."""
+    sec = section if section is not None else section_filter()
+    effective_search = build_search(search or DEFAULT_DECK_SEARCH, section=sec)
+    use_interleave = interleaving_enabled() if interleaving is None else interleaving
+    if not use_interleave:
+        return plain_due_cards(col, limit=limit, search=effective_search)
+
     weights = load_schema_weights()
     if weaknesses is None and use_performance_weakness:
         weaknesses = weakness_from_collection(col, **performance_kwargs)
     return list(
         col._backend.build_schema_weighted_queue(
-            search=search,
+            search=effective_search,
             limit=limit,
             schema_tag_prefix=SCHEMA_TAG_PREFIX,
             schema_weight=weights,

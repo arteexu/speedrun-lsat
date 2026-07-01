@@ -23,6 +23,8 @@ from typing import Any
 
 SCHEMA_TAG = "sr:schema:"
 
+from speedrun.config import latency_budget_ms as _latency_budget_ms
+
 # Per-item time budget. LSAT gives ~35 min for ~25 questions ~= 84s/question.
 DEFAULT_BUDGET_MS = 90_000
 
@@ -102,7 +104,11 @@ def score_from_attempts(
         )
 
     hits = sum(1 for a in attempts if a.correct)
-    on_budget = sum(1 for a in attempts if a.on_budget_hit(budget_ms))
+    on_budget = sum(
+        1
+        for a in attempts
+        if a.correct and a.latency_ms <= _budget_for_schema(a.schema, budget_ms)
+    )
     raw_accuracy = hits / n
     on_budget_rate = on_budget / n
     mean_latency = sum(a.latency_ms for a in attempts) / n
@@ -134,6 +140,14 @@ def _schema_from_tags(tags: str, prefix: str = SCHEMA_TAG) -> str | None:
         if tok.startswith(prefix):
             return tok[len(prefix) :]
     return None
+
+
+def _budget_for_schema(schema: str, default_budget_ms: int) -> int:
+    if schema.startswith("rc."):
+        return _latency_budget_ms("RC")
+    if schema.startswith(("flaw.", "qt.", "trap.")):
+        return _latency_budget_ms("LR")
+    return default_budget_ms
 
 
 def collection_attempts(col, schema_tag_prefix: str = SCHEMA_TAG) -> list[Attempt]:
@@ -179,7 +193,10 @@ def performance_score(
 
     per_schema = {
         schema: score_from_attempts(
-            group, label=schema, budget_ms=budget_ms, min_attempts=min_attempts_per_schema
+            group,
+            label=schema,
+            budget_ms=_budget_for_schema(schema, budget_ms),
+            min_attempts=min_attempts_per_schema,
         )
         for schema, group in sorted(by_schema.items())
     }
