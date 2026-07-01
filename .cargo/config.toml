@@ -13,3 +13,10 @@ color = "always"
 
 [target.'cfg(all(target_env = "msvc", target_os = "windows"))']
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# rslib-ffi staticlib link step must match IPHONEOS_DEPLOYMENT_TARGET (see ios/build-xcframework.sh).
+[target.aarch64-apple-ios]
+rustflags = ["-C", "link-arg=-miphoneos-version-min=15.0"]
+
+[target.aarch64-apple-ios-sim]
+rustflags = ["-C", "link-arg=-mios-simulator-version-min=15.0"]

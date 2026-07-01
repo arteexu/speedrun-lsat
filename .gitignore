@@ -28,3 +28,7 @@ docs/autoapi/
 # Speedrun: local dev Anki profile (ANKI_BASE) and scratch data
 /.ankidata/
 .pytest_cache/
+
+# Speedrun iOS: built artifacts (run ios/build-xcframework.sh)
+/ios/AnkiFFI.xcframework/
+/ios/AnkiKit/.build/
