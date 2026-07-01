@@ -151,9 +151,27 @@ def readiness_score(
     min_attempts: int = MIN_ATTEMPTS,
     min_coverage: float = MIN_COVERAGE,
     taxonomy_path: Path = DEFAULT_TAXONOMY,
+    gate: Any = None,
     **performance_kwargs: Any,
 ) -> ReadinessScore:
-    perf = performance_score(col, **performance_kwargs)
+    # The evidence gate is the outermost precondition: without enough flashcards
+    # and enough distinct flaws/patterns, no readiness number is honest.
+    if gate is not None and not gate.open:
+        return ReadinessScore(
+            point=None,
+            low=None,
+            high=None,
+            coverage=gate.concept_coverage,
+            confidence="low",
+            n_attempts=0,
+            expected_fraction=None,
+            best_next_step=None,
+            speed_flag=False,
+            gave_up=True,
+            reason=gate.reason,
+        )
+
+    perf = performance_score(col, gate=gate, **performance_kwargs)
     per_schema = perf["per_schema"]
     n_attempts = perf["overall"].n_attempts
     meta = _load_schema_meta(taxonomy_path)

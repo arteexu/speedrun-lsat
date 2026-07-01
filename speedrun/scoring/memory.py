@@ -157,9 +157,30 @@ def memory_score(
     min_reviewed_overall: int = MIN_REVIEWED_OVERALL,
     min_reviewed_per_schema: int = MIN_REVIEWED_PER_SCHEMA,
     schema_tag_prefix: str = SCHEMA_TAG,
+    gate: Any = None,
 ) -> dict[str, Any]:
-    """Compute the honest memory score (overall + per schema) for a collection."""
+    """Compute the honest memory score (overall + per schema) for a collection.
+
+    If an evidence `gate` is supplied and it is closed, the score abstains with the
+    gate's reason (not enough flashcards/flaws/patterns practiced yet)."""
     records = collection_memory_records(col, schema_tag_prefix)
+
+    if gate is not None and not gate.open:
+        retr = [r for _, r in records]
+        reviewed = [r for r in retr if r is not None]
+        n_cards = len(retr)
+        overall = MemoryScore(
+            label="overall",
+            point=None,
+            low=None,
+            high=None,
+            n_reviewed=len(reviewed),
+            n_cards=n_cards,
+            coverage=(len(reviewed) / n_cards) if n_cards else 0.0,
+            gave_up=True,
+            reason=gate.reason,
+        )
+        return {"overall": overall, "per_schema": {}}
 
     overall = score_from_retrievabilities(
         [r for _, r in records], label="overall", min_reviewed=min_reviewed_overall

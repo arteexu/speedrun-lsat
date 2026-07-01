@@ -180,8 +180,25 @@ def performance_score(
     min_attempts_per_schema: int = MIN_ATTEMPTS_PER_SCHEMA,
     min_attempts_overall: int = MIN_ATTEMPTS_OVERALL,
     schema_tag_prefix: str = SCHEMA_TAG,
+    gate: Any = None,
 ) -> dict[str, Any]:
     attempts = collection_attempts(col, schema_tag_prefix)
+
+    if gate is not None and not gate.open:
+        overall = PerformanceScore(
+            label="overall",
+            point=None,
+            low=None,
+            high=None,
+            raw_accuracy=None,
+            on_budget_rate=None,
+            mean_latency_ms=None,
+            n_attempts=len(attempts),
+            speed_flag=False,
+            gave_up=True,
+            reason=gate.reason,
+        )
+        return {"overall": overall, "per_schema": {}}
 
     overall = score_from_attempts(
         attempts, label="overall", budget_ms=budget_ms, min_attempts=min_attempts_overall

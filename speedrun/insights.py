@@ -77,6 +77,18 @@ class ReadinessPoint:
         return asdict(self)
 
 
+@dataclass
+class TrapHabit:
+    """A wrong-answer trap the student habitually falls for (SPOV2 / Insight 8)."""
+
+    trap: str
+    count: int
+    pct: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def _classify_schema(
     mem_point: float | None,
     perf_point: float | None,
@@ -147,6 +159,36 @@ def wrong_answer_patterns(col, *, top_n: int = 10) -> list[WrongPattern]:
         for k, v in counter.most_common(top_n)
     ]
     return patterns
+
+
+def trap_profile(col, *, top_n: int = 5) -> list[TrapHabit]:
+    """Rank the traps the student habitually falls for, on missed (Again) reviews.
+
+    Per SPOV2 / Insight 8, *which trap a student keeps choosing* is a more
+    diagnostic, more transferable signal than which question they missed. This
+    makes that signal first-class: it counts distinct trap tags on the cards the
+    student got wrong so the dashboard can name the recurring weakness."""
+    rows = col.db.all(
+        """
+        SELECT n.tags
+        FROM revlog r
+        JOIN cards c ON r.cid = c.id
+        JOIN notes n ON c.nid = n.id
+        WHERE r.ease = 1
+        """
+    )
+    counter: Counter[str] = Counter()
+    for (tags,) in rows:
+        if _schema_from_tags(tags, SCHEMA_TAG) is None:
+            continue
+        for tok in tags.split():
+            if tok.startswith(TRAP_TAG):
+                counter[tok[len(TRAP_TAG) :]] += 1
+    total = sum(counter.values()) or 1
+    return [
+        TrapHabit(trap=trap, count=count, pct=count / total)
+        for trap, count in counter.most_common(top_n)
+    ]
 
 
 def _section_from_tags(tags: str) -> str:
