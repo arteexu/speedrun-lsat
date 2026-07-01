@@ -73,6 +73,19 @@ def test_dashboard_html_shows_scores_after_reviews():
     col.close()
 
 
+def test_dashboard_html_includes_stylesheet():
+    col = getEmptyCol()
+    import_seed_deck(col, backup=False)
+    html = render_dashboard_html(col)
+    assert "<style>" in html
+    assert ".sr-dash" in html
+    assert ".sr-card" in html
+    assert ".heat-bar" in html
+    assert "prefers-color-scheme: dark" in html
+    assert 'class="sr-grid"' in html
+    col.close()
+
+
 def test_study_list_html_lists_cards():
     col = getEmptyCol()
     import_seed_deck(col, backup=False)

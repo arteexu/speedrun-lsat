@@ -16,7 +16,7 @@ from pathlib import Path
 
 from aqt import gui_hooks
 from aqt.qt import QAction, QKeySequence, QMenu, QShortcut, qconnect
-from aqt.utils import showInfo, showText, tooltip
+from aqt.utils import disable_help_button, showInfo, tooltip
 
 DECK_NAME = "LSAT Speedrun"
 _score_action: QAction | None = None
@@ -168,6 +168,43 @@ def _require_col(mw) -> bool:
     return True
 
 
+def _show_html(
+    mw,
+    html: str,
+    *,
+    title: str = "LSAT Speedrun",
+    minWidth: int = 720,
+    minHeight: int = 640,
+) -> None:
+    """Show self-contained HTML in a dialog using QWebEngineView.
+
+    Anki's showText(type=\"html\") uses QTextBrowser, which strips <style> tags
+    and ignores most CSS — the Speedrun dashboard relies on a <style> block.
+    """
+    from aqt.qt import (
+        QDialog,
+        QDialogButtonBox,
+        QUrl,
+        QVBoxLayout,
+        QWebEngineView,
+    )
+
+    diag = QDialog(mw)
+    diag.setWindowTitle(title)
+    disable_help_button(diag)
+    layout = QVBoxLayout(diag)
+    web = QWebEngineView(diag)
+    web.setHtml(html, QUrl("about:blank"))
+    layout.addWidget(web)
+    box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+    layout.addWidget(box)
+    qconnect(box.rejected, diag.reject)
+    qconnect(box.accepted, diag.accept)
+    diag.setMinimumWidth(minWidth)
+    diag.setMinimumHeight(minHeight)
+    diag.exec()
+
+
 def _show_report(mw, renderer, title: str) -> None:
     if not _require_col(mw):
         return
@@ -176,8 +213,12 @@ def _show_report(mw, renderer, title: str) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"{title} error: {exc}")
         return
-    showText(
-        html, type="html", title=f"LSAT Speedrun — {title}", minWidth=720, minHeight=640
+    _show_html(
+        mw,
+        html,
+        title=f"LSAT Speedrun — {title}",
+        minWidth=720,
+        minHeight=640,
     )
 
 
@@ -203,9 +244,9 @@ def _show_dashboard(mw) -> None:
     except Exception as exc:  # pragma: no cover - defensive
         tooltip(f"Dashboard error: {exc}")
         return
-    showText(
+    _show_html(
+        mw,
         html,
-        type="html",
         title="LSAT Speedrun — Dashboard",
         minWidth=820,
         minHeight=720,
@@ -223,9 +264,9 @@ def _show_queue(mw) -> None:
     except Exception as exc:  # pragma: no cover - defensive
         tooltip(f"Queue error: {exc}")
         return
-    showText(
+    _show_html(
+        mw,
         html,
-        type="html",
         title="LSAT Speedrun — Study queue",
         minWidth=620,
         minHeight=520,
@@ -251,7 +292,7 @@ def _show_drill(mw) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"Drill error: {exc}")
         return
-    showText(html, type="html", title="Schema drill", minWidth=560, minHeight=480)
+    _show_html(mw, html, title="Schema drill", minWidth=560, minHeight=480)
 
 
 def _export_report(mw) -> None:
@@ -264,8 +305,12 @@ def _export_report(mw) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"Export error: {exc}")
         return
-    showText(
-        html, type="html", title="LSAT Speedrun — Export", minWidth=800, minHeight=720
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — Export",
+        minWidth=800,
+        minHeight=720,
     )
 
 
@@ -278,7 +323,7 @@ def _show_config(mw) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"Config error: {exc}")
         return
-    showText(html, type="html", title="Speedrun settings", minWidth=520, minHeight=480)
+    _show_html(mw, html, title="Speedrun settings", minWidth=520, minHeight=480)
 
 
 def _toggle_sidebar(mw) -> None:
@@ -305,8 +350,8 @@ def _health_check(mw) -> None:
     except Exception as exc:  # pragma: no cover
         tooltip(f"Health check error: {exc}")
         return
-    showText(
-        html, type="html", title="Speedrun health check", minWidth=480, minHeight=320
+    _show_html(
+        mw, html, title="Speedrun health check", minWidth=480, minHeight=320
     )
 
 
@@ -326,9 +371,9 @@ def _explain_schema(mw) -> None:
             tooltip("No schema on this card.")
             return
         text = explain_schema(schema)
-        showText(
+        _show_html(
+            mw,
             f"<div style='font-family:system-ui,sans-serif'><b>{schema}</b><p>{text}</p></div>",
-            type="html",
             title="Explain this schema",
             minWidth=420,
             minHeight=200,
