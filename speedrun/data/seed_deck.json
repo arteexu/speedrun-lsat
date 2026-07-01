@@ -1,0 +1,208 @@
+{
+  "deck": "LSAT Speedrun — seed",
+  "version": "0.1.0",
+  "content_note": "All items are ORIGINAL, authored for this project to stay license-clean. They are NOT real LSAT questions. schema ids reference speedrun/taxonomy/lsat_taxonomy.json. This is a small scaffold to exercise the pipeline; expand with a chosen licensed/original source before scoring.",
+  "items": [
+    {
+      "id": "lr-0001",
+      "section": "LR",
+      "stem_type": "qt.weaken",
+      "schemas": ["flaw.causal.correlation_causation", "qt.weaken"],
+      "difficulty": 2,
+      "source": "original",
+      "stimulus": "Employees who use the company's new standing desks report fewer afternoon headaches than those who use ordinary desks. Clearly, standing while working reduces headaches.",
+      "question": "Which one of the following, if true, most weakens the argument?",
+      "choices": [
+        { "id": "A", "text": "Employees chose their own desks, and those prone to headaches avoided standing desks.", "trap": null, "correct": true },
+        { "id": "B", "text": "Standing desks are more expensive than ordinary desks.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "Some employees with ordinary desks also report few headaches.", "trap": "trap.too_weak", "correct": false },
+        { "id": "D", "text": "Afternoon headaches are more common than morning headaches.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "Standing improves posture, which employees value.", "trap": "trap.opposite", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "C", "why_runner_up_wrong": "C is 'too weak': a few headache-free ordinary-desk users is consistent with standing still helping on average. A attacks the causal link itself by offering a selection effect (a reverse-causation / self-selection alternative)." }
+    },
+    {
+      "id": "lr-0002",
+      "section": "LR",
+      "stem_type": "qt.flaw",
+      "schemas": ["flaw.conditional.mistaken_reversal", "qt.flaw"],
+      "difficulty": 3,
+      "source": "original",
+      "stimulus": "Anyone who has mastered calculus can solve these puzzles. Maria solved these puzzles, so she has mastered calculus.",
+      "question": "The reasoning above is flawed because it",
+      "choices": [
+        { "id": "A", "text": "treats a condition sufficient for solving the puzzles as if it were necessary.", "trap": "trap.reversed_relationship", "correct": true },
+        { "id": "B", "text": "relies on the testimony of a single person.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "fails to define what counts as mastering calculus.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "D", "text": "assumes without warrant that the puzzles are difficult.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "concludes that Maria cannot solve other kinds of puzzles.", "trap": "trap.half_right", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "E", "why_runner_up_wrong": "E describes a conclusion the argument never draws. A names the actual error: mastery is sufficient for solving, but the argument treats solving as sufficient for mastery (affirming the consequent)." }
+    },
+    {
+      "id": "lr-0003",
+      "section": "LR",
+      "stem_type": "qt.necessary_assumption",
+      "schemas": ["flaw.gap.unwarranted_assumption", "qt.necessary_assumption"],
+      "difficulty": 3,
+      "source": "original",
+      "stimulus": "The new bridge will reduce commute times, so the city council should approve it: shorter commutes make residents happier.",
+      "question": "Which one of the following is an assumption required by the argument?",
+      "choices": [
+        { "id": "A", "text": "The bridge will not create other problems that outweigh happier residents.", "trap": null, "correct": true },
+        { "id": "B", "text": "Every resident commutes across the river daily.", "trap": "trap.too_strong_extreme", "correct": false },
+        { "id": "C", "text": "The bridge is the cheapest way to shorten commutes.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "D", "text": "Residents have asked the council for a new bridge.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "Happier residents always re-elect the council.", "trap": "trap.out_of_scope", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "B", "why_runner_up_wrong": "B is 'too strong' — the argument needs some commute benefit, not that everyone commutes daily; negating B does not destroy the argument. A is required: if approving the bridge caused offsetting harms, the recommendation would collapse (negation test)." }
+    },
+    {
+      "id": "lr-0004",
+      "section": "LR",
+      "stem_type": "qt.strengthen",
+      "schemas": ["flaw.causal.common_cause", "qt.strengthen"],
+      "difficulty": 3,
+      "source": "original",
+      "stimulus": "Towns that added bike lanes saw retail sales rise. Adding bike lanes must boost local retail.",
+      "question": "Which one of the following, if true, most strengthens the argument?",
+      "choices": [
+        { "id": "A", "text": "The towns added bike lanes without making any other economic changes during the period.", "trap": null, "correct": true },
+        { "id": "B", "text": "Bike lanes are popular with younger residents.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "Retail sales also rose in towns without bike lanes.", "trap": "trap.opposite", "correct": false },
+        { "id": "D", "text": "Some retailers opposed the bike lanes.", "trap": "trap.opposite", "correct": false },
+        { "id": "E", "text": "Bike lanes reduce car traffic.", "trap": "trap.out_of_scope", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "C", "why_runner_up_wrong": "C actually weakens (a common cause raising sales everywhere). A strengthens by ruling out an alternative cause, protecting the causal claim." }
+    },
+    {
+      "id": "lr-0005",
+      "section": "LR",
+      "stem_type": "qt.paradox",
+      "schemas": ["qt.paradox"],
+      "difficulty": 2,
+      "source": "original",
+      "stimulus": "The clinic saw more patients this year than last, yet its total revenue fell.",
+      "question": "Which one of the following, if true, most helps to resolve the apparent discrepancy?",
+      "choices": [
+        { "id": "A", "text": "This year the clinic shifted to shorter, lower-priced visits, seeing more patients for less money each.", "trap": null, "correct": true },
+        { "id": "B", "text": "The clinic hired two additional nurses this year.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "Patient satisfaction scores rose this year.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "D", "text": "The clinic is open the same hours as last year.", "trap": "trap.premise_restatement", "correct": false },
+        { "id": "E", "text": "Nearby clinics also saw more patients.", "trap": "trap.real_world_plausible", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "E", "why_runner_up_wrong": "E is real-world plausible but says nothing about why THIS clinic's revenue fell. A resolves it: more visits at lower price per visit can lower total revenue." }
+    },
+    {
+      "id": "lr-0006",
+      "section": "LR",
+      "stem_type": "qt.flaw",
+      "schemas": ["flaw.sampling.unrepresentative", "qt.flaw"],
+      "difficulty": 3,
+      "source": "original",
+      "stimulus": "A magazine asked its readers to mail in whether they exercise daily; 80% said yes. So most people in the country exercise daily.",
+      "question": "The argument is most vulnerable to criticism on the grounds that it",
+      "choices": [
+        { "id": "A", "text": "draws a conclusion about the country from a self-selected group of respondents.", "trap": null, "correct": true },
+        { "id": "B", "text": "assumes exercising daily is healthy.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "reports that 80% of readers responded affirmatively.", "trap": "trap.premise_restatement", "correct": false },
+        { "id": "D", "text": "fails to specify what counts as exercise.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "ignores people who exercise weekly.", "trap": "trap.out_of_scope", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "C", "why_runner_up_wrong": "C merely restates a premise rather than naming an error. A identifies the sampling flaw: readers who mail in are not representative of the country." }
+    },
+    {
+      "id": "lr-0007",
+      "section": "LR",
+      "stem_type": "qt.flaw",
+      "schemas": ["flaw.scope.percent_vs_number", "qt.flaw"],
+      "difficulty": 4,
+      "source": "original",
+      "stimulus": "A larger percentage of Startup A's employees are managers than at giant Corp B. So Startup A has more managers than Corp B.",
+      "question": "The reasoning is flawed because it",
+      "choices": [
+        { "id": "A", "text": "infers a larger absolute number from a larger proportion.", "trap": null, "correct": true },
+        { "id": "B", "text": "assumes managers are more productive than other staff.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "C", "text": "overlooks that Startup A is newer than Corp B.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "D", "text": "treats being a manager as the same as being an executive, though it also ignores turnover.", "trap": "trap.half_right", "correct": false },
+        { "id": "E", "text": "assumes Corp B wants more managers.", "trap": "trap.out_of_scope", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "D", "why_runner_up_wrong": "D is half-right/half-wrong (an equivocation clause plus an irrelevant turnover clause) and misses the point. A names the percentage-vs-number error directly: a bigger share of a much smaller company can be fewer people." }
+    },
+    {
+      "id": "lr-0008",
+      "section": "LR",
+      "stem_type": "qt.parallel_flaw",
+      "schemas": ["flaw.scope.part_whole", "qt.parallel_flaw"],
+      "difficulty": 4,
+      "source": "original",
+      "stimulus": "Each part of this machine is lightweight, so the whole machine must be lightweight.",
+      "question": "Which one of the following exhibits flawed reasoning most similar to that above?",
+      "choices": [
+        { "id": "A", "text": "Every player on the team is excellent, so the team as a whole must be excellent.", "trap": null, "correct": true },
+        { "id": "B", "text": "This soup is salty, so each ingredient must be salty.", "trap": "trap.reversed_relationship", "correct": false },
+        { "id": "C", "text": "The report is long, so it must be thorough.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "D", "text": "Since it rained yesterday, it will rain today.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "All cats are animals, so some animals are cats.", "trap": "trap.half_right", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "B", "why_runner_up_wrong": "B is whole-to-part (division), the reverse direction. A matches the stimulus's part-to-whole (composition) error." }
+    },
+    {
+      "id": "rc-0001-q1",
+      "section": "RC",
+      "stem_type": "rc.main_point",
+      "schemas": ["rc.main_point"],
+      "difficulty": 3,
+      "source": "original",
+      "passage_id": "rc-0001",
+      "passage": "Historians once treated early cartography as a straightforward record of geographic knowledge. Recent scholarship complicates this view. Maps, these scholars argue, were also instruments of persuasion: a ruler's map might exaggerate contested borders or omit rival settlements entirely. Yet the revisionists sometimes overreach, implying that accuracy was never a mapmaker's goal. The evidence suggests a middle position: cartographers pursued utility and rhetoric together, and the balance shifted with a map's purpose.",
+      "question": "Which one of the following most accurately expresses the main point of the passage?",
+      "choices": [
+        { "id": "A", "text": "Early maps served both practical and persuasive purposes, in a balance that depended on their use.", "trap": null, "correct": true },
+        { "id": "B", "text": "Early maps were primarily tools of political propaganda.", "trap": "trap.rc.distortion_author_view", "correct": false },
+        { "id": "C", "text": "Historians were wrong to study early cartography at all.", "trap": "trap.too_strong_extreme", "correct": false },
+        { "id": "D", "text": "Revisionist scholars have corrected every earlier error about maps.", "trap": "trap.too_strong_extreme", "correct": false },
+        { "id": "E", "text": "Accuracy was never a goal of early mapmakers.", "trap": "trap.rc.wrong_viewpoint", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "B", "why_runner_up_wrong": "B captures only the revisionist view the author qualifies; the author endorses the middle position (A), not persuasion as primary." }
+    },
+    {
+      "id": "rc-0001-q2",
+      "section": "RC",
+      "stem_type": "rc.author_attitude",
+      "schemas": ["rc.author_attitude"],
+      "difficulty": 3,
+      "source": "original",
+      "passage_id": "rc-0001",
+      "passage": "(see rc-0001)",
+      "question": "The author's attitude toward the revisionist scholarship is best described as",
+      "choices": [
+        { "id": "A", "text": "partial agreement tempered by a specific reservation.", "trap": null, "correct": true },
+        { "id": "B", "text": "enthusiastic endorsement.", "trap": "trap.rc.tone_mismatch", "correct": false },
+        { "id": "C", "text": "dismissive rejection.", "trap": "trap.rc.tone_mismatch", "correct": false },
+        { "id": "D", "text": "complete indifference.", "trap": "trap.rc.tone_mismatch", "correct": false },
+        { "id": "E", "text": "confusion about its claims.", "trap": "trap.out_of_scope", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "B", "why_runner_up_wrong": "The author agrees the old view was too simple but says revisionists 'sometimes overreach' — a reservation, so partial agreement (A), not enthusiasm." }
+    },
+    {
+      "id": "rc-0001-q3",
+      "section": "RC",
+      "stem_type": "rc.function_of_detail",
+      "schemas": ["rc.function_of_detail"],
+      "difficulty": 4,
+      "source": "original",
+      "passage_id": "rc-0001",
+      "passage": "(see rc-0001)",
+      "question": "The reference to a ruler's map exaggerating contested borders functions primarily to",
+      "choices": [
+        { "id": "A", "text": "illustrate the revisionist claim that maps could be persuasive.", "trap": null, "correct": true },
+        { "id": "B", "text": "prove that all maps are inaccurate.", "trap": "trap.too_strong_extreme", "correct": false },
+        { "id": "C", "text": "introduce the author's own final position.", "trap": "trap.half_right", "correct": false },
+        { "id": "D", "text": "criticize rulers for dishonesty.", "trap": "trap.out_of_scope", "correct": false },
+        { "id": "E", "text": "show that early historians were correct.", "trap": "trap.rc.wrong_viewpoint", "correct": false }
+      ],
+      "two_answer_fork": { "runner_up": "C", "why_runner_up_wrong": "The example supports the revisionist point being described, not the author's later middle position; C misattributes its function." }
+    }
+  ]
+}

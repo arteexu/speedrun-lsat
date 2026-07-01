@@ -1,0 +1,108 @@
+{
+  "exam": "LSAT",
+  "version": "0.1.0",
+  "updated": "2026-06-30",
+  "scale": { "min": 120, "max": 180 },
+  "notes": "Schema is the unit of mastery (BrainLift SPOV1). The flaw axis is PRIMARY (SPOV2). exam_weight values are RELATIVE frequency estimates within each axis (normalized to sum ~1.0 per axis) synthesized from prep-taxonomy sources; they are estimates to be refined with real form-frequency data, and are consumed as schema_weight by the schema-weighted queue. See methodology.md.",
+  "sections": {
+    "LR": {
+      "name": "Logical Reasoning",
+      "weight": 0.66,
+      "scored_sections_per_test": 2,
+      "questions_per_section": [24, 26],
+      "minutes_per_section": 35,
+      "notes": "~2/3 of scored questions; the primary target."
+    },
+    "RC": {
+      "name": "Reading Comprehension",
+      "weight": 0.34,
+      "scored_sections_per_test": 1,
+      "questions_per_section": [26, 28],
+      "minutes_per_section": 35
+    }
+  },
+  "axes": {
+    "flaw": {
+      "primary": true,
+      "description": "The reasoning error in an argument. Highest-transfer schema: the same flaw recurs across many question types, so it is the primary organizing and diagnostic axis.",
+      "sources": ["Khan Academy LSAT 'Types of flaws'", "LSATHacks", "PowerScore/Manhattan/The LSAT Trainer synthesis"]
+    },
+    "question_type": {
+      "primary": false,
+      "description": "The task the stem announces (surface axis). Useful for labeling and section modeling, secondary to flaw.",
+      "sources": ["Cambridge LSAT question types", "prep-taxonomy synthesis"]
+    },
+    "trap": {
+      "primary": false,
+      "description": "Wrong-answer (distractor) types. Systematic, so 'why is this wrong' is itself a learnable schema; a student's habitual trap is highly diagnostic (BrainLift Insight 8).",
+      "sources": ["prep-taxonomy synthesis", "LSATHacks"]
+    },
+    "rc_structure": {
+      "primary": false,
+      "description": "Recurring structural targets in Reading Comprehension passages and question stems.",
+      "sources": ["prep-taxonomy synthesis"]
+    }
+  },
+  "schemas": [
+    { "id": "flaw.causal.correlation_causation", "axis": "flaw", "category": "causal", "name": "Correlation treated as causation", "exam_weight": 0.12, "description": "Concludes X causes Y from mere correlation between X and Y." },
+    { "id": "flaw.causal.reversed", "axis": "flaw", "category": "causal", "name": "Reversed causation", "exam_weight": 0.03, "description": "Concludes X causes Y when Y may cause X." },
+    { "id": "flaw.causal.common_cause", "axis": "flaw", "category": "causal", "name": "Overlooked common cause", "exam_weight": 0.03, "description": "Ignores a third factor Z that causes both X and Y." },
+    { "id": "flaw.causal.post_hoc", "axis": "flaw", "category": "causal", "name": "Post hoc (temporal-to-causal)", "exam_weight": 0.03, "description": "Infers causation from mere temporal sequence (after this, therefore because of this)." },
+    { "id": "flaw.conditional.nec_suff_confusion", "axis": "flaw", "category": "conditional", "name": "Necessary/sufficient confusion", "exam_weight": 0.09, "description": "Treats a necessary condition as sufficient or vice versa." },
+    { "id": "flaw.conditional.mistaken_reversal", "axis": "flaw", "category": "conditional", "name": "Mistaken reversal", "exam_weight": 0.04, "description": "Affirms the consequent: from A->B concludes B->A." },
+    { "id": "flaw.conditional.mistaken_negation", "axis": "flaw", "category": "conditional", "name": "Mistaken negation", "exam_weight": 0.04, "description": "Denies the antecedent: from A->B concludes not-A -> not-B." },
+    { "id": "flaw.gap.unwarranted_assumption", "axis": "flaw", "category": "gap", "name": "Unwarranted assumption / term shift", "exam_weight": 0.08, "description": "Conclusion introduces a term or scope not established by the premises (a gap)." },
+    { "id": "flaw.sampling.unrepresentative", "axis": "flaw", "category": "sampling", "name": "Unrepresentative / biased / small sample", "exam_weight": 0.06, "description": "Generalizes from a sample that is biased, too small, or not representative." },
+    { "id": "flaw.sampling.appeal_to_ignorance", "axis": "flaw", "category": "sampling", "name": "Appeal to ignorance", "exam_weight": 0.03, "description": "Treats absence of evidence as evidence of absence (or vice versa)." },
+    { "id": "flaw.scope.part_whole", "axis": "flaw", "category": "scope", "name": "Part-to-whole / whole-to-part", "exam_weight": 0.05, "description": "Assumes what is true of the parts is true of the whole, or vice versa (composition/division)." },
+    { "id": "flaw.scope.percent_vs_number", "axis": "flaw", "category": "scope", "name": "Percentage vs. absolute number", "exam_weight": 0.04, "description": "Confuses a change in proportion with a change in absolute quantity." },
+    { "id": "flaw.scope.equivocation", "axis": "flaw", "category": "scope", "name": "Equivocation", "exam_weight": 0.04, "description": "Uses one word in two different senses across the argument." },
+    { "id": "flaw.structure.circular", "axis": "flaw", "category": "structure", "name": "Circular reasoning", "exam_weight": 0.02, "description": "Assumes the conclusion among the premises." },
+    { "id": "flaw.structure.ad_hominem", "axis": "flaw", "category": "structure", "name": "Ad hominem", "exam_weight": 0.03, "description": "Attacks the source rather than the argument." },
+    { "id": "flaw.structure.straw_man", "axis": "flaw", "category": "structure", "name": "Straw man", "exam_weight": 0.03, "description": "Misrepresents an opposing view to refute it more easily." },
+    { "id": "flaw.structure.false_dilemma", "axis": "flaw", "category": "structure", "name": "False dilemma", "exam_weight": 0.03, "description": "Presents only two options when others exist." },
+    { "id": "flaw.structure.appeal_authority_emotion", "axis": "flaw", "category": "structure", "name": "Appeal to authority/emotion", "exam_weight": 0.03, "description": "Relies on an illegitimate authority or on emotion instead of evidence." },
+    { "id": "flaw.structure.comparison", "axis": "flaw", "category": "structure", "name": "Faulty comparison / analogy", "exam_weight": 0.02, "description": "Compares two things that are not relevantly alike." },
+    { "id": "flaw.structure.self_contradiction", "axis": "flaw", "category": "structure", "name": "Internal contradiction", "exam_weight": 0.01, "description": "Premises or conclusion conflict with one another." },
+
+    { "id": "qt.necessary_assumption", "axis": "question_type", "category": "assumption", "name": "Necessary Assumption", "exam_weight": 0.12, "description": "Find an assumption the argument requires to be true." },
+    { "id": "qt.sufficient_assumption", "axis": "question_type", "category": "assumption", "name": "Sufficient Assumption", "exam_weight": 0.06, "description": "Find an assumption that, if added, guarantees the conclusion." },
+    { "id": "qt.flaw", "axis": "question_type", "category": "flaw", "name": "Identify the Flaw", "exam_weight": 0.12, "description": "Describe the reasoning error in the argument." },
+    { "id": "qt.strengthen", "axis": "question_type", "category": "impact", "name": "Strengthen", "exam_weight": 0.10, "description": "Choose the answer that most supports the argument." },
+    { "id": "qt.weaken", "axis": "question_type", "category": "impact", "name": "Weaken", "exam_weight": 0.10, "description": "Choose the answer that most undermines the argument." },
+    { "id": "qt.inference_must_be_true", "axis": "question_type", "category": "inference", "name": "Must Be True / Inference", "exam_weight": 0.09, "description": "What must be true given the statements." },
+    { "id": "qt.most_strongly_supported", "axis": "question_type", "category": "inference", "name": "Most Strongly Supported", "exam_weight": 0.05, "description": "What is best supported (not necessarily entailed) by the statements." },
+    { "id": "qt.paradox", "axis": "question_type", "category": "explain", "name": "Paradox / Resolve-Explain", "exam_weight": 0.06, "description": "Resolve an apparent discrepancy between two facts." },
+    { "id": "qt.principle_identify", "axis": "question_type", "category": "principle", "name": "Principle (Identify)", "exam_weight": 0.04, "description": "Identify the general principle underlying the argument." },
+    { "id": "qt.principle_apply", "axis": "question_type", "category": "principle", "name": "Principle (Apply)", "exam_weight": 0.03, "description": "Apply a stated principle to a case." },
+    { "id": "qt.method_of_reasoning", "axis": "question_type", "category": "structure", "name": "Method of Reasoning", "exam_weight": 0.04, "description": "Describe how the argument proceeds." },
+    { "id": "qt.parallel_reasoning", "axis": "question_type", "category": "structure", "name": "Parallel Reasoning", "exam_weight": 0.03, "description": "Find the argument with matching logical structure." },
+    { "id": "qt.parallel_flaw", "axis": "question_type", "category": "structure", "name": "Parallel Flaw", "exam_weight": 0.03, "description": "Find the argument whose flaw matches the stimulus flaw." },
+    { "id": "qt.main_conclusion", "axis": "question_type", "category": "structure", "name": "Main Conclusion", "exam_weight": 0.03, "description": "Identify the main conclusion of the argument." },
+    { "id": "qt.role_of_statement", "axis": "question_type", "category": "structure", "name": "Role of a Statement", "exam_weight": 0.03, "description": "Identify the function a claim plays in the argument." },
+    { "id": "qt.point_at_issue", "axis": "question_type", "category": "dialogue", "name": "Point at Issue / Agreement", "exam_weight": 0.02, "description": "Identify what two speakers disagree (or agree) about." },
+    { "id": "qt.evaluate", "axis": "question_type", "category": "impact", "name": "Evaluate the Argument", "exam_weight": 0.02, "description": "Find the question most relevant to evaluating the argument." },
+
+    { "id": "trap.out_of_scope", "axis": "trap", "category": "scope", "name": "Out of scope", "exam_weight": 0.16, "description": "Introduces a consideration irrelevant to the argument's scope." },
+    { "id": "trap.too_strong_extreme", "axis": "trap", "category": "degree", "name": "Too strong / extreme", "exam_weight": 0.14, "description": "Overstated language the stimulus does not support." },
+    { "id": "trap.too_weak", "axis": "trap", "category": "degree", "name": "Too weak", "exam_weight": 0.05, "description": "So hedged it fails to do the required job (e.g., for a sufficient assumption)." },
+    { "id": "trap.opposite", "axis": "trap", "category": "direction", "name": "Opposite", "exam_weight": 0.07, "description": "Does the reverse of what the task asks (e.g., weakens on a strengthen)." },
+    { "id": "trap.reversed_relationship", "axis": "trap", "category": "direction", "name": "Reversed relationship", "exam_weight": 0.07, "description": "Swaps the direction of a conditional or causal relationship." },
+    { "id": "trap.half_right", "axis": "trap", "category": "composite", "name": "Half right / half wrong", "exam_weight": 0.10, "description": "One clause is correct, another is not; the whole is wrong." },
+    { "id": "trap.premise_restatement", "axis": "trap", "category": "composite", "name": "Premise restatement", "exam_weight": 0.10, "description": "Repeats a premise instead of doing the required work." },
+    { "id": "trap.could_be_true", "axis": "trap", "category": "standard", "name": "Could be true (fails must-be-true)", "exam_weight": 0.07, "description": "Consistent with the stimulus but not required by it." },
+    { "id": "trap.real_world_plausible", "axis": "trap", "category": "standard", "name": "Real-world plausible but unsupported", "exam_weight": 0.08, "description": "True in the world but not supported by the stimulus." },
+    { "id": "trap.right_answer_wrong_question", "axis": "trap", "category": "task", "name": "Right answer to the wrong question", "exam_weight": 0.09, "description": "A good answer to a different task than the stem asks." },
+    { "id": "trap.rc.distortion_author_view", "axis": "trap", "category": "rc", "name": "RC: distortion of author's view", "exam_weight": 0.03, "description": "Misstates the author's position or degree of commitment." },
+    { "id": "trap.rc.wrong_viewpoint", "axis": "trap", "category": "rc", "name": "RC: wrong-viewpoint attribution", "exam_weight": 0.02, "description": "Attributes a view to the wrong party in the passage." },
+    { "id": "trap.rc.tone_mismatch", "axis": "trap", "category": "rc", "name": "RC: tone mismatch", "exam_weight": 0.02, "description": "Answer's tone conflicts with the author's tone." },
+
+    { "id": "rc.main_point", "axis": "rc_structure", "category": "global", "name": "Main point / primary purpose", "exam_weight": 0.22, "description": "The central claim or purpose of the passage." },
+    { "id": "rc.author_attitude", "axis": "rc_structure", "category": "global", "name": "Author attitude / tone", "exam_weight": 0.14, "description": "The author's stance toward the subject or a view." },
+    { "id": "rc.passage_organization", "axis": "rc_structure", "category": "global", "name": "Passage organization", "exam_weight": 0.10, "description": "How the passage is structured." },
+    { "id": "rc.viewpoint_attribution", "axis": "rc_structure", "category": "detail", "name": "Viewpoint attribution", "exam_weight": 0.14, "description": "Which party holds which view." },
+    { "id": "rc.function_of_detail", "axis": "rc_structure", "category": "detail", "name": "Function of a detail", "exam_weight": 0.14, "description": "Why the author includes a specific detail." },
+    { "id": "rc.inference", "axis": "rc_structure", "category": "detail", "name": "RC inference", "exam_weight": 0.16, "description": "What the passage implies or supports." },
+    { "id": "rc.comparative_relationship", "axis": "rc_structure", "category": "comparative", "name": "Comparative-passage relationship", "exam_weight": 0.10, "description": "How two paired passages relate to each other." }
+  ]
+}
