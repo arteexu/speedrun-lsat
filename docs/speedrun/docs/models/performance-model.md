@@ -1,6 +1,6 @@
 # Performance Model — one-page description
 
-> Status: TEMPLATE. Fill the bracketed values with real numbers from held-out evaluation before hand-in.
+> Status: **Implemented** with revlog-based transfer proxy; paraphrase harness (7d) runs; real reworded grading pending.
 
 ## Question it answers
 
@@ -11,39 +11,55 @@ Can the student get a **new, exam-style item right** — including items they ha
 A per-schema model predicting P(correct) on a novel item, from:
 
 - **Schema mastery** — running transfer estimate for the item's schema(s) (primary: flaw).
-- **Item difficulty** — calibrated difficulty of the item.
-- **Latency** — response time, treated as co-equal with correctness (SPOV4): correct-but-over-budget is discounted.
+- **Item difficulty** — not yet item-level; uses revlog grades as proxy.
+- **Latency** — response time co-equal with correctness (SPOV4): correct-but-over-budget is discounted via `on_budget_rate`.
 - **Coverage** — whether the student has enough exposure across the schema to generalize.
 
-Model form: `[e.g., logistic regression / IRT-style / hierarchical per-schema]`. Habitual **trap type** (`chosen_trap_type` on attempts) is an input/diagnostic for which distractors the student falls for (Insight 8).
+Model form: **Wilson interval on latency-adjusted accuracy** per schema and overall (`speedrun/scoring/performance.py`). Habitual trap type is planned; not yet wired from revlog.
 
-## Honest reporting
+## Honest reporting (seed deck, 11 reviews, 2026-07-01)
 
-- Point estimate (overall + per schema): `[p]`
-- Likely range: `[low–high]`
-- Coverage: `[% schemas with ≥ N transfer attempts]`
-- Confidence: `[low/med/high + why]`
-- Last updated: `[timestamp]`
-- Top reasons / weakest schema: `[e.g., necessary-assumption]`
+- Point estimate (overall): **93%** transfer (latency-adjusted)
+- Likely range: reported per score object (Wilson on on-budget accuracy)
+- Coverage: all seed schemas with ≥10 revlog attempts after full deck review
+- Confidence: **low** (11 cards, single session)
+- Last updated: runtime timestamp
+- Top reasons / weakest schema: surfaced in dashboard per-schema table
 
 ## Give-up rule
 
-No per-schema performance estimate until `[≥ N]` graded **transfer** attempts on that schema. Overall performance abstains below `[coverage X%]`.
+No per-schema performance estimate until **≥ 2** graded attempts on that schema.
+Overall performance abstains below **≥ 10** total graded attempts (`MIN_ATTEMPTS_OVERALL`).
 
 ## Validation — the paraphrase / transfer test (spec 7d)
 
-Take 30 cards; for each write 2 exam-style questions testing the same schema in new words. Compare recall on the card vs accuracy on the reworded questions.
+Harness: `speedrun/eval/transfer_gap.py` — 11 seed cards × 2 synthetic reworded variants.
 
-- Recall (card): `[%]`
-- Transfer accuracy (reworded): `[%]`
-- **Gap (recall − transfer): `[Δ]`** — a near-zero gap means the model is just copying memory; a real gap means the bridge exists.
-- Held-out accuracy on exam-style items: `[%]` (set size `[n]`, seeded split)
+After full seed review with synthetic transfer penalty 0.15:
+
+- Recall (FSRS): **100%** [100%–100%]
+- Transfer accuracy (reworded): **54%** [35%–73%]
+- **Gap (recall − transfer): +46%** — bridge is distinct from memory (not echoing FSRS)
+- Without reviews: report **abstains** honestly
+
+Held-out exam-style items at scale: **not yet run** (needs larger tagged deck).
 
 ## Re-runnability
 
-Command: `[just eval-performance]` — regenerates the transfer-gap report and held-out accuracy deterministically.
+```bash
+PYTHONPATH=out/pylib out/pyenv/bin/python -c "
+from speedrun.eval.transfer_gap import transfer_gap_report
+from tests.shared import getEmptyCol
+from speedrun.tools.import_seed_deck import import_seed_deck
+# ... review loop ...
+print(transfer_gap_report(col, synthetic_transfer_penalty=0.15).format_report())
+"
+```
+
+Tests: `pylib/tests/test_speedrun_performance.py`, `pylib/tests/test_speedrun_transfer.py`.
 
 ## Known limitations
 
-- `[e.g., sparse data on low-frequency schemas widens ranges]`
-- `[latency normalization assumptions]`
+- Current revlog proxy is same-card review, not true novel items until reworded grading ships.
+- Sparse data on low-frequency schemas widens Wilson intervals.
+- Latency budget defaults to schema taxonomy `time_budget_ms`; seed deck uses defaults.

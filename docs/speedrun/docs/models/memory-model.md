@@ -1,6 +1,6 @@
 # Memory Model — one-page description
 
-> Status: TEMPLATE. Fill the bracketed values with real numbers from held-out evaluation before hand-in.
+> Status: **Implemented** on seed deck; calibration harness runs; full-scale held-out eval pending larger deck.
 
 ## Question it answers
 
@@ -21,14 +21,14 @@ the range is a normal-approximation CI on the mean of per-card recall
 probabilities, clamped to [0, 1]. Cards with no FSRS memory yet (unreviewed) are
 excluded from the estimate but counted in coverage.
 
-## Honest reporting
+## Honest reporting (seed deck, 11 reviews, 2026-07-01)
 
-- Point estimate: `[p]`
-- Likely range: `[low–high]` (method: `[e.g., Wilson interval / posterior band]`)
-- Coverage: `[% of memory-eligible schemas with ≥ N reviews]`
-- Confidence indicator: `[low/med/high + why]`
-- Last updated: `[timestamp]`
-- Top reasons: `[e.g., few reviews on conditional-logic terms]`
+- Point estimate: **100%** recall
+- Likely range: **100%–100%** (normal-approx CI on per-card FSRS retrievability)
+- Coverage: **100%** of reviewed cards (11/11)
+- Confidence indicator: **low** (tiny deck; all Good answers)
+- Last updated: runtime timestamp in score object
+- Top reasons: seed deck only; not representative of production scale
 
 ## Give-up rule
 
@@ -42,10 +42,16 @@ names exactly what is missing (e.g., "Not enough data: 1 reviewed card < require
 
 Calibrate on reviews held out of fitting. When the model says 80%, observed recall should be ≈80%.
 
-- Reliability chart: `[path to figure]`
-- Brier score: `[value]` (lower is better)
-- Log loss: `[value]`
-- Held-out set size: `[n reviews]`, split method: `[seeded, re-runnable]`
+Harness: `speedrun/eval/calibration.py` (`pylib/tests/test_speedrun_calibration.py`).
+
+Seed-deck result (all Good answers, min held-out=5):
+
+- Reliability chart: not yet exported to figure (bins in report object)
+- Brier score: **0.0000** (lower is better)
+- Log loss: **0.0000**
+- Held-out set size: **22 reviews**, split method: **last 30% of revlog rows per card (seeded order)**
+
+**Caveat:** perfect scores on 11 cards are not meaningful calibration evidence.
 
 ## Re-runnability
 
@@ -54,14 +60,13 @@ Report the current memory score for any collection:
 ```bash
 python speedrun/tools/memory_report.py --col /path/to/collection.anki2        # or --base <ANKI_BASE>
 python speedrun/tools/memory_report.py --col ... --json
+PYTHONPATH=out/pylib out/pyenv/bin/python -c "from speedrun.eval.calibration import calibration_report; ..."
 ```
 
 Tests (`pylib/tests/test_speedrun_memory.py`) cover the importer, the abstain
-path (no reviews), and a real score after FSRS reviews. Calibration on a held-out
-split (`just eval-memory`, Brier/log-loss + reliability chart) is future work,
-tracked in the eval/ship phase.
+path (no reviews), and a real score after FSRS reviews.
 
 ## Known limitations
 
 - FSRS estimates memory, not transfer; a high memory score does **not** imply LSAT performance (that gap is the whole point — see the performance model).
-- `[other limitations found during eval]`
+- Seed deck is too small for reliable calibration or per-schema breakdowns at scale.
