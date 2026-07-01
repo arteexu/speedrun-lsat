@@ -53,6 +53,94 @@ impl crate::services::SchedulerService for Collection {
         Ok(studied_today(input.cards, input.seconds as f32, &self.tr).into())
     }
 
+    /// Speedrun LSAT: order due cards by schema value at stake. Read-only.
+    fn build_schema_weighted_queue(
+        &mut self,
+        input: scheduler::SchemaWeightedQueueRequest,
+    ) -> Result<scheduler::SchemaWeightedQueueResponse> {
+        use std::collections::HashSet;
+
+        use crate::scheduler::schema_weighted::schema_weighted_order;
+        use crate::scheduler::schema_weighted::SchemaCard;
+        use crate::scheduler::schema_weighted::SchemaWeightParams;
+
+        let search = if input.search.trim().is_empty() {
+            "is:due".to_string()
+        } else {
+            input.search.clone()
+        };
+        let prefix = if input.schema_tag_prefix.is_empty() {
+            "sr:schema:".to_string()
+        } else {
+            input.schema_tag_prefix.clone()
+        };
+
+        // Read-only: gather candidate cards and their schema tag. We never write,
+        // so undo state and the collection are untouched.
+        let cids = self.search_cards(search.as_str(), SortMode::NoOrder)?;
+        let mut cards = Vec::with_capacity(cids.len());
+        for cid in cids {
+            let Some(card) = self.storage.get_card(cid)? else {
+                continue;
+            };
+            let schema = match self.storage.get_note(card.note_id)? {
+                Some(note) => note
+                    .tags
+                    .iter()
+                    .find_map(|t| t.strip_prefix(&prefix).map(str::to_string))
+                    .unwrap_or_default(),
+                None => String::new(),
+            };
+            cards.push(SchemaCard {
+                card_id: card.id.0,
+                note_id: card.note_id.0,
+                schema,
+            });
+        }
+
+        let params = SchemaWeightParams {
+            schema_weight: input.schema_weight.clone(),
+            schema_weakness: input.schema_weakness.clone(),
+            time_pressured: input
+                .time_pressured_schemas
+                .iter()
+                .cloned()
+                .collect::<HashSet<_>>(),
+            time_pressure_factor: if input.time_pressure_factor == 0.0 {
+                1.0
+            } else {
+                input.time_pressure_factor
+            },
+            default_weight: input.default_weight,
+            default_weakness: if input.default_weakness == 0.0 {
+                1.0
+            } else {
+                input.default_weakness
+            },
+        };
+
+        let limit = if input.limit == 0 {
+            None
+        } else {
+            Some(input.limit as usize)
+        };
+        let scored = schema_weighted_order(cards, &params, limit);
+
+        Ok(scheduler::SchemaWeightedQueueResponse {
+            cards: scored
+                .into_iter()
+                .map(|c| scheduler::ScoredCard {
+                    card_id: c.card_id,
+                    note_id: c.note_id,
+                    schema: c.schema,
+                    schema_weight: c.schema_weight,
+                    weakness: c.weakness,
+                    priority: c.priority,
+                })
+                .collect(),
+        })
+    }
+
     fn update_stats(&mut self, input: scheduler::UpdateStatsRequest) -> Result<()> {
         self.transact_no_undo(|col| {
             let today = col.current_due_day(0)?;

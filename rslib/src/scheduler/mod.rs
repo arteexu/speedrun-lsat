@@ -14,6 +14,7 @@ pub mod fsrs;
 pub mod new;
 pub(crate) mod queue;
 mod reviews;
+pub mod schema_weighted;
 mod service;
 pub mod states;
 pub mod timespan;

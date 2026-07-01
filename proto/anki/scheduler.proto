@@ -64,6 +64,11 @@ service SchedulerService {
   // The number of days the calculated interval was fuzzed by on the previous
   // review (if any). Utilized by the FSRS add-on.
   rpc FuzzDelta(FuzzDeltaRequest) returns (FuzzDeltaResponse);
+  // Speedrun LSAT: order due cards by schema value at stake
+  // (schema_weight x student_weakness x time_pressure). Read-only; does not
+  // mutate the collection. See docs/speedrun/rust-change.md.
+  rpc BuildSchemaWeightedQueue(SchemaWeightedQueueRequest)
+      returns (SchemaWeightedQueueResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
@@ -482,4 +487,43 @@ message FuzzDeltaRequest {
 
 message FuzzDeltaResponse {
   sint32 delta_days = 1;
+}
+
+// Speedrun LSAT: schema-weighted "points-at-stake" queue.
+// The engine reads a card's schema from a note tag (schema_tag_prefix), looks
+// up the schema's weight and the student's weakness, and orders due cards so
+// the highest-value cards come first. Weights/weaknesses are supplied by the
+// caller (sourced from speedrun/taxonomy and the performance model), keeping
+// the taxonomy as the single source of truth.
+message SchemaWeightedQueueRequest {
+  // Search selecting the candidate cards; empty defaults to "is:due".
+  string search = 1;
+  // Maximum cards to return; 0 means no limit.
+  uint32 limit = 2;
+  // Note-tag prefix that identifies a card's schema, e.g. "sr:schema:".
+  string schema_tag_prefix = 3;
+  // Per-schema exam weight, keyed by schema id (the tag suffix).
+  map<string, double> schema_weight = 4;
+  // Per-schema student weakness in [0,1], keyed by schema id.
+  map<string, double> schema_weakness = 5;
+  // Schemas the student is accurate-but-slow on (SPOV4); their priority is
+  // multiplied by time_pressure_factor.
+  repeated string time_pressured_schemas = 6;
+  double time_pressure_factor = 7;
+  // Fallbacks used when a card's schema is absent from the maps above.
+  double default_weight = 8;
+  double default_weakness = 9;
+}
+
+message SchemaWeightedQueueResponse {
+  repeated ScoredCard cards = 1;
+}
+
+message ScoredCard {
+  int64 card_id = 1;
+  int64 note_id = 2;
+  string schema = 3;
+  double schema_weight = 4;
+  double weakness = 5;
+  double priority = 6;
 }
