@@ -13,6 +13,38 @@ See the product spec and roadmap in
 [`docs/speedrun/docs/architecture.md`](docs/speedrun/docs/architecture.md), roadmap:
 [`docs/speedrun/docs/roadmap.md`](docs/speedrun/docs/roadmap.md)).
 
+## Speedrun LSAT — build and run
+
+### Desktop
+
+```bash
+./run --profile .ankidata          # dev mode (first build ~5 min)
+```
+
+In the app: **Tools → LSAT Speedrun** (Dashboard, Queue, Import Seed Deck).
+
+```bash
+just check                         # full lint + test
+PYTHONPATH=out/pylib out/pyenv/bin/python -m pytest pylib/tests/test_speedrun_*.py -q
+just bench                         # scoring benchmarks
+just wheels                        # packaging wheels
+```
+
+### iOS companion
+
+```bash
+bash ios/build-xcframework.sh      # build AnkiFFI.xcframework
+bash ios/run-tests.sh              # verify FFI + host tests
+```
+
+See [`ios/README.md`](ios/README.md) for Xcode simulator setup.
+
+### Results and demo
+
+- [`docs/speedrun/RESULTS.md`](docs/speedrun/RESULTS.md) — honest test numbers
+- [`docs/speedrun/DEMO.md`](docs/speedrun/DEMO.md) — walkthrough script
+- [`docs/speedrun/SYNC.md`](docs/speedrun/SYNC.md) — sync conflict rule (documented)
+
 ## License and attribution
 
 This project is a fork of **Anki** by Ankitects Pty Ltd and contributors, and

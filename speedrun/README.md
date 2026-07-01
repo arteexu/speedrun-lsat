@@ -13,8 +13,31 @@ speedrun/
     methodology.md       # how the taxonomy and weights are built, with sources
   data/
     seed_deck.json       # original (license-clean) LSAT-style items, schema-tagged
+    gold_set.json        # 50 Q&A pairs for AI checker baseline
+  scoring/
+    memory.py            # FSRS recall score
+    performance.py       # latency-aware transfer (revlog)
+    readiness.py         # 120-180 projection
+    queue.py             # schema-weighted queue client
+  eval/
+    transfer_gap.py      # recall vs reworded accuracy (spec 7d)
+    interleaving_experiment.py  # 3-build harness (spec 8)
+    calibration.py       # Brier / log loss on held-out reviews
+    leakage_check.py     # training/test overlap scan
+  ai/
+    config.py            # SPEEDRUN_AI_OFF switch
+    client.py            # pluggable LLM (stub when off)
+    baseline.py          # keyword baseline
+    card_checker.py      # gold-set checker with cutoff
+    reasoning_evaluator.py  # pattern weakness stub
+  dashboard.py           # Qt-free HTML three-score dashboard
   tools/
     coverage_map.py      # coverage report + schema-ref validation (CI-able)
+    memory_report.py     # CLI memory score
+    bench.py             # p50/p95/worst benchmarks
+    crash_test.py        # mid-review close integrity
+    offline_test.py      # AI off, scores still run
+    import_seed_deck.py  # seed deck importer
 ```
 
 ## The taxonomy is the source of truth
