@@ -41,7 +41,19 @@ cc -isysroot "$SDK" -target "$DEST" \
   -lobjc \
   /tmp/ffi_smoke.c -o /tmp/ffi_smoke
 
-echo "PASS: simulator target links anki_buildhash (compile-only; run via Xcode XCTest)"
+echo "PASS: simulator target links anki_buildhash (compile-only)"
+
+# Full XCTest on a simulator: opens the bundled exam deck and builds the
+# schema-weighted queue on the shared engine (SpeedrunEngineTests).
+SIM_NAME="${SIM_NAME:-iPhone 17}"
+if xcrun simctl list devices available | grep -q "$SIM_NAME ("; then
+  echo "Running AnkiKit XCTest on simulator '$SIM_NAME'..."
+  ( cd "$REPO_ROOT/ios/AnkiKit" && \
+    xcodebuild test -scheme AnkiKit \
+      -destination "platform=iOS Simulator,name=$SIM_NAME" 2>&1 | tail -8 )
+  echo "PASS: AnkiKit simulator tests (exam deck + shared-engine queue)"
+else
+  echo "SKIP: no '$SIM_NAME' simulator; open ios/AnkiKit in Xcode and run AnkiKitTests."
+fi
 
 echo "All iOS engine checks passed."
-echo "For XCTest: open ios/AnkiKit in Xcode, select an iOS Simulator, run AnkiKitTests."

@@ -1,0 +1,29 @@
+# Packaging for the `speedrun` Python package so it can be installed as a wheel
+# on a clean machine (alongside the fork's `anki` and `aqt` wheels) instead of
+# only running from the dev source tree.
+#
+# Build:   uv build packaging/speedrun            (or: python -m build packaging/speedrun)
+# Install: pip install dist/speedrun_lsat-*.whl
+#
+# The wheel bundles the package source *and* its data (taxonomy JSON, seed deck,
+# config) via force-include below.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "speedrun-lsat"
+version = "0.1.0"
+description = "Speedrun LSAT: schema-weighted review, three honest scores, and learning-science drills on top of Anki."
+requires-python = ">=3.12"
+license = { text = "AGPL-3.0-or-later" }
+classifiers = ["Private :: Do Not Upload"]
+
+[tool.hatch.build]
+exclude = ["**/__pycache__", "**/*.pyc"]
+
+[tool.hatch.build.targets.wheel]
+# The package lives two levels up from this pyproject.
+[tool.hatch.build.targets.wheel.force-include]
+"../../speedrun" = "speedrun"

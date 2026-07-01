@@ -30,11 +30,31 @@ _score_action: QAction | None = None
 
 
 def _ensure_speedrun_on_path() -> bool:
-    """Make the repo-root `speedrun` package importable in the dev layout."""
+    """Make the `speedrun` package importable across dev *and* packaged layouts.
+
+    Resolution order:
+      1. Already importable (installed as a wheel, e.g. `pip install speedrun-lsat`
+         on a clean machine) -> nothing to do.
+      2. A copy bundled next to the `aqt` package (what the installer ships).
+      3. The repo-root `speedrun/` (the dev layout, `./run`).
+    """
+    # 1. Installed / already on sys.path.
+    try:
+        import speedrun.scoring.memory  # noqa: F401
+
+        return True
+    except Exception:
+        pass
+
     here = Path(__file__).resolve()
-    candidates = [Path.cwd()]
+    candidates: list[Path] = [Path.cwd()]
+    # 2. Bundled beside aqt: .../site-packages/speedrun (parent of the aqt pkg).
+    #    here = .../aqt/speedrun/__init__.py -> parents[2] == site-packages root.
+    if len(here.parents) > 2:
+        candidates.append(here.parents[2])
+    # 3. Dev layout: out/qt/_aqt/speedrun -> repo root.
     if len(here.parents) > 4:
-        candidates.append(here.parents[4])  # out/qt/_aqt/speedrun -> repo root
+        candidates.append(here.parents[4])
     for cand in candidates:
         if (cand / "speedrun" / "scoring" / "memory.py").exists():
             if str(cand) not in sys.path:

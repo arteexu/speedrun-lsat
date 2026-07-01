@@ -32,3 +32,9 @@ docs/autoapi/
 # Speedrun iOS build artifacts (rebuild with ios/build-xcframework.sh)
 /ios/AnkiFFI.xcframework/
 /ios/AnkiKit/.build/
+/ios/App/build/
+# XcodeGen output (regenerate with: cd ios/App && xcodegen generate)
+/ios/App/SpeedrunLSAT.xcodeproj/
+
+# Speedrun packaging output
+/dist/

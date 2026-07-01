@@ -14,7 +14,11 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(name: "AnkiFFI", path: "../AnkiFFI.xcframework"),
-        .target(name: "AnkiKit", dependencies: ["AnkiFFI"]),
+        .target(
+            name: "AnkiKit",
+            dependencies: ["AnkiFFI"],
+            resources: [.copy("Resources/collection.anki2")]
+        ),
         .testTarget(name: "AnkiKitTests", dependencies: ["AnkiKit"]),
     ]
 )

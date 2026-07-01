@@ -12,12 +12,19 @@ rslib-ffi (Rust staticlib, C ABI)  ->  AnkiFFI.xcframework  ->  AnkiKit (Swift) 
 
 - [x] `rslib-ffi` C/FFI bridge (open backend + `runCommand` over protobuf bytes),
       with host tests that open a collection and run the schema-weighted queue
-      **across the C boundary** (`cargo test -p rslib-ffi`).
+      **across the C boundary** (`cargo test -p rslib-ffi`), including opening the
+      **real exam deck** (`open_exam_deck_and_queue_over_ffi`).
 - [x] iOS Rust targets installed (`aarch64-apple-ios`, `aarch64-apple-ios-sim`).
-- [x] Swift wrapper (`AnkiKit/AnkiBackend`) + sample `ContentView`.
+- [x] Swift wrapper (`AnkiKit/AnkiBackend`) + `SpeedrunEngine` (open deck +
+      schema-weighted queue) + bundled exam deck resource.
 - [x] **XCFramework build** — `bash ios/build-xcframework.sh` (requires full Xcode).
-- [x] **AnkiKitTests** — `testBuildHashNonEmpty` in `ios/AnkiKit/Tests/`.
-- [ ] SwiftUI review session + three-score dashboard (built on `AnkiBackend`).
+- [x] **AnkiKitTests** — `testBuildHashNonEmpty` **plus** `SpeedrunEngineTests`
+      (opens the exam deck + builds the schema-weighted queue on the shared
+      engine), passing on the iOS 26.5 simulator.
+- [x] **Runnable SwiftUI app** (`ios/App`, XcodeGen `project.yml`): dashboard +
+      review session over the shared engine. Builds, launches, and reviews the
+      exam deck on the simulator (see `ios/screenshot-*.png`).
+- [ ] Full FSRS grading UI on the phone (engine supports it; desktop has it).
 - [ ] Two-way sync with desktop.
 
 ## Prerequisite (one-time): Xcode
@@ -58,24 +65,48 @@ This checks:
 3. Product → Test (⌘U), or run the **AnkiKitTests** scheme.
 4. `testBuildHashNonEmpty` should pass — non-empty engine build hash.
 
-## Run the sample app
+## Build & run the app (simulator or device)
 
-1. In Xcode: File → New → Project → iOS App (SwiftUI). Name it `SpeedrunLSAT`.
-2. Replace the generated `ContentView.swift` with [`App/ContentView.swift`](App/ContentView.swift).
-3. File → Add Package Dependencies → Add Local… → select [`ios/AnkiKit`](AnkiKit).
-   (AnkiKit references `../AnkiFFI.xcframework`, so build the framework first.)
-4. Run on a simulator. The screen shows the Anki engine build hash — proof the
-   shared Rust engine loads and runs on the device.
+The app target is defined by [`App/project.yml`](App/project.yml) (XcodeGen), so
+no `.xcodeproj` is committed — generate it once:
 
-## Next: the review session (uses SwiftProtobuf)
+```bash
+brew install xcodegen                 # one-time
+bash ios/build-xcframework.sh         # build the shared engine (if not already)
+cd ios/App && xcodegen generate       # -> SpeedrunLSAT.xcodeproj
+```
+
+Then either open it in Xcode and press **Run**, or from the CLI:
+
+```bash
+# build for the simulator
+xcodebuild -project SpeedrunLSAT.xcodeproj -scheme SpeedrunLSAT \
+  -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath build build
+
+# launch it
+UDID=$(xcrun simctl list devices available | grep -m1 'iPhone 17 ' | grep -oE '[0-9A-F-]{36}')
+xcrun simctl boot "$UDID"; sleep 5
+xcrun simctl install "$UDID" "build/Build/Products/Debug-iphonesimulator/Speedrun LSAT.app"
+xcrun simctl launch "$UDID" com.speedrunlsat.app
+```
+
+The home screen shows the shared engine build hash and the exam-deck card count;
+**Study the exam deck** opens the review session driven by the schema-weighted
+queue (service `13`, method `39` — the same Rust ordering the desktop uses).
+Launch straight into review with `SIMCTL_CHILD_SPEEDRUN_START_REVIEW=1`.
+
+## How the review path works (no SwiftProtobuf dependency)
 
 `AnkiBackend.runCommand(service:method:input:)` takes/returns protobuf bytes.
-Generate Swift types from `proto/anki/*.proto` with
-[SwiftProtobuf](https://github.com/apple/swift-protobuf) (add the SPM plugin), then:
+`SpeedrunEngine` (in `AnkiKit`) encodes the few flat messages it needs with a
+tiny built-in codec (`Protobuf.swift`) — the same wire format the desktop uses:
 
-1. Build `BackendInit` → `AnkiBackend(initBytes:)`.
-2. `OpenCollectionRequest` → `runCommand(service: 3, method: 0, …)` (indices
-   mirror `out/pylib/anki/_backend_generated.py`).
-3. Sync the shared deck, then drive the review loop with the scheduler service and
-   render the three scores. The **schema-weighted queue** is service `13`,
-   method `39` — the same Rust ordering the desktop uses.
+1. `BackendInit` → `AnkiBackend(initBytes:)`.
+2. `OpenCollectionRequest` → `runCommand(service: 3, method: 0, …)` on a writable
+   copy of the bundled exam deck (`AnkiKit/Sources/AnkiKit/Resources/collection.anki2`).
+3. `SchemaWeightedQueueRequest` → `runCommand(service: 13, method: 39, …)`, decode
+   `SchemaWeightedQueueResponse`.
+
+For richer messages (full FSRS grading UI), swap in
+[SwiftProtobuf](https://github.com/apple/swift-protobuf) and generate from
+`proto/anki/*.proto`.

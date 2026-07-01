@@ -67,11 +67,13 @@ struct ContentView: View {
                         }
                     }
                 }
-                Section {
-                    Button("Study (opens deck on device)") {
-                        // Hook to AnkiBackend review loop when UI ships
+                Section("Exam deck") {
+                    LabeledContent("cards in deck", value: deckCount >= 0 ? "\(deckCount)" : "…")
+                    NavigationLink {
+                        ReviewView()
+                    } label: {
+                        Label("Study the exam deck", systemImage: "play.circle.fill")
                     }
-                    .buttonStyle(.borderedProminent)
                 }
             }
             .navigationTitle("Speedrun LSAT")
@@ -79,6 +81,18 @@ struct ContentView: View {
         .onAppear {
             engineBuild = AnkiBackend.buildHash()
             loadPlaceholderState()
+            loadDeckCount()
+        }
+    }
+
+    @State private var deckCount = -1
+
+    private func loadDeckCount() {
+        // Prove the shared engine can open the exam deck at launch.
+        if let engine = try? SpeedrunEngine() {
+            deckCount = engine.schemaWeightedQueue(limit: 500).count
+        } else {
+            deckCount = 0
         }
     }
 

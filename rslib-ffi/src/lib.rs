@@ -211,6 +211,95 @@ mod test {
     }
 
     #[test]
+    fn open_exam_deck_and_queue_over_ffi() {
+        // Proves the *shared engine* loads the real Speedrun exam deck (the same
+        // artifact the iOS app bundles) and orders it with the schema-weighted
+        // queue over the C FFI -- the exact path the phone uses.
+        let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let exam = repo_root.join("ios/Resources/exam/collection.anki2");
+        if !exam.exists() {
+            eprintln!(
+                "skipping: exam deck not built; run \
+                 `PYTHONPATH=out/pylib out/pyenv/bin/python \
+                 speedrun/tools/export_exam_deck.py`"
+            );
+            return;
+        }
+
+        // Copy so we never mutate the committed artifact (open creates WAL etc.).
+        let col_path = tmp_path("anki2");
+        std::fs::copy(&exam, &col_path).unwrap();
+
+        let init = anki_proto::backend::BackendInit {
+            preferred_langs: vec!["en".into()],
+            server: false,
+            ..Default::default()
+        };
+        let init_bytes = init.encode_to_vec();
+        let backend = unsafe { anki_backend_open(init_bytes.as_ptr(), init_bytes.len()) };
+        assert!(!backend.is_null());
+
+        let media_dir = tmp_path("media");
+        std::fs::create_dir_all(&media_dir).unwrap();
+        let open_req = anki_proto::collection::OpenCollectionRequest {
+            collection_path: col_path.clone(),
+            media_folder_path: media_dir,
+            media_db_path: tmp_path("mdb"),
+        };
+        let ob = open_req.encode_to_vec();
+        let res = unsafe {
+            anki_backend_run_command(backend, SVC_COLLECTION, M_OPEN_COLLECTION, ob.as_ptr(), ob.len())
+        };
+        assert!(!res.is_error, "should open the exam deck over FFI");
+        unsafe { anki_bytes_free(res) };
+
+        let q = anki_proto::scheduler::SchemaWeightedQueueRequest {
+            search: "deck:\"LSAT Speedrun\"".into(),
+            limit: 100,
+            schema_tag_prefix: "sr:schema:".into(),
+            default_weight: 1.0,
+            default_weakness: 1.0,
+            time_pressure_factor: 1.0,
+            ..Default::default()
+        };
+        let qb = q.encode_to_vec();
+        let res = unsafe {
+            anki_backend_run_command(
+                backend,
+                SVC_SCHEDULER,
+                M_BUILD_SCHEMA_WEIGHTED_QUEUE,
+                qb.as_ptr(),
+                qb.len(),
+            )
+        };
+        assert!(!res.is_error);
+        let out = unsafe { std::slice::from_raw_parts(res.ptr, res.len) };
+        let resp = anki_proto::scheduler::SchemaWeightedQueueResponse::decode(out).unwrap();
+        assert!(
+            resp.cards.len() >= 40,
+            "exam deck should yield its schema-tagged cards, got {}",
+            resp.cards.len()
+        );
+        assert!(
+            resp.cards.iter().all(|c| !c.schema.is_empty()),
+            "every queued card carries a schema"
+        );
+        // Rust ordering guarantee: priorities are non-increasing.
+        let mut prev = f64::INFINITY;
+        for c in &resp.cards {
+            assert!(c.priority <= prev + 1e-9);
+            prev = c.priority;
+        }
+        unsafe { anki_bytes_free(res) };
+
+        unsafe { anki_backend_free(backend) };
+        let _ = std::fs::remove_file(&col_path);
+    }
+
+    #[test]
     fn buildhash_roundtrips() {
         let b = anki_buildhash();
         assert!(!b.is_error);
