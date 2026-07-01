@@ -29,7 +29,9 @@ from speedrun.tools.import_seed_deck import (  # noqa: E402
     DECK_NAME,
     NOTETYPE_NAME,
     SCHEMA_TAG,
+    backup_collection,
     import_seed_deck,
+    is_seed_deck_imported,
 )
 from tests.shared import getEmptyCol  # noqa: E402
 
@@ -81,6 +83,33 @@ def test_importer_creates_notetype_deck_and_tags():
     again = import_seed_deck(col)
     assert again.added == 0
     assert again.skipped == SEED_ITEM_COUNT
+    assert is_seed_deck_imported(col)
+    col.close()
+
+
+def test_backup_collection_creates_valid_sqlite():
+    from anki.collection import Collection
+
+    col = getEmptyCol()
+    note = col.new_note(col.models.by_name("Basic"))
+    note["Front"] = "checkpoint test"
+    note["Back"] = "ok"
+    col.add_note(note, col.decks.id("Default"))
+    backup_path = backup_collection(col)
+    assert backup_path is not None
+    assert backup_path.is_file()
+    backup_col = Collection(str(backup_path))
+    try:
+        assert backup_col.db.scalar("select count() from notes") >= 1
+    finally:
+        backup_col.close()
+        backup_path.unlink(missing_ok=True)
+    col.close()
+
+
+def test_is_seed_deck_imported_false_on_empty_col():
+    col = getEmptyCol()
+    assert not is_seed_deck_imported(col)
     col.close()
 
 

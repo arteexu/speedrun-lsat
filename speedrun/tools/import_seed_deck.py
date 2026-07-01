@@ -24,15 +24,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
+import sqlite3
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DECK_JSON = REPO_ROOT / "speedrun" / "data" / "seed_deck.json"
+SEED_ITEM_COUNT = len(
+    json.loads(DEFAULT_DECK_JSON.read_text(encoding="utf-8"))["items"]
+)
 
 NOTETYPE_NAME = "LSAT Speedrun"
 DECK_NAME = "LSAT Speedrun"
@@ -91,10 +98,37 @@ class ImportResult:
     backup_path: str | None = None
 
 
+def is_seed_deck_imported(col) -> bool:
+    """True when the full seed deck is already present in the collection."""
+    return len(col.find_notes(f'"note:{NOTETYPE_NAME}"')) >= SEED_ITEM_COUNT
+
+
+def _checkpoint_collection_db(col_path: Path, col) -> bool:
+    """Flush WAL pages into the main db file before a filesystem copy."""
+    db = getattr(col, "db", None)
+    if db is not None:
+        try:
+            db.execute("PRAGMA wal_checkpoint(FULL)")
+            return True
+        except Exception as exc:
+            logger.warning("WAL checkpoint via collection failed: %s", exc)
+    try:
+        with sqlite3.connect(str(col_path), timeout=5.0) as conn:
+            conn.execute("PRAGMA wal_checkpoint(FULL)")
+        return True
+    except sqlite3.Error as exc:
+        logger.warning(
+            "Skipping collection backup: cannot checkpoint %s (%s)", col_path, exc
+        )
+        return False
+
+
 def backup_collection(col) -> Path | None:
     """Copy the collection file before a bulk import."""
     col_path = Path(col.path)
     if not col_path.is_file():
+        return None
+    if not _checkpoint_collection_db(col_path, col):
         return None
     stamp = time.strftime("%Y%m%d-%H%M%S")
     dest = col_path.with_name(f"{col_path.stem}.speedrun-backup-{stamp}{col_path.suffix}")

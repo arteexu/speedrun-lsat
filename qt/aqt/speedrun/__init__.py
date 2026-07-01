@@ -16,7 +16,7 @@ from pathlib import Path
 
 from aqt import gui_hooks
 from aqt.qt import QAction, QKeySequence, QMenu, QShortcut, qconnect
-from aqt.utils import showText, tooltip
+from aqt.utils import showInfo, showText, tooltip
 
 DECK_NAME = "LSAT Speedrun"
 _score_action: QAction | None = None
@@ -341,9 +341,17 @@ def _import_seed(mw) -> None:
     if not _require_col(mw):
         return
     try:
-        from speedrun.tools.import_seed_deck import import_seed_deck
+        from speedrun.tools import import_seed_deck as importer
 
-        result = import_seed_deck(mw.col)
+        if importer.is_seed_deck_imported(mw.col):
+            showInfo(
+                "The LSAT Speedrun seed deck is already imported "
+                f"({importer.SEED_ITEM_COUNT} notes).",
+                title="Already imported",
+            )
+            return
+
+        result = importer.import_seed_deck(mw.col)
     except Exception as exc:  # pragma: no cover - defensive
         tooltip(f"Import error: {exc}")
         return
