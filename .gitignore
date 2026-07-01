@@ -24,3 +24,7 @@ ts/.svelte-kit
 docs/_build/
 docs/autoapi/
 .complexipy_cache
+
+# Speedrun: local dev Anki profile (ANKI_BASE) and scratch data
+/.ankidata/
+.pytest_cache/
