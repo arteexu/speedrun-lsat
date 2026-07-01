@@ -2,6 +2,7 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 """Tests for the seed-deck importer and the honest FSRS memory score."""
+
 from __future__ import annotations
 
 import sys
@@ -23,7 +24,6 @@ from speedrun.tools.import_seed_deck import (  # noqa: E402
     import_seed_deck,
 )
 from tests.shared import getEmptyCol  # noqa: E402
-
 
 # ----------------------------- pure functions ------------------------------
 
@@ -107,8 +107,8 @@ def test_memory_score_after_fsrs_reviews():
         answered += 1
     assert answered >= 5, "need enough reviews to clear the give-up threshold"
 
-    result = memory_score(col)
-    overall = result["overall"]
+    scores = memory_score(col)
+    overall = scores["overall"]
     assert overall.gave_up is False, overall.reason
     assert overall.n_reviewed >= 5
     assert 0.0 < overall.point <= 1.0

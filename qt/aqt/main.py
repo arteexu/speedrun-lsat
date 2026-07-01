@@ -1448,6 +1448,14 @@ title="{}" {}>{}</button>""".format(
         qconnect(m.action_check_for_updates.triggered, self.on_check_for_updates)
         qconnect(m.actionPreferences.triggered, self.onPrefs)
 
+        # Speedrun LSAT (guarded so it can never block startup)
+        try:
+            from aqt import speedrun as _speedrun
+
+            _speedrun.setup_menu(self)
+        except Exception as exc:
+            print(f"Speedrun LSAT menu failed to load: {exc}")
+
         # View
         qconnect(
             m.actionZoomIn.triggered,
