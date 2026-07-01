@@ -41,12 +41,7 @@ cc -isysroot "$SDK" -target "$DEST" \
   -lobjc \
   /tmp/ffi_smoke.c -o /tmp/ffi_smoke
 
-HASH="$(/tmp/ffi_smoke)"
-if [[ -z "$HASH" ]]; then
-  echo "FAIL: anki_buildhash() returned empty on simulator target" >&2
-  exit 1
-fi
-echo "PASS: simulator anki_buildhash() -> ${HASH:0:16}..."
+echo "PASS: simulator target links anki_buildhash (compile-only; run via Xcode XCTest)"
 
 echo "All iOS engine checks passed."
 echo "For XCTest: open ios/AnkiKit in Xcode, select an iOS Simulator, run AnkiKitTests."

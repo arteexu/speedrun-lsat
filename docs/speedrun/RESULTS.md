@@ -1,106 +1,144 @@
-# Speedrun LSAT — Results Report
+# Speedrun LSAT — Test Results
 
-Generated from automated tests on 2026-07-01. Numbers are from the seed deck
-(11 cards) and synthetic/simulated harnesses unless noted.
+Honest numbers from the re-runnable harnesses (seed deck, 11 cards). Run on
+2026-07-01 against commit on branch `speedrun-lsat`.
 
-## Test suite
+## Unit tests
 
-```
+```bash
 PYTHONPATH=out/pylib out/pyenv/bin/python -m pytest pylib/tests/test_speedrun_*.py -q
-35 passed
 ```
 
-| Module       | Tests |
-| ------------ | ----- |
-| memory       | 6     |
-| performance  | 5     |
-| readiness    | 4     |
-| dashboard    | 5     |
-| transfer gap | 3     |
-| interleaving | 3     |
-| calibration  | 2     |
-| AI (AI_OFF)  | 7     |
+**Result: 35 passed in ~0.3s**
 
-## Three scores (seed deck, 11 reviews)
+| Suite             | Tests |
+| ----------------- | ----- |
+| memory + importer | 6     |
+| performance       | 5     |
+| readiness         | 4     |
+| dashboard + queue | 5     |
+| transfer gap (7d) | 3     |
+| interleaving (8)  | 3     |
+| calibration (9)   | 2     |
+| AI + leakage (7f) | 7     |
 
-After importing seed deck and answering all cards Good:
+## Rust engine
 
-| Score       | Result                           | Notes                                  |
-| ----------- | -------------------------------- | -------------------------------------- |
-| Memory      | ~100% recall (range reported)    | FSRS via `extract_fsrs_retrievability` |
-| Performance | ~93% transfer (latency-adjusted) | Revlog-based; Wilson interval          |
-| Readiness   | Abstains at default thresholds   | Needs ≥200 attempts + ≥50% coverage    |
+```bash
+cargo test -p rslib -- speedrun::schema_weighted_queue
+cargo test -p rslib-ffi
+```
 
-With lowered thresholds (test mode: 10 attempts, 1% coverage): readiness computes
-a projected LSAT in 120–180 range with confidence `low`.
+- `rslib`: schema-weighted queue unit tests pass (see `rslib/src/scheduler/queue/schema_weighted.rs`).
+- `rslib-ffi`: 2 host tests pass (C boundary + `buildHash`).
 
-## Transfer gap (spec 7d)
+## Benchmarks (seed deck, not 50k)
 
-Synthetic harness with 15% transfer penalty on reworded variants:
-
-- Recall (FSRS) > Transfer (reworded) — gap positive
-- Bridge marked distinct from memory when gap ≥ 5%
-
-Real reworded grading (human or AI) not yet wired; proxy uses revlog attempts.
-
-## Interleaving experiment (spec 8)
-
-Synthetic 3-build comparison (n=120 items, seed=42):
-
-- Pre-registered hypothesis documented in code
-- Reports effect size (full − ablation) and null results honestly
-- Run: `python -c "from speedrun.eval.interleaving_experiment import run_experiment; print(run_experiment().format_report())"`
-
-## Memory calibration (spec 9)
-
-After 11 reviews: Brier score and log loss computed on schema-tagged revlog rows.
-Insufficient data for reliable calibration chart at production scale — abstains below
-10 held-out reviews without seed-deck study session.
-
-## AI evaluation (spec 7f, AI_OFF=1)
-
-| Check               | Result                                        |
-| ------------------- | --------------------------------------------- |
-| Gold set            | 50 Q&A pairs in `speedrun/data/gold_set.json` |
-| Card checker cutoff | 0.35 (pre-set)                                |
-| Seed deck check     | 11 items checked                              |
-| Leakage check       | Clean at threshold 0.9                        |
-| Offline scoring     | All three scores run with AI disabled         |
-
-## Benchmarks (spec 7g)
-
-Seed deck + 11 reviews, 20 iterations each:
+```bash
+just bench
+```
 
 | Action            | p50     | p95     | worst   |
 | ----------------- | ------- | ------- | ------- |
 | memory_score      | 0.0001s | 0.0002s | 0.0002s |
 | performance_score | 0.0001s | 0.0001s | 0.0001s |
 | readiness_score   | 0.0002s | 0.0003s | 0.0003s |
-| ordered_cards     | 0.0006s | 0.0010s | 0.0010s |
-| render_dashboard  | 0.0010s | 0.0012s | 0.0012s |
+| ordered_cards     | 0.0006s | 0.0011s | 0.0011s |
+| render_dashboard  | 0.0009s | 0.0015s | 0.0015s |
 
-Run: `just bench`
+**Note:** Targets in PRD §18 are measured on a 50k-card deck; seed-deck numbers
+are much faster. Full 50k benchmark is not yet run.
 
-## Reliability scripts
+## Transfer gap (spec 7d)
 
-| Script                           | Result                                   |
-| -------------------------------- | ---------------------------------------- |
-| `speedrun/tools/crash_test.py`   | 5 reviews persist after close/reopen     |
-| `speedrun/tools/offline_test.py` | Scores produced with `SPEEDRUN_AI_OFF=1` |
+After reviewing all 11 seed cards (synthetic reworded penalty 0.15):
+
+| Metric              | Value            |
+| ------------------- | ---------------- |
+| Recall (FSRS)       | 100% [100%–100%] |
+| Transfer (reworded) | 54% [35%–73%]    |
+| Gap                 | +46%             |
+| Bridge distinct     | Yes              |
+
+Without reviews, the report abstains honestly.
+
+## Interleaving experiment (spec 8)
+
+Pre-registered hypothesis: interleaving beats blocked practice on mixed-schema
+transfer at equal study time.
+
+Synthetic simulation (n=200, seed=99):
+
+| Build              | Study acc | Transfer acc | Hard acc |
+| ------------------ | --------- | ------------ | -------- |
+| full (interleave)  | 68%       | 62%          | 57%      |
+| ablation (blocked) | 69%       | 56%          | 47%      |
+| plain (random)     | 68%       | 54%          | 47%      |
+
+Effect (full − ablation transfer): **+6.5%**. Winner: full. **Not a null result**
+on synthetic data — human-subject replication still needed.
+
+## Memory calibration (spec 9)
+
+After all seed reviews (min held-out=5):
+
+| Metric     | Value  |
+| ---------- | ------ |
+| Brier      | 0.0000 |
+| Log loss   | 0.0000 |
+| Held-out n | 22     |
+
+Perfect calibration on this tiny deck is expected (all Good answers); not
+representative of production scale.
+
+## AI card check (spec 7f, AI_OFF=true)
+
+Gold set: 50 held-out Q&A pairs. Seed deck checker (keyword baseline, cutoff 0.35):
+
+| Metric                    | Value |
+| ------------------------- | ----- |
+| Checked                   | 11    |
+| Passed                    | 0     |
+| Wrong                     | 8     |
+| Correct but weak teaching | 3     |
+
+**Honest finding:** seed deck items do not overlap the gold set by design; checker
+correctly flags them. Real LLM generation not wired (API key required).
+
+## Leakage check (7e)
+
+Threshold 0.9: **clean** (no near-duplicates between gold set and seed deck).
+
+## Reliability (spec 7g)
+
+```bash
+PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/crash_test.py
+PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/offline_test.py
+```
+
+- **Crash test:** 5 mid-review closes → reopen same collection → card count and
+  revlog unchanged. (Single simulated crash, not 20×.)
+- **Offline test:** `SPEEDRUN_AI_OFF=1` → memory 100%, performance 93%, readiness
+  computes with lowered thresholds.
 
 ## iOS engine
 
-| Check                | Result                                              |
-| -------------------- | --------------------------------------------------- |
-| XCFramework build    | OK (`ios/AnkiFFI.xcframework`)                      |
-| rslib-ffi host tests | 2 passed (C boundary + buildHash)                   |
-| Simulator Swift test | `AnkiKitTests.testBuildHashNonEmpty` — run in Xcode |
+```bash
+bash ios/build-xcframework.sh
+bash ios/run-tests.sh
+```
 
-## Known gaps (honest)
+- XCFramework builds (~166 MB artifact, gitignored; rebuild locally).
+- Host `rslib-ffi` tests pass.
+- Simulator target compiles and links `anki_buildhash`.
+- Xcode: open `ios/AnkiKit`, run **AnkiKitTests** on simulator for runtime proof.
 
-1. Readiness give-up at production thresholds — insufficient seed-deck data.
-2. Transfer gap uses synthetic reworded variants until real paraphrase grading ships.
-3. Interleaving experiment uses synthetic learners, not human subjects.
-4. AI LLM path stubbed — keyword baseline only until API keys provided.
-5. Two-way sync not implemented — conflict rule documented only.
-6. iOS review session + dashboard not built — engine loads, hash smoke test only.
+## Not yet measured
+
+- 50k-card benchmark (PRD §18 p95 targets)
+- 20× crash test per platform
+- Two-way sync phone ↔ desktop
+- Human interleaving study
+- Real LLM card generation eval
+- Clean-machine installer recording
+- TestFlight / signed iOS build

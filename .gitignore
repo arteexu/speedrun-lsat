@@ -29,6 +29,6 @@ docs/autoapi/
 /.ankidata/
 .pytest_cache/
 
-# Speedrun iOS: built artifacts (run ios/build-xcframework.sh)
+# Speedrun iOS build artifacts (rebuild with ios/build-xcframework.sh)
 /ios/AnkiFFI.xcframework/
 /ios/AnkiKit/.build/
