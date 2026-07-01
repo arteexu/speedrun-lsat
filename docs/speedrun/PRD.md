@@ -8,6 +8,7 @@
 This PRD is the single source of truth for the build. It encodes both the Speedrun specification and the learning science in the LSAT BrainLift. The phased roadmap in [§16](#16-deadline-aligned-roadmap) maps every requirement to the Wednesday / Friday / Sunday deadlines.
 
 Companion documents:
+
 - [docs/architecture.md](docs/architecture.md) — system architecture and the shared-engine design.
 - [docs/roadmap.md](docs/roadmap.md) — the deadline-by-deadline execution checklist with proof artifacts.
 - [docs/models/memory-model.md](docs/models/memory-model.md), [docs/models/performance-model.md](docs/models/performance-model.md), [docs/models/readiness-model.md](docs/models/readiness-model.md) — one-page model descriptions (to be filled with real numbers as the build progresses).
@@ -15,6 +16,7 @@ Companion documents:
 ---
 
 ## Table of contents
+
 1. [Mission and the honesty rule](#1-mission-and-the-honesty-rule)
 2. [Product thesis (from the BrainLift)](#2-product-thesis-from-the-brainlift)
 3. [Spiky POVs mapped to product requirements](#3-spiky-povs-mapped-to-product-requirements)
@@ -44,19 +46,20 @@ Companion documents:
 This is not another flashcard app. A flashcard app is good at one thing — remembering facts. A big exam asks for more: using knowledge on novel questions, working fast enough to finish, and knowing whether you are ready. The app must answer three different questions, and must never blur them together:
 
 1. **Memory** — can the student recall a fact right now?
-2. **Performance** — can the student answer a *new*, exam-style question that uses this skill?
+2. **Performance** — can the student answer a _new_, exam-style question that uses this skill?
 3. **Readiness** — what LSAT score would the student get today, and how sure are we?
 
 Anki's built-in FSRS handles memory well. The hard, valuable bridges are memory → answering novel questions, and answering questions → a real score. We build those bridges and **measure the gap rather than hiding it**.
 
 **The honesty rule (binding).** The app may not show a readiness score unless it can also show, on the same screen:
+
 - the evidence that produced the number,
 - what data is still missing,
 - how accurate past predictions turned out to be (calibration),
 - the likely range of scores, not just a point,
 - and the single best next thing to study.
 
-A confident number with none of that behind it is not a prediction; it is a guess in a nice font. **Making up a readiness number is an automatic fail.** When the app lacks data, it shows *no* score and says why (the give-up rule, [§10](#10-the-three-scores)).
+A confident number with none of that behind it is not a prediction; it is a guess in a nice font. **Making up a readiness number is an automatic fail.** When the app lacks data, it shows _no_ score and says why (the give-up rule, [§10](#10-the-three-scores)).
 
 ---
 
@@ -64,7 +67,7 @@ A confident number with none of that behind it is not a prediction; it is a gues
 
 **The LSAT is a transfer problem, not a fact base.** The modern LSAT is roughly two-thirds Logical Reasoning, and every Logical Reasoning argument is surface-unique — a specific argument about coffee, voting, or paleontology that will literally never be seen again. There is almost nothing to memorize. What recurs is **deep structure**: a correlation→causation flaw, a sufficient/necessary confusion, an out-of-scope trap.
 
-Therefore the **atomic unit of mastery is the schema**, not the card. A schema is a pattern that transfers — a flaw type, a trap (wrong-answer) type, a question-type procedure, or an RC structure. Individual questions are merely *instances* used to train and test a schema. This inverts every flashcard app, where the card is the atom. Here, the card is an instance; the schema is the unit of study, diagnosis, and scoring.
+Therefore the **atomic unit of mastery is the schema**, not the card. A schema is a pattern that transfers — a flaw type, a trap (wrong-answer) type, a question-type procedure, or an RC structure. Individual questions are merely _instances_ used to train and test a schema. This inverts every flashcard app, where the card is the atom. Here, the card is an instance; the schema is the unit of study, diagnosis, and scoring.
 
 The single most important metric is the **gap between "can recall this card" and "can answer a new question with this structure."** If those two numbers are the same, we have built a memory app wearing an LSAT costume.
 
@@ -72,12 +75,12 @@ The single most important metric is the **gap between "can recall this card" and
 
 ## 3. Spiky POVs mapped to product requirements
 
-| Spiky POV (BrainLift) | Concrete product requirement |
-| --- | --- |
-| **SPOV1** — The LSAT is a transfer problem; a flashcard app can't be used for traditional memory retention. | Data model, study queue, and all three scores are keyed to **schema mastery**, not card retention. The app explicitly computes and displays the recall-vs-transfer gap ([§8](#8-schema-taxonomy-data-model-and-coverage-map), [§10](#10-the-three-scores)). |
-| **SPOV2** — Mastery is measured at the schema, starting with **flaws**, not question type. | **Flaw** is the *primary* organizing and diagnostic axis; question-type is secondary. The app tracks each student's **habitual trap types** as a first-class diagnostic signal ([§8](#8-schema-taxonomy-data-model-and-coverage-map)). |
+| Spiky POV (BrainLift)                                                                                        | Concrete product requirement                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SPOV1** — The LSAT is a transfer problem; a flashcard app can't be used for traditional memory retention.  | Data model, study queue, and all three scores are keyed to **schema mastery**, not card retention. The app explicitly computes and displays the recall-vs-transfer gap ([§8](#8-schema-taxonomy-data-model-and-coverage-map), [§10](#10-the-three-scores)).                                                                                 |
+| **SPOV2** — Mastery is measured at the schema, starting with **flaws**, not question type.                   | **Flaw** is the _primary_ organizing and diagnostic axis; question-type is secondary. The app tracks each student's **habitual trap types** as a first-class diagnostic signal ([§8](#8-schema-taxonomy-data-model-and-coverage-map)).                                                                                                      |
 | **SPOV3** — Scaffolding should fade far more slowly for LSAT; for the two-answer fork it nearly never fades. | The "why the runner-up is wrong / why the winner is right" explanation is preserved on hard items rather than faded. The interleaving experiment's design records hard-item (two-answer) accuracy to test the slow-fade claim ([§14](#14-ai-features-sourced-evaluated-switch-off-able), [§15](#15-study-feature-experiment-interleaving)). |
-| **SPOV4** — Speed is co-equal with accuracy; accuracy without latency is a vanity metric. | **Latency is a first-class field** on every attempt. The readiness model jointly models correctness and response time, and **flags the accurate-but-slow student** rather than rewarding them ([§8](#8-schema-taxonomy-data-model-and-coverage-map), [§10](#10-the-three-scores)). |
+| **SPOV4** — Speed is co-equal with accuracy; accuracy without latency is a vanity metric.                    | **Latency is a first-class field** on every attempt. The readiness model jointly models correctness and response time, and **flags the accurate-but-slow student** rather than rewarding them ([§8](#8-schema-taxonomy-data-model-and-coverage-map), [§10](#10-the-three-scores)).                                                          |
 
 ---
 
@@ -86,6 +89,7 @@ The single most important metric is the **gap between "can recall this card" and
 **Primary user.** A self-studying LSAT candidate aiming for a target score, studying at a desk (desktop) and in spare minutes on the phone (iOS), who needs an honest, actionable readiness signal and targeted practice on their weakest schemas.
 
 **In scope.**
+
 - Schema-centric study of Logical Reasoning and Reading Comprehension.
 - Three separately-reported scores with ranges and a give-up rule.
 - A real Rust engine change shared by both apps.
@@ -94,6 +98,7 @@ The single most important metric is the **gap between "can recall this card" and
 - Sourced, evaluated AI that can be switched off.
 
 **Out of scope (per BrainLift and spec).**
+
 - **Logic Games / Analytical Reasoning** — permanently removed from the LSAT as of August 2024; do not build around them.
 - **Memory-model research as the centerpiece** — FSRS/spacing is supporting, not foundational, because the LSAT has too little memorizable content.
 - Building for any exam other than the LSAT.
@@ -102,14 +107,14 @@ The single most important metric is the **gap between "can recall this card" and
 
 ## 5. The LSAT, modeled as it works today
 
-| Property | Value |
-| --- | --- |
-| Scaled score | 120–180 |
-| Scored sections | Two **Logical Reasoning** (24–26 questions each), one **Reading Comprehension** (26–28 questions); 35 minutes each |
-| Removed | Logic Games / Analytical Reasoning (August 2024), replaced by a second LR section |
-| Scoring | Raw score (number correct) is **equated** for form difficulty, not curved against other test-takers; **no guessing penalty** |
-| Experimental section | One unscored section (LR or RC), indistinguishable from scored sections during the test |
-| Composition | ~2/3 Logical Reasoning, so LR drives most of the score and is the primary target |
+| Property             | Value                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Scaled score         | 120–180                                                                                                                      |
+| Scored sections      | Two **Logical Reasoning** (24–26 questions each), one **Reading Comprehension** (26–28 questions); 35 minutes each           |
+| Removed              | Logic Games / Analytical Reasoning (August 2024), replaced by a second LR section                                            |
+| Scoring              | Raw score (number correct) is **equated** for form difficulty, not curved against other test-takers; **no guessing penalty** |
+| Experimental section | One unscored section (LR or RC), indistinguishable from scored sections during the test                                      |
+| Composition          | ~2/3 Logical Reasoning, so LR drives most of the score and is the primary target                                             |
 
 **Modeling consequence.** Because raw correct is equated to the 120–180 scale, the readiness model maps **expected raw correct across the three scored sections → scaled score** through a stated equating/linear function with an explicit uncertainty band ([§10](#10-the-three-scores), [docs/models/readiness-model.md](docs/models/readiness-model.md)). Source for format facts: LSAC, "About the LSAT" / "Types of LSAT Questions" (`https://www.lsac.org/lsat/prepare/types-lsat-questions`).
 
@@ -135,9 +140,10 @@ flowchart TD
   iOS <-->|Anki sync protocol| SyncSrv
 ```
 
-**Key design rule.** Both the Python desktop and the iOS app reach the engine the *same way Anki already does internally*: a single command entrypoint that takes `(service, method, request_bytes)` and returns `response_bytes`, where the bytes are protobuf-encoded. `pylib/rsbridge` already does this for Python; the iOS bridge (`rslib-ffi`) mirrors it. **Rewriting the scheduler in Swift or JavaScript does not count** and is forbidden.
+**Key design rule.** Both the Python desktop and the iOS app reach the engine the _same way Anki already does internally_: a single command entrypoint that takes `(service, method, request_bytes)` and returns `response_bytes`, where the bytes are protobuf-encoded. `pylib/rsbridge` already does this for Python; the iOS bridge (`rslib-ffi`) mirrors it. **Rewriting the scheduler in Swift or JavaScript does not count** and is forbidden.
 
 Anki repository layout we build on (`ankitects/anki`, branch `main`):
+
 - `rslib/` — core Rust backend (scheduler, collection, sync, FSRS).
 - `pylib/` — Python wrapper; `pylib/rsbridge/` is the PyO3 module; `pylib/anki/_backend.py` exposes a snake_case method per protobuf RPC.
 - `qt/aqt/` — PyQt desktop GUI; web components in `qt/aqt/data/web/` and `ts/`.
@@ -156,6 +162,7 @@ Anki repository layout we build on (`ankitects/anki`, branch `main`):
 **Step 0.2 — Clone to a path with NO SPACES.** Anki's build **fails on paths containing spaces**. This workspace (`/Users/arthurxu/Desktop/Alpha AI/Speedrun`) contains spaces, so the fork must be cloned elsewhere, e.g. `~/dev/speedrun-lsat`. Keep this PRD and the PDFs in the current workspace; develop the code in the no-space path.
 
 **Step 0.3 — Install the toolchain (macOS).**
+
 - `rustup` (the version pinned in `rust-toolchain.toml` is downloaded automatically).
 - `uv` for Python env/deps.
 - `n2` (preferred) or Ninja ≥1.10 — `tools/install-n2`.
@@ -179,11 +186,11 @@ Anki repository layout we build on (`ankitects/anki`, branch `main`):
 Four axes; **flaw is primary** (SPOV2). Sources: LSAC; prep-taxonomy synthesis (PowerScore, Manhattan, The LSAT Trainer, Cambridge LSAT); Khan Academy LSAT "Types of flaws"; LSATHacks.
 
 - **Flaw types (primary axis — highest transfer).**
-  - *Causal:* correlation→causation, reversed causation, common-cause overlooked, post hoc.
-  - *Conditional:* necessary/sufficient confusion, mistaken reversal, mistaken negation.
-  - *Sampling/evidence:* unrepresentative/biased/small sample, appeal to ignorance.
-  - *Quantity/scope:* part↔whole, percentage vs. absolute number, equivocation.
-  - *Structure:* circular reasoning, ad hominem, straw man, false dilemma, appeal to authority/emotion.
+  - _Causal:_ correlation→causation, reversed causation, common-cause overlooked, post hoc.
+  - _Conditional:_ necessary/sufficient confusion, mistaken reversal, mistaken negation.
+  - _Sampling/evidence:_ unrepresentative/biased/small sample, appeal to ignorance.
+  - _Quantity/scope:_ part↔whole, percentage vs. absolute number, equivocation.
+  - _Structure:_ circular reasoning, ad hominem, straw man, false dilemma, appeal to authority/emotion.
 - **Question types (secondary, surface/task axis).** Identify the Flaw; Necessary Assumption; Sufficient Assumption; Strengthen; Weaken; Evaluate; Must Be True/Inference; Most Strongly Supported; Main Conclusion; Method of Reasoning; Parallel Reasoning; Parallel Flaw; Point at Issue/Agreement; Paradox; Principle (Identify/Apply); Role of a Statement; plus EXCEPT variants. (Assumption+Flaw+Inference ≈ 40% of LR; adding Strengthen, Weaken, Paradox, Principle ≈ 75%+.)
 - **Trap (wrong-answer) types.** Out-of-scope; too-strong/extreme; too-weak; opposite; reversed relationship; half-right/half-wrong; premise restatement; could-be-true (fails must-be-true bar); real-world-plausible-but-unsupported; right-answer-to-wrong-question. RC-specific: distortion of author's view, wrong-viewpoint attribution, scope too broad/narrow, tone mismatch.
 - **RC structures.** Main point, author attitude/tone, passage organization, viewpoint attribution, comparative-passage relationship.
@@ -231,7 +238,7 @@ priority(card) = schema_weight(card.schema) * student_weakness(card.schema) * ti
 
 - New protobuf message(s) and an RPC in `proto/anki/` (e.g., a `build_schema_weighted_queue` method returning an ordered card list plus the per-card priority breakdown for transparency).
 - Exposed through `pylib/rsbridge` → a snake_case method in `pylib/anki/_backend.py`, called from `qt/aqt` for the desktop, **and** through `rslib-ffi` for iOS. The same ordering ships to both apps.
-- The ordering reuses FSRS due-state; it changes the *order* of due cards, it does not invent intervals, so FSRS intervals stay valid and undo keeps working.
+- The ordering reuses FSRS due-state; it changes the _order_ of due cards, it does not invent intervals, so FSRS intervals stay valid and undo keeps working.
 
 ### 9.3 Required artifacts (grading)
 
@@ -250,28 +257,31 @@ priority(card) = schema_weight(card.schema) * student_weakness(card.schema) * ti
 Every score is shown with: **point estimate, likely range, % of exam covered, a "how sure" indicator, last-updated time, the main reasons behind it, and the give-up rule.** Never a single blended number.
 
 ### 10.1 Memory (FSRS)
-- *Question:* can the student recall a taught fact right now?
-- *Scope:* deliberately small for the LSAT — flaw/trap definitions, conditional-logic terminology, RC vocabulary.
-- *Method:* Anki's built-in FSRS. Reported as a probability with a range.
-- *Validation:* calibration on **held-out** reviews — a reliability chart plus a **Brier score / log loss**. When it says 80%, recall should be ≈80%.
-- *Detail:* [docs/models/memory-model.md](docs/models/memory-model.md).
+
+- _Question:_ can the student recall a taught fact right now?
+- _Scope:_ deliberately small for the LSAT — flaw/trap definitions, conditional-logic terminology, RC vocabulary.
+- _Method:_ Anki's built-in FSRS. Reported as a probability with a range.
+- _Validation:_ calibration on **held-out** reviews — a reliability chart plus a **Brier score / log loss**. When it says 80%, recall should be ≈80%.
+- _Detail:_ [docs/models/memory-model.md](docs/models/memory-model.md).
 
 ### 10.2 Performance (the memory → transfer bridge)
-- *Question:* can the student get a **new**, exam-style item right, including ones never seen?
-- *Method:* a per-schema model using **schema mastery, item difficulty, latency, and coverage** to predict P(correct) on novel items. This is the bridge; it must **not** just echo FSRS.
-- *Validation:* the **paraphrase / transfer test** ([§17](#17-evaluation-tests-and-benchmarks)) — compare recall on a card with accuracy on 2 reworded questions testing the same schema; **report the gap**. If recall ≈ transfer accuracy, the bridge is not built.
-- *Detail:* [docs/models/performance-model.md](docs/models/performance-model.md).
+
+- _Question:_ can the student get a **new**, exam-style item right, including ones never seen?
+- _Method:_ a per-schema model using **schema mastery, item difficulty, latency, and coverage** to predict P(correct) on novel items. This is the bridge; it must **not** just echo FSRS.
+- _Validation:_ the **paraphrase / transfer test** ([§17](#17-evaluation-tests-and-benchmarks)) — compare recall on a card with accuracy on 2 reworded questions testing the same schema; **report the gap**. If recall ≈ transfer accuracy, the bridge is not built.
+- _Detail:_ [docs/models/performance-model.md](docs/models/performance-model.md).
 
 ### 10.3 Readiness (projected LSAT score)
-- *Question:* what score today, and how sure?
-- *Method:* aggregate per-schema performance → **expected raw correct per scored section** (weighted by schema frequency) → map to the **120–180** scale via a stated equating/linear function. Propagate uncertainty into a range. **Jointly model latency**: an answer that is correct but over the per-item time budget is discounted because, in aggregate, it trades away points elsewhere (SPOV4). The accurate-but-slow student is flagged, not flattered.
-- *Display example:*
+
+- _Question:_ what score today, and how sure?
+- _Method:_ aggregate per-schema performance → **expected raw correct per scored section** (weighted by schema frequency) → map to the **120–180** scale via a stated equating/linear function. Propagate uncertainty into a range. **Jointly model latency**: an answer that is correct but over the per-item time budget is discounted because, in aggregate, it trades away points elsewhere (SPOV4). The accurate-but-slow student is flagged, not flattered.
+- _Display example:_
   > **Projected LSAT: 161**
   > Likely range: 157–165
   > Confidence: low — you have covered 38% of the outline and 22% of your in-budget attempts are on RC.
-  > Best next step: drill *necessary-assumption* items (your weakest high-weight schema).
-- *Give-up rule (stated and enforced in code):* **no readiness score until ≥200 graded transfer attempts AND ≥50% schema coverage across both LR and RC.** Below the line, the app shows no score and names the missing data. (Thresholds are configurable; the defaults are stated here so the rule is falsifiable.)
-- *Detail:* [docs/models/readiness-model.md](docs/models/readiness-model.md).
+  > Best next step: drill _necessary-assumption_ items (your weakest high-weight schema).
+- _Give-up rule (stated and enforced in code):_ **no readiness score until ≥200 graded transfer attempts AND ≥50% schema coverage across both LR and RC.** Below the line, the app shows no score and names the missing data. (Thresholds are configurable; the defaults are stated here so the rule is falsifiable.)
+- _Detail:_ [docs/models/readiness-model.md](docs/models/readiness-model.md).
 
 > Honest-grading note: "we calibrated memory but do not yet have data to prove the projected score" scores **higher** than a polished score we cannot back up.
 
@@ -313,20 +323,23 @@ Every score is shown with: **point estimate, likely range, % of exam covered, a 
 **No AI ships before Friday.** The Wednesday build has no model calls, no generated cards, no chatbot. Every AI output must (a) trace to a **named source**, (b) be checked against a **test set** with a **pre-set cutoff**, and (c) **beat a simpler baseline**. The app must still produce all three scores with **AI fully off**.
 
 ### 14.1 Card / question generation + checker
+
 - Generate ~50 LSAT-style items from **one real source** (a prep chapter or notes).
 - Run every generated item through a checker against a **gold set of 50 Q&A pairs with known-correct answers**. Set the **passing cutoff before** looking at results; block any item that fails.
 - Report three counts: **correct & useful**, **wrong** (a wrong fact is worse than no card), **correct-but-bad-teaching** (vague, trivial, duplicate).
 - **Prompt-injection defense:** sanitize/ignore instructions hidden in source files; never let source text alter the generation policy.
 
 ### 14.2 Reasoning evaluator (the LSAT-specific AI)
-- The student articulates **why the runner-up is wrong and why the winner is right** — i.e., retrieves the *reasoning procedure*, not a fact (Karpicke & Roediger; Insight 5).
+
+- The student articulates **why the runner-up is wrong and why the winner is right** — i.e., retrieves the _reasoning procedure_, not a fact (Karpicke & Roediger; Insight 5).
 - The AI grades that explanation against the item's two-answer-fork rationale **and surfaces patterns of weakness** — the recurring flaw/trap the student keeps missing — which is the high-value signal AI adds beyond per-item feedback.
 
 ### 14.3 Guardrails and evidence (Friday)
+
 - **Source traceability:** every AI output names its source.
 - **Held-out eval before students see anything:** accuracy and wrong-answer rate on a held-out set, with the stated cutoff.
 - **Baseline beat:** show the AI beats a simpler **keyword or vector search** method, side by side.
-- **Leakage check:** a script that scans training data and flags any test item (or near-copy) that leaked in; show the result is clean. *Leaked test data zeroes that score.*
+- **Leakage check:** a script that scans training data and flags any test item (or near-copy) that leaked in; show the result is clean. _Leaked test data zeroes that score._
 - **Off switch:** a single flag disables all AI; both apps keep working and still score.
 
 ---
@@ -335,9 +348,10 @@ Every score is shown with: **point estimate, likely range, % of exam covered, a 
 
 **Feature.** Interleaving of schema / flaw / question types within a session (Kornell & Bjork 2008; Rohrer & Taylor 2007), matched to LR's core demand — "which pattern is this?" — a discrimination task.
 
-**Pre-registered hypothesis (stated before results):** *Interleaving schema types within a session raises accuracy on novel, mixed-schema transfer questions at equal study time, versus blocked practice.* Failure criterion: no improvement (or a drop) on the mixed-schema transfer set at equal time.
+**Pre-registered hypothesis (stated before results):** _Interleaving schema types within a session raises accuracy on novel, mixed-schema transfer questions at equal study time, versus blocked practice._ Failure criterion: no improvement (or a drop) on the mixed-schema transfer set at equal time.
 
 **Three builds, identical learners / items / time budget:**
+
 1. **Full app** — interleaving on.
 2. **Ablation** — interleaving off (blocked practice); everything else identical. This isolates the feature.
 3. **Plain, unmodified Anki** — the baseline. Shows whether the whole app beats the obvious alternative.
@@ -361,16 +375,19 @@ flowchart LR
 **Phase 0 (setup).** Fork (AGPL + credit), clone to no-space path, install toolchain, `just run`, tiny Rust change visible, tests green, iOS engine "hello world" on device/sim. Define schema taxonomy + seed deck + coverage map.
 
 **Wednesday — core works on both screens, NO AI.**
+
 - Desktop: fork building; **schema-weighted queue end-to-end** (diff + 3 Rust tests + 1 Python test); review loop on the LSAT deck; memory model with an honest range + give-up rule; **installer runs on a clean machine.**
 - iOS: app builds/runs on a device or emulator, loads the deck, runs a **real review on the shared engine** (two-way sync not required yet).
 - Proof: commit hash, clean-build recording, test results, clean-machine install recording, phone review recording.
 
 **Friday — AI added and checked; phone syncs.**
+
 - Desktop AI: a note on what AI was built/skipped; every output traces to a source; held-out eval (accuracy + wrong-rate) with cutoff; side-by-side beating keyword/vector baseline; **still scores with AI off.**
 - iOS: **two-way sync** (no lost/double counts); offline review then sync; three scores with ranges + give-up rule on the phone.
 - Proof: eval numbers + baseline comparison; recording of a phone review appearing on desktop after sync.
 
 **Sunday — prove it and ship both.**
+
 - Models/evidence: memory **calibrated** (chart + Brier/log loss on held-out); performance accuracy on held-out exam-style items; score mapping written down with a range; the **3-build study-feature result** at equal study time; honest reporting incl. results that did not work.
 - Desktop + iOS: **packaged installer** + **packaged iOS build** (signed APK is the Android analogue; for iOS: TestFlight or a sideload build); sync conflict handling correct and documented; both run AI-off and still score.
 - Proof: results report, model descriptions, Brainlift, recordings of both builds installing and running on clean devices.
@@ -409,31 +426,33 @@ Measured on the shared 50k deck; report p50 / p95 / worst for each:
 
 ## 19. Grading-map coverage and hard limits
 
-| Rubric area | Weight | Where addressed |
-| --- | --- | --- |
-| Rust change and Anki fit | 20% | [§9](#9-the-rust-change-schema-weighted-points-at-stake-queue) |
-| Score accuracy + honest uncertainty | 20% | [§10](#10-the-three-scores), [§17](#17-evaluation-tests-and-benchmarks) |
-| Study feature on learning science | 15% | [§15](#15-study-feature-experiment-interleaving) |
-| AI checking and safety | 15% | [§14](#14-ai-features-sourced-evaluated-switch-off-able) |
-| Fair, re-runnable tests | 12% | [§17](#17-evaluation-tests-and-benchmarks) |
-| Shared engine + working sync | 10% | [§6](#6-architecture-two-apps-one-engine), [§12](#12-ios-companion-the-engine-on-the-phone), [§13](#13-sync-and-the-conflict-rule) |
-| Useful product + clean UX | 8% | [§11](#11-desktop-app-review-loop-and-dashboard), [§12](#12-ios-companion-the-engine-on-the-phone) |
+| Rubric area                         | Weight | Where addressed                                                                                                                    |
+| ----------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Rust change and Anki fit            | 20%    | [§9](#9-the-rust-change-schema-weighted-points-at-stake-queue)                                                                     |
+| Score accuracy + honest uncertainty | 20%    | [§10](#10-the-three-scores), [§17](#17-evaluation-tests-and-benchmarks)                                                            |
+| Study feature on learning science   | 15%    | [§15](#15-study-feature-experiment-interleaving)                                                                                   |
+| AI checking and safety              | 15%    | [§14](#14-ai-features-sourced-evaluated-switch-off-able)                                                                           |
+| Fair, re-runnable tests             | 12%    | [§17](#17-evaluation-tests-and-benchmarks)                                                                                         |
+| Shared engine + working sync        | 10%    | [§6](#6-architecture-two-apps-one-engine), [§12](#12-ios-companion-the-engine-on-the-phone), [§13](#13-sync-and-the-conflict-rule) |
+| Useful product + clean UX           | 8%     | [§11](#11-desktop-app-review-loop-and-dashboard), [§12](#12-ios-companion-the-engine-on-the-phone)                                 |
 
 **Hard limits (designed around):**
-- No real Rust change → 50% max. *(Addressed by [§9](#9-the-rust-change-schema-weighted-points-at-stake-queue).)*
-- No phone companion sharing the engine + syncing → 70% max. *([§12](#12-ios-companion-the-engine-on-the-phone), [§13](#13-sync-and-the-conflict-rule).)*
-- No re-runnable test setup → 60% max. *([§17](#17-evaluation-tests-and-benchmarks).)*
-- No held-out testing → 60% max. *([§10](#10-the-three-scores), [§17](#17-evaluation-tests-and-benchmarks).)*
-- Made-up/misleading readiness → **automatic fail.** *(Honesty rule, give-up rule.)*
-- Either app fails on a clean device → 50% max. *(Installers, [§11](#11-desktop-app-review-loop-and-dashboard)/[§12](#12-ios-companion-the-engine-on-the-phone).)*
-- Leaked test data → that score is **zero.** *(Leakage check, [§14](#14-ai-features-sourced-evaluated-switch-off-able).)*
-- AI claims with no traceable source → AI section is **zero.** *(Source traceability, [§14](#14-ai-features-sourced-evaluated-switch-off-able).)*
+
+- No real Rust change → 50% max. _(Addressed by [§9](#9-the-rust-change-schema-weighted-points-at-stake-queue).)_
+- No phone companion sharing the engine + syncing → 70% max. _([§12](#12-ios-companion-the-engine-on-the-phone), [§13](#13-sync-and-the-conflict-rule).)_
+- No re-runnable test setup → 60% max. _([§17](#17-evaluation-tests-and-benchmarks).)_
+- No held-out testing → 60% max. _([§10](#10-the-three-scores), [§17](#17-evaluation-tests-and-benchmarks).)_
+- Made-up/misleading readiness → **automatic fail.** _(Honesty rule, give-up rule.)_
+- Either app fails on a clean device → 50% max. _(Installers, [§11](#11-desktop-app-review-loop-and-dashboard)/[§12](#12-ios-companion-the-engine-on-the-phone).)_
+- Leaked test data → that score is **zero.** _(Leakage check, [§14](#14-ai-features-sourced-evaluated-switch-off-able).)_
+- AI claims with no traceable source → AI section is **zero.** _(Source traceability, [§14](#14-ai-features-sourced-evaluated-switch-off-able).)_
 
 ---
 
 ## 20. Deliverables
 
 Due Sunday 10:59 PM CT:
+
 - **GitHub repo** — public AGPL-3.0-or-later fork crediting Anki; exam (LSAT) stated up front; build instructions for both apps; architecture overview; the Rust-change note; the list of files touched.
 - **Demo video (3–5 min)** — a review session, the Rust change in action, a card synced phone→desktop, the three scores with ranges, the AI features, and the test results.
 - **Model descriptions** — one page each for memory, performance, readiness, including the give-up rule ([docs/models/](docs/models/)).
@@ -444,6 +463,7 @@ Due Sunday 10:59 PM CT:
 ## 21. Risks and open decisions
 
 **Risks / day-0 gotchas.**
+
 - **Path with spaces** — the current workspace path breaks Anki's build; develop the fork in a no-space path ([§7](#7-phase-0-fork-build-and-toolchain)).
 - **iOS FFI is the highest-risk track** — stand up the engine-on-device "hello world" before any feature work.
 - **First build is slow** — downloads + compiles many deps; budget time on day 0.
@@ -451,6 +471,7 @@ Due Sunday 10:59 PM CT:
 - **Schema labeling quality** — the whole thesis depends on correct schema tags on items; build a small, carefully-tagged seed set before scaling.
 
 **Open decisions (sensible defaults assumed; revisit as the build progresses).**
+
 - **LLM provider/model** — pluggable client behind an interface with an AI-off path (default: a hosted API). This will be CHAT GPT 5.5 or the latest ChatGPT reasoning model
 - **Sync hosting** — self-hosted Anki sync server from `rslib` (default) vs an AnkiWeb-compatible endpoint.
 - **Seed content** — the LSAT deck source and the single AI-generation source chapter (must be license-clean). From this website potentially: https://www.lawhub.org/prepare-for-the-lsat/prepare-with-lawhub/official-lsat-practice-tests

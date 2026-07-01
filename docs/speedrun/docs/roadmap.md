@@ -22,6 +22,7 @@ Execution checklist with the proof artifact required for each item. Build in ord
 ## Wednesday — Core works on both screens, NO AI
 
 **Desktop**
+
 - [ ] Fork builds from source.
 - [ ] Schema-weighted queue Rust change end to end: the diff, **3 Rust unit tests + 1 Python test**.
 - [ ] Undo works and the collection does not corrupt after using the new queue.
@@ -30,6 +31,7 @@ Execution checklist with the proof artifact required for each item. Build in ord
 - [ ] Installer runs on a clean machine.
 
 **iOS**
+
 - [ ] App builds and runs on a real device or emulator.
 - [ ] Loads the LSAT deck and runs a real review session **on the shared engine** (two-way sync not required yet).
 
@@ -40,6 +42,7 @@ Execution checklist with the proof artifact required for each item. Build in ord
 ## Friday — AI added and checked; phone syncs
 
 **Desktop (AI)**
+
 - [ ] Short note: what AI was built, why, what was skipped.
 - [ ] Every AI output traces to a named source.
 - [ ] Eval before students see anything: accuracy + wrong-answer rate on a held-out set, with a stated cutoff.
@@ -50,6 +53,7 @@ Execution checklist with the proof artifact required for each item. Build in ord
 - [ ] App still scores with AI switched off.
 
 **iOS**
+
 - [ ] Two-way sync with desktop: review on phone → see on desktop and the reverse; no lost/double-counted reviews.
 - [ ] Offline review works, then syncs on reconnect.
 - [ ] Phone shows the three scores with ranges and follows the give-up rule.
@@ -61,6 +65,7 @@ Execution checklist with the proof artifact required for each item. Build in ord
 ## Sunday — Prove it, and ship both
 
 **Models and evidence**
+
 - [ ] Memory model calibrated: calibration chart + Brier/log loss on held-out reviews.
 - [ ] Performance model: accuracy on held-out exam-style questions.
 - [ ] Paraphrase/transfer-gap report (30 cards × 2 reworded each).
@@ -69,12 +74,14 @@ Execution checklist with the proof artifact required for each item. Build in ord
 - [ ] Honest reporting incl. results that did not work.
 
 **Desktop and mobile**
+
 - [ ] Packaged desktop installer.
 - [ ] Packaged iOS build (TestFlight or sideload).
 - [ ] Sync conflict handling correct and documented (same card on both devices offline → later timestamp wins).
 - [ ] Both apps run with AI off and still give a score.
 
 **System tests**
+
 - [ ] Crash test: kill each app mid-review 20× → zero corrupted collections.
 - [ ] Offline test: AI turns off cleanly; both apps keep working and scoring.
 - [ ] `just bench` on the 50k deck prints p50/p95/worst for each action vs targets.

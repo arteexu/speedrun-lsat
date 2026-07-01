@@ -6,6 +6,7 @@ identity and `schema_weight` across the whole app: the schema-weighted queue in
 `rslib`, the coverage map, and the three scores all read from it.
 
 ## Why schema, not card
+
 Per the BrainLift, the LSAT is a transfer problem: every Logical Reasoning
 argument is surface-unique, so the reusable unit of mastery is the **schema**
 (a flaw, a trap, a question-type procedure, an RC structure). Cards/items are
@@ -13,6 +14,7 @@ instances of schemas. The taxonomy enumerates the schemas; the seed deck tags
 each item with the schema(s) it trains.
 
 ## The four axes (flaw is primary)
+
 - **flaw** (PRIMARY) — the reasoning error. Highest transfer because the same
   flaw recurs across question types (SPOV2). This is the primary diagnostic axis.
 - **question_type** — the task the stem announces (surface axis). Used for
@@ -22,6 +24,7 @@ each item with the schema(s) it trains.
 - **rc_structure** — recurring structural targets in Reading Comprehension.
 
 ## Weights (`exam_weight`)
+
 - `exam_weight` is a **relative frequency estimate within each axis**, intended to
   approximate how often a schema drives a question on a modern test. Within an
   axis the values are meant to sum to ~1.0 (the coverage tool normalizes exactly).
@@ -35,6 +38,7 @@ each item with the schema(s) it trains.
   gracefully if they are off (it still surfaces weak high-weight schemas first).
 
 ## How the queue uses this
+
 The schema-weighted "points-at-stake" queue computes, per due card:
 
 ```
@@ -45,12 +49,14 @@ priority = schema_weight(schema) * student_weakness(schema) * time_pressure_fact
 `student_weakness` and `time_pressure_factor` come from the performance model.
 
 ## Sources
+
 - LSAC, "About the LSAT" / "Types of LSAT Questions": https://www.lsac.org/lsat/prepare/types-lsat-questions
 - Cambridge LSAT, question types: https://www.cambridgelsat.com/resources/information/question-types/
 - Khan Academy LSAT, "Types of flaws"; LSATHacks: https://lsathacks.com/logical-reasoning-question-types/
 - Prep-taxonomy synthesis: PowerScore, Manhattan Prep, The LSAT Trainer.
 
 ## Change process
+
 Bump `version` and `updated` in the JSON when schemas or weights change. Any code
 that consumes the taxonomy should key on the stable `id` field (never on array
 order or display name).

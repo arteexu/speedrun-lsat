@@ -25,6 +25,7 @@ flowchart TD
 ## 2. The protobuf command pattern (and why iOS reuses it)
 
 Anki already routes all backend calls as protobuf messages:
+
 - `.proto` files in `proto/anki/` define services, methods, and message types.
 - The build generates Rust dispatch + Python/TS stubs.
 - `pylib/rsbridge` (PyO3) exposes a single bridge into Rust; `pylib/anki/_backend.py` provides a snake_case method per RPC that encodes a request message, calls the bridge, and decodes the response.
@@ -40,15 +41,15 @@ Swift encodes the same protobuf request, calls `run_command`, and decodes the re
 
 ## 3. Build/runtime layout (`ankitects/anki`, branch `main`)
 
-| Path | Role | Our changes |
-| --- | --- | --- |
-| `rslib/` | Core Rust backend | schema-weighted queue; weakness/priority math; (later) mastery query |
-| `proto/anki/` | protobuf definitions | new message(s) + RPC for the queue |
-| `pylib/rsbridge/` | PyO3 bridge | unchanged (reused) |
-| `pylib/anki/_backend.py` | snake_case RPC methods | new method auto-exposed for the queue RPC |
-| `qt/aqt/`, `ts/` | Desktop GUI + Svelte dashboard | review loop wiring + three-score dashboard |
-| `rslib-ffi/` (new crate) | iOS staticlib bridge | single command entrypoint → XCFramework |
-| `build/`, `justfile` | Build system (ninja + uv) | `just bench`, iOS build recipe |
+| Path                     | Role                           | Our changes                                                          |
+| ------------------------ | ------------------------------ | -------------------------------------------------------------------- |
+| `rslib/`                 | Core Rust backend              | schema-weighted queue; weakness/priority math; (later) mastery query |
+| `proto/anki/`            | protobuf definitions           | new message(s) + RPC for the queue                                   |
+| `pylib/rsbridge/`        | PyO3 bridge                    | unchanged (reused)                                                   |
+| `pylib/anki/_backend.py` | snake_case RPC methods         | new method auto-exposed for the queue RPC                            |
+| `qt/aqt/`, `ts/`         | Desktop GUI + Svelte dashboard | review loop wiring + three-score dashboard                           |
+| `rslib-ffi/` (new crate) | iOS staticlib bridge           | single command entrypoint → XCFramework                              |
+| `build/`, `justfile`     | Build system (ninja + uv)      | `just bench`, iOS build recipe                                       |
 
 Build commands: `just run` (build + launch desktop), `just check` (Rust + Python tests), `just --list` (all recipes). Develop in a **path with no spaces** — Anki's build fails otherwise.
 
@@ -73,15 +74,15 @@ AI lives behind an interface with a hard off-switch; the engine and all three sc
 
 ## 7. Failure-mode handling (what we are graded against breaking)
 
-| Adversarial case | Where handled |
-| --- | --- |
-| Memorizes wording, fails reworded items | Performance model + paraphrase test (recall ≠ transfer) |
-| Huge deck skipping a high-weight topic | Coverage map → readiness abstains |
-| Two cards stating opposite facts | Schema tagging review + checker |
-| Hidden text in a source file (prompt injection) | Source sanitization in AI ingestion |
-| Taps "Good" without reading | Latency outliers flagged; suspiciously fast attempts down-weighted |
-| Topic with almost no history | Give-up rule per schema; wide range / abstain |
-| Accurate but too slow | Latency-aware readiness flags the imbalance (SPOV4) |
-| AI offline / rate-limited / broken output | AI-off path; both apps keep scoring |
-| Same card reviewed on two devices offline | Conflict rule (later timestamp wins) |
-| Crash mid-review | Atomic collection writes; crash test shows zero corruption |
+| Adversarial case                                | Where handled                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------ |
+| Memorizes wording, fails reworded items         | Performance model + paraphrase test (recall ≠ transfer)            |
+| Huge deck skipping a high-weight topic          | Coverage map → readiness abstains                                  |
+| Two cards stating opposite facts                | Schema tagging review + checker                                    |
+| Hidden text in a source file (prompt injection) | Source sanitization in AI ingestion                                |
+| Taps "Good" without reading                     | Latency outliers flagged; suspiciously fast attempts down-weighted |
+| Topic with almost no history                    | Give-up rule per schema; wide range / abstain                      |
+| Accurate but too slow                           | Latency-aware readiness flags the imbalance (SPOV4)                |
+| AI offline / rate-limited / broken output       | AI-off path; both apps keep scoring                                |
+| Same card reviewed on two devices offline       | Conflict rule (later timestamp wins)                               |
+| Crash mid-review                                | Atomic collection writes; crash test shows zero corruption         |
