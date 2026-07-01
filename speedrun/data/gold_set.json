@@ -1,0 +1,406 @@
+{
+    "version": "0.1.0",
+    "n_items": 50,
+    "items": [
+        {
+            "id": "gold-001",
+            "schema": "flaw.causal.correlation_causation",
+            "question": "What flaw treats correlation as causation?",
+            "answer": "Concluding X causes Y from mere co-occurrence without ruling out alternatives.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-002",
+            "schema": "flaw.causal.reversed",
+            "question": "What is reversed causation?",
+            "answer": "Assuming X causes Y when Y may cause X.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-003",
+            "schema": "flaw.causal.common_cause",
+            "question": "What is an overlooked common cause flaw?",
+            "answer": "Ignoring a third factor Z that produces both X and Y.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-004",
+            "schema": "flaw.causal.post_hoc",
+            "question": "What is post hoc reasoning?",
+            "answer": "Inferring causation from temporal sequence alone.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-005",
+            "schema": "flaw.conditional.mistaken_reversal",
+            "question": "What is mistaken reversal?",
+            "answer": "Confusing sufficient and necessary conditions.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-006",
+            "schema": "flaw.conditional.mistaken_negation",
+            "question": "What is mistaken negation?",
+            "answer": "Invalidly negating both sides of a conditional.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-007",
+            "schema": "flaw.generalization.sample",
+            "question": "What is a sampling flaw?",
+            "answer": "Generalizing from an unrepresentative sample.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-008",
+            "schema": "flaw.generalization.hasty",
+            "question": "What is hasty generalization?",
+            "answer": "Drawing a broad conclusion from too few instances.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-009",
+            "schema": "flaw.analogy.weak",
+            "question": "What makes an analogy weak?",
+            "answer": "Compared items differ in a relevant respect.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-010",
+            "schema": "flaw.analogy.dissimilar",
+            "question": "What is a dissimilar analogy flaw?",
+            "answer": "The analogy breaks on the property that matters.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-011",
+            "schema": "qt.necessary_assumption",
+            "question": "What does a necessary assumption question ask?",
+            "answer": "Which answer must be true for the argument to work.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-012",
+            "schema": "qt.sufficient_assumption",
+            "question": "What does a sufficient assumption question ask?",
+            "answer": "Which answer, if added, makes the conclusion follow.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-013",
+            "schema": "qt.weaken",
+            "question": "What does a weaken question ask?",
+            "answer": "Which answer most undermines the argument.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-014",
+            "schema": "qt.strengthen",
+            "question": "What does a strengthen question ask?",
+            "answer": "Which answer most supports the argument.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-015",
+            "schema": "qt.flaw",
+            "question": "What does a flaw question ask?",
+            "answer": "Which answer best describes the reasoning error.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-016",
+            "schema": "qt.inference",
+            "question": "What does an inference question ask?",
+            "answer": "Which answer must be true if the statements are true.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-017",
+            "schema": "qt.parallel",
+            "question": "What does parallel reasoning ask?",
+            "answer": "Which argument uses the same logical structure.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-018",
+            "schema": "qt.parallel_flaw",
+            "question": "What does parallel flaw ask?",
+            "answer": "Which argument commits the same flaw.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-019",
+            "schema": "qt.evaluate",
+            "question": "What does an evaluate question ask?",
+            "answer": "Which answer helps assess whether the argument is good.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-020",
+            "schema": "qt.principle",
+            "question": "What does a principle question ask?",
+            "answer": "Which principle best matches or applies to the case.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-021",
+            "schema": "trap.out_of_scope",
+            "question": "What is an out-of-scope trap?",
+            "answer": "An answer about an irrelevant topic.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-022",
+            "schema": "trap.too_weak",
+            "question": "What is a too-weak trap?",
+            "answer": "An answer that is true but doesn't do enough.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-023",
+            "schema": "trap.opposite",
+            "question": "What is an opposite trap?",
+            "answer": "An answer that does the reverse of what's needed.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-024",
+            "schema": "trap.reversed_relationship",
+            "question": "What is a reversed relationship trap?",
+            "answer": "Swaps sufficient and necessary.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-025",
+            "schema": "trap.shell_game",
+            "question": "What is a shell game trap?",
+            "answer": "Shifts the topic subtly while sounding relevant.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-026",
+            "schema": "rc.main_point",
+            "question": "What does RC main point ask?",
+            "answer": "The central claim of the passage.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-027",
+            "schema": "rc.structure",
+            "question": "What does RC structure ask?",
+            "answer": "How the passage is organized.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-028",
+            "schema": "rc.inference",
+            "question": "What does RC inference ask?",
+            "answer": "What follows from the passage.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-029",
+            "schema": "rc.author_attitude",
+            "question": "What does author attitude ask?",
+            "answer": "The author's view toward a claim.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-030",
+            "schema": "rc.analogy",
+            "question": "What does RC analogy ask?",
+            "answer": "How a comparison in the passage functions.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-031",
+            "schema": "flaw.composition",
+            "question": "What is the composition fallacy?",
+            "answer": "Attributing a group property to each member.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-032",
+            "schema": "flaw.division",
+            "question": "What is the division fallacy?",
+            "answer": "Attributing a member property to the whole group.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-033",
+            "schema": "flaw.ad_hominem",
+            "question": "What is ad hominem?",
+            "answer": "Attacking the person instead of the argument.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-034",
+            "schema": "flaw.ad_populum",
+            "question": "What is ad populum?",
+            "answer": "Appeal to popularity as evidence.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-035",
+            "schema": "flaw.false_dilemma",
+            "question": "What is false dilemma?",
+            "answer": "Presenting only two options when more exist.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-036",
+            "schema": "flaw.circular",
+            "question": "What is circular reasoning?",
+            "answer": "The conclusion is assumed in a premise.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-037",
+            "schema": "flaw equivocation",
+            "question": "What is equivocation?",
+            "answer": "Shifting the meaning of a key term.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-038",
+            "schema": "flaw.part_whole",
+            "question": "What is part-whole confusion?",
+            "answer": "Treating parts and wholes as interchangeable.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-039",
+            "schema": "flaw.percentage",
+            "question": "What is a percentage flaw?",
+            "answer": "Confusing absolute and relative quantities.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-040",
+            "schema": "flaw.absence",
+            "question": "What is appeal to absence?",
+            "answer": "Concluding no evidence means evidence of absence.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-041",
+            "schema": "qt.must_be_true",
+            "question": "What is must be true?",
+            "answer": "Same family as inference \u2014 strictly follows.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-042",
+            "schema": "qt.most_supported",
+            "question": "What is most strongly supported?",
+            "answer": "Best supported by the evidence, not necessarily required.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-043",
+            "schema": "qt.role",
+            "question": "What is role of a statement?",
+            "answer": "How a sentence functions in the argument.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-044",
+            "schema": "qt.method",
+            "question": "What is method of reasoning?",
+            "answer": "How the argument proceeds.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-045",
+            "schema": "qt.conclusion",
+            "question": "What is main conclusion?",
+            "answer": "The claim the author is trying to establish.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-046",
+            "schema": "qt.paradox",
+            "question": "What is paradox resolution?",
+            "answer": "Explain how seemingly conflicting facts coexist.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-047",
+            "schema": "qt.agreement",
+            "question": "What is point at issue?",
+            "answer": "What the speakers disagree about.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-048",
+            "schema": "rc.detail",
+            "question": "What is RC detail?",
+            "answer": "Specific fact stated in the passage.",
+            "source": "original-taxonomy",
+            "difficulty": 1
+        },
+        {
+            "id": "gold-049",
+            "schema": "rc.compare",
+            "question": "What is RC comparison?",
+            "answer": "Similarities or differences between views.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        },
+        {
+            "id": "gold-050",
+            "schema": "rc.application",
+            "question": "What is RC application?",
+            "answer": "Apply passage principle to a new case.",
+            "source": "original-taxonomy",
+            "difficulty": 2
+        }
+    ]
+}
