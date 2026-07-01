@@ -15,6 +15,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from speedrun.scoring.performance import performance_score
+from speedrun.scoring.performance import weakness_map
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TAXONOMY = REPO_ROOT / "speedrun" / "taxonomy" / "lsat_taxonomy.json"
 SCHEMA_TAG_PREFIX = "sr:schema:"
@@ -27,6 +30,12 @@ def load_schema_weights(path: Path = DEFAULT_TAXONOMY) -> dict[str, float]:
     return {s["id"]: float(s.get("exam_weight", 0.0)) for s in data["schemas"]}
 
 
+def weakness_from_collection(col, **performance_kwargs: Any) -> dict[str, float]:
+    """Per-schema weakness (1 - transfer) from the performance model."""
+    perf = performance_score(col, **performance_kwargs)
+    return weakness_map(perf["per_schema"])
+
+
 def ordered_cards(
     col,
     *,
@@ -35,9 +44,13 @@ def ordered_cards(
     weaknesses: dict[str, float] | None = None,
     time_pressured: list[str] | None = None,
     time_pressure_factor: float = 1.0,
+    use_performance_weakness: bool = True,
+    **performance_kwargs: Any,
 ) -> list[Any]:
     """Return cards ordered by schema points-at-stake (list of ScoredCard)."""
     weights = load_schema_weights()
+    if weaknesses is None and use_performance_weakness:
+        weaknesses = weakness_from_collection(col, **performance_kwargs)
     return list(
         col._backend.build_schema_weighted_queue(
             search=search,

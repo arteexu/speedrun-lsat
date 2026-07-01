@@ -178,6 +178,10 @@ complexipy-diff:
 clean *args:
     ./tools/clean {{ args }}
 
+# Speedrun LSAT benchmarks (p50/p95/worst for key scoring actions)
+bench:
+    PYTHONPATH=out/pylib {{ if os() == "windows" { "out\\pyenv\\Scripts\\python" } else { "out/pyenv/bin/python" } }} speedrun/tools/bench.py
+
 # Helpers to get the right commands for the platform
 
 ninja := if os() == "windows" { "tools\\ninja" } else { "./ninja" }
