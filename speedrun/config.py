@@ -2,6 +2,7 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 """Load and save Speedrun configuration (latency budgets, study goals, toggles)."""
+
 from __future__ import annotations
 
 import json
@@ -18,22 +19,29 @@ DEFAULT_BUDGET_MS = 90_000
 # reported until the student has actually practiced enough flashcards AND enough
 # distinct flaws/patterns. A memory number off 5 cards of one flaw is not honest.
 GUARDRAIL_DEFAULTS: dict[str, Any] = {
-    "min_cards_read": 250,          # distinct schema-tagged cards reviewed at least once
-    "min_concept_coverage": 0.80,   # fraction of ALL taxonomy concepts touched
-    "min_flaw_coverage": 0.80,      # fraction of flaw types practiced (primary axis, SPOV2)
-    "min_trap_coverage": 0.80,      # fraction of wrong-answer trap types encountered
-    "min_pattern_coverage": 0.80,   # fraction of question-type + RC patterns practiced
+    "min_cards_read": 250,  # distinct schema-tagged cards reviewed at least once
+    "min_concept_coverage": 0.80,  # fraction of ALL taxonomy concepts touched
+    "min_flaw_coverage": 0.80,  # fraction of flaw types practiced (primary axis, SPOV2)
+    "min_trap_coverage": 0.80,  # fraction of wrong-answer trap types encountered
+    "min_pattern_coverage": 0.80,  # fraction of question-type + RC patterns practiced
 }
 
 DEFAULTS: dict[str, Any] = {
     "version": "0.4.0",
-    "latency_budget_ms": {"default": DEFAULT_BUDGET_MS, "LR": 84_000, "RC": 96_000, "LG": 84_000},
+    "latency_budget_ms": {
+        "default": DEFAULT_BUDGET_MS,
+        "LR": 84_000,
+        "RC": 96_000,
+        "LG": 84_000,
+    },
     "daily_study_goal_cards": 20,
     "daily_study_goal_minutes": None,
     "interleaving_enabled": True,
     "ai_enabled": False,
     "section_filter": None,
     "schema_drill_count": 3,
+    "contrasting_pairs_count": 6,
+    "cold_open_count": 12,
     "show_schema_ids": False,
     "guardrail": dict(GUARDRAIL_DEFAULTS),
 }
@@ -90,6 +98,12 @@ def validate_config(cfg: dict[str, Any] | None = None) -> list[str]:
     drill = cfg.get("schema_drill_count")
     if not isinstance(drill, int) or drill < 1:
         errors.append("schema_drill_count must be a positive integer")
+    pairs = cfg.get("contrasting_pairs_count")
+    if not isinstance(pairs, int) or isinstance(pairs, bool) or pairs < 1:
+        errors.append("contrasting_pairs_count must be a positive integer")
+    cold_open = cfg.get("cold_open_count")
+    if not isinstance(cold_open, int) or isinstance(cold_open, bool) or cold_open < 1:
+        errors.append("cold_open_count must be a positive integer")
     guardrail = cfg.get("guardrail", {})
     if not isinstance(guardrail, dict):
         errors.append("guardrail must be an object")
@@ -104,12 +118,18 @@ def validate_config(cfg: dict[str, Any] | None = None) -> list[str]:
             "min_pattern_coverage",
         ):
             cov = guardrail.get(key)
-            if not isinstance(cov, (int, float)) or isinstance(cov, bool) or not 0.0 <= cov <= 1.0:
+            if (
+                not isinstance(cov, (int, float))
+                or isinstance(cov, bool)
+                or not 0.0 <= cov <= 1.0
+            ):
                 errors.append(f"guardrail.{key} must be between 0 and 1")
     return errors
 
 
-def latency_budget_ms(section: str | None = None, *, config: dict[str, Any] | None = None) -> int:
+def latency_budget_ms(
+    section: str | None = None, *, config: dict[str, Any] | None = None
+) -> int:
     """Return the per-item latency budget for a section (LR/RC/LG) or the default."""
     cfg = config or load_config()
     budgets = cfg.get("latency_budget_ms", {})
@@ -148,6 +168,16 @@ def section_filter(*, config: dict[str, Any] | None = None) -> str | None:
 def schema_drill_count(*, config: dict[str, Any] | None = None) -> int:
     cfg = config or load_config()
     return int(cfg.get("schema_drill_count", 3))
+
+
+def contrasting_pairs_count(*, config: dict[str, Any] | None = None) -> int:
+    cfg = config or load_config()
+    return int(cfg.get("contrasting_pairs_count", 6))
+
+
+def cold_open_count(*, config: dict[str, Any] | None = None) -> int:
+    cfg = config or load_config()
+    return int(cfg.get("cold_open_count", 12))
 
 
 def show_schema_ids(*, config: dict[str, Any] | None = None) -> bool:

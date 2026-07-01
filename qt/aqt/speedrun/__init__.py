@@ -81,6 +81,14 @@ def setup_menu(mw) -> None:
     qconnect(drill.triggered, lambda: _show_drill(mw))
     menu.addAction(drill)
 
+    contrast = QAction("Contrasting-pairs drill", mw)
+    qconnect(contrast.triggered, lambda: _show_contrasting_drill(mw))
+    menu.addAction(contrast)
+
+    cold_open = QAction("Predict-the-schema cold-open", mw)
+    qconnect(cold_open.triggered, lambda: _show_cold_open(mw))
+    menu.addAction(cold_open)
+
     export = QAction("Export offline report", mw)
     qconnect(export.triggered, lambda: _export_report(mw))
     menu.addAction(export)
@@ -97,19 +105,31 @@ def setup_menu(mw) -> None:
     qconnect(explain.triggered, lambda: _explain_schema(mw))
     menu.addAction(explain)
 
+    explain_problem = QAction("Explain this problem", mw)
+    qconnect(explain_problem.triggered, lambda: _explain_problem(mw))
+    menu.addAction(explain_problem)
+
     menu.addSeparator()
 
     from speedrun.dashboard import (
         render_calibration_html,
         render_concept_map_html,
         render_memory_report_html,
+        render_mistake_graph_html,
         render_performance_report_html,
         render_readiness_report_html,
         render_transfer_gap_html,
     )
+    from speedrun.explanations import render_explanations_report_html
+    from speedrun.logic_diagram import render_logic_diagram_html
+    from speedrun.rc_commentator import render_rc_commentator_html
 
     for label, fn in (
+        ("Problem explanations", render_explanations_report_html),
         ("Concept map", render_concept_map_html),
+        ("Mistake graph", render_mistake_graph_html),
+        ("Conditional logic visualizer", render_logic_diagram_html),
+        ("RC AI commentator", render_rc_commentator_html),
         ("Memory report", render_memory_report_html),
         ("Performance report", render_performance_report_html),
         ("Readiness report", render_readiness_report_html),
@@ -221,6 +241,7 @@ class SpeedrunHtmlDialog:
         title: str,
         minWidth: int,
         minHeight: int,
+        bridge=None,
     ) -> None:
         from aqt.qt import (
             QDialog,
@@ -247,8 +268,17 @@ class SpeedrunHtmlDialog:
         mw.garbage_collect_on_dialog_finish(diag)
 
         layout = QVBoxLayout(diag)
-        self._web = QWebEngineView(diag)
-        self._web.setHtml(html, QUrl("about:blank"))
+        if bridge is not None:
+            # An interactive page needs the pycmd bridge, which only AnkiWebView
+            # provides; `html` here is body-only markup (embed=True).
+            from aqt.webview import AnkiWebView
+
+            self._web = AnkiWebView(diag)
+            self._web.set_bridge_command(bridge, self)
+            self._web.stdHtml(html, context=self)
+        else:
+            self._web = QWebEngineView(diag)
+            self._web.setHtml(html, QUrl("about:blank"))
         layout.addWidget(self._web)
         box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         layout.addWidget(box)
@@ -265,7 +295,11 @@ class SpeedrunHtmlDialog:
 
     def _on_finished(self) -> None:
         if self._web is not None:
-            self._web.setHtml("")
+            cleanup = getattr(self._web, "cleanup", None)
+            if callable(cleanup):
+                cleanup()
+            else:
+                self._web.setHtml("")
             self._web.deleteLater()
             self._web = None
         saveGeom(self._dialog, _GEOM_KEY)
@@ -287,11 +321,15 @@ def _show_html(
     title: str = "LSAT Speedrun",
     minWidth: int = 720,
     minHeight: int = 640,
+    bridge=None,
 ) -> None:
     """Show self-contained HTML in a dialog using QWebEngineView.
 
     Anki's showText(type=\"html\") uses QTextBrowser, which strips <style> tags
     and ignores most CSS — the Speedrun dashboard relies on a <style> block.
+
+    When ``bridge`` is provided the dialog uses an AnkiWebView so the page can
+    post results back via ``pycmd`` (``html`` must then be body-only markup).
     """
     existing = getattr(mw, "_speedrun_html_dialog", None)
     if existing is not None:
@@ -303,6 +341,7 @@ def _show_html(
         title=title,
         minWidth=minWidth,
         minHeight=minHeight,
+        bridge=bridge,
     )
     mw._speedrun_html_dialog = dialog
 
@@ -406,6 +445,113 @@ def _show_drill(mw) -> None:
     _show_html(mw, html, title="Schema drill", minWidth=560, minHeight=480)
 
 
+def _contrast_logger(mw):
+    """One SessionLogger per app run for contrasting-pairs self-ratings."""
+    logger = getattr(mw, "_speedrun_contrast_logger", None)
+    if logger is None:
+        from speedrun.session_logger import SessionLogger
+
+        logger = SessionLogger()
+        mw._speedrun_contrast_logger = logger
+    return logger
+
+
+def _show_contrasting_drill(mw) -> None:
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.contrasting import (
+            build_contrasting_pairs,
+            render_contrasting_drill_html,
+        )
+
+        cset = build_contrasting_pairs(mw.col)
+        html = render_contrasting_drill_html(cset, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Contrasting drill error: {exc}")
+        return
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return
+        prefix = "speedrun:contrast:"
+        if cmd.startswith(prefix):
+            import json
+
+            from speedrun.contrasting import record_contrast_result
+
+            try:
+                payload = json.loads(cmd[len(prefix) :])
+                record_contrast_result(_contrast_logger(mw), payload)
+            except Exception:  # pragma: no cover - never break the drill on logging
+                pass
+        return
+
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — Contrasting pairs",
+        minWidth=780,
+        minHeight=680,
+        bridge=bridge,
+    )
+
+
+def _cold_open_logger(mw):
+    """One SessionLogger per app run for cold-open diagnostic results."""
+    logger = getattr(mw, "_speedrun_cold_open_logger", None)
+    if logger is None:
+        from speedrun.session_logger import SessionLogger
+
+        logger = SessionLogger()
+        mw._speedrun_cold_open_logger = logger
+    return logger
+
+
+def _show_cold_open(mw) -> None:
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.cold_open import build_cold_open_set, render_cold_open_html
+
+        cset = build_cold_open_set(mw.col)
+        html = render_cold_open_html(cset, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Cold-open error: {exc}")
+        return
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return
+        prefix = "speedrun:cold_open:"
+        if cmd.startswith(prefix):
+            import json
+
+            from speedrun.cold_open import record_cold_open_result
+
+            try:
+                payload = json.loads(cmd[len(prefix) :])
+                record_cold_open_result(_cold_open_logger(mw), payload)
+            except Exception:  # pragma: no cover - never break the drill on logging
+                pass
+        return
+
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — Cold-open",
+        minWidth=760,
+        minHeight=660,
+        bridge=bridge,
+    )
+
+
 def _export_report(mw) -> None:
     if not _require_col(mw):
         return
@@ -491,6 +637,45 @@ def _explain_schema(mw) -> None:
         )
     except Exception as exc:  # pragma: no cover
         tooltip(str(exc))
+
+
+def _explain_problem(mw) -> None:
+    if not _require_col(mw):
+        return
+    reviewer = mw.reviewer
+    if reviewer is None or reviewer.card is None:
+        tooltip("Open the reviewer first, then explain the current problem.")
+        return
+    try:
+        from speedrun.explanations import (
+            explain_item_by_id,
+            items_by_id,
+            load_items,
+            render_problem_explanation_html,
+        )
+
+        note = reviewer.card.note()
+        try:
+            item_id = (note["ItemId"] or "").strip()
+        except Exception:
+            item_id = ""
+
+        if not item_id or explain_item_by_id(item_id) is None:
+            tooltip("No explanation available for this card (not a seed problem).")
+            return
+
+        items = load_items()
+        item = items_by_id(items).get(item_id)
+        html = render_problem_explanation_html(item, items=items)
+        _show_html(
+            mw,
+            html,
+            title="LSAT Speedrun — Why this answer",
+            minWidth=640,
+            minHeight=560,
+        )
+    except Exception as exc:  # pragma: no cover
+        tooltip(f"Explain problem error: {exc}")
 
 
 def _import_seed(mw) -> None:

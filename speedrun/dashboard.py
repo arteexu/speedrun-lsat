@@ -15,6 +15,7 @@ import json
 from typing import Any
 
 from speedrun.concept_graph import build_concept_graph
+from speedrun.mistake_graph import build_mistake_graph
 from speedrun.config import (
     interleaving_enabled,
     latency_budget_ms,
@@ -181,6 +182,10 @@ table.sr-table td { padding: 7px 12px; border-top: 1px solid var(--border); }
 .sr-map-svg .node { cursor: pointer; stroke: var(--surface); stroke-width: 1.5; }
 .sr-map-svg .node.strong { fill: var(--high); } .sr-map-svg .node.learning { fill: var(--med); }
 .sr-map-svg .node.weak { fill: var(--low); } .sr-map-svg .node.untested { fill: var(--abstain); }
+.sr-map-svg .node.chronic { fill: var(--low); } .sr-map-svg .node.shaky { fill: var(--med); }
+.sr-map-svg .node.occasional { fill: var(--high); }
+.sr-map-svg .edge.corr { stroke: var(--low); stroke-opacity: 0.45; }
+.sr-map-svg .edge.corr.hot { stroke: var(--low); stroke-opacity: 0.95; }
 .sr-map-svg .node.dim { opacity: 0.2; } .sr-map-svg .node.sel { stroke: var(--text); stroke-width: 2.5; }
 .sr-map-svg .glabel { fill: var(--muted); font-size: 10px; font-weight: 600; text-anchor: middle;
   pointer-events: none; opacity: 0.75; }
@@ -196,6 +201,9 @@ table.sr-table td { padding: 7px 12px; border-top: 1px solid var(--border); }
 .sr-map-panel .pill.learning { background: rgba(217,119,6,0.15); color: var(--med); }
 .sr-map-panel .pill.weak { background: rgba(220,38,38,0.15); color: var(--low); }
 .sr-map-panel .pill.untested { background: rgba(148,163,184,0.2); color: var(--muted); }
+.sr-map-panel .pill.chronic { background: rgba(220,38,38,0.15); color: var(--low); }
+.sr-map-panel .pill.shaky { background: rgba(217,119,6,0.15); color: var(--med); }
+.sr-map-panel .pill.occasional { background: rgba(22,163,74,0.15); color: var(--high); }
 .sr-map-panel dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
 .sr-map-panel dt { color: var(--muted); } .sr-map-panel dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .sr-map-panel .nbrs { margin-top: 8px; color: var(--muted); font-size: 0.72rem; }
@@ -421,6 +429,196 @@ function srConceptMap() {
   (function anneal() { if (ticks++ < 120) { step(); paint(); requestAnimationFrame(anneal); } })();
 }
 srConceptMap();
+
+function srMistakeGraph() {
+  const holder = document.getElementById('sr-mistake');
+  if (!holder) return;
+  const data = JSON.parse(document.getElementById('sr-mistake-data').textContent);
+  const svg = holder.querySelector('svg');
+  const gEdges = svg.querySelector('.edges');
+  const gNodes = svg.querySelector('.nodes');
+  const gLabels = svg.querySelector('.glabels');
+  const panel = holder.querySelector('.sr-map-panel');
+  const W = 900, H = 520;
+  const nodes = data.nodes.map(n => Object.assign({}, n));
+  const byId = {}; nodes.forEach((n, i) => { n.i = i; byId[n.id] = n; });
+  const edges = data.edges
+    .map(e => ({ s: byId[e.source], t: byId[e.target], w: e.weight, co: e.co_miss, kind: e.kind }))
+    .filter(e => e.s && e.t);
+
+  const groups = {};
+  nodes.forEach(n => { (groups[n.group] = groups[n.group] || []).push(n); });
+  const gkeys = Object.keys(groups);
+  const gCenter = {};
+  gkeys.forEach((g, gi) => {
+    const a = (gi / gkeys.length) * Math.PI * 2;
+    gCenter[g] = { x: W / 2 + Math.cos(a) * 250, y: H / 2 + Math.sin(a) * 200 };
+  });
+  nodes.forEach(n => {
+    const c = gCenter[n.group];
+    n.x = c.x + (Math.random() - 0.5) * 80;
+    n.y = c.y + (Math.random() - 0.5) * 80;
+    n.vx = 0; n.vy = 0;
+    n.r = Math.max(7, Math.min(26, 7 + Math.sqrt(n.misses) * 4));
+  });
+
+  let dragged = null, panning = false, last = null;
+  const K_REPULSE = 5200, K_SPRING = 0.02, SPRING_LEN = 62, K_GROUP = 0.015, DAMP = 0.85;
+  function step() {
+    for (let a = 0; a < nodes.length; a++) {
+      for (let b = a + 1; b < nodes.length; b++) {
+        const p = nodes[a], q = nodes[b];
+        let dx = p.x - q.x, dy = p.y - q.y;
+        let d2 = dx * dx + dy * dy || 0.01;
+        const f = K_REPULSE / d2;
+        const d = Math.sqrt(d2);
+        const ux = dx / d, uy = dy / d;
+        p.vx += ux * f; p.vy += uy * f; q.vx -= ux * f; q.vy -= uy * f;
+      }
+    }
+    edges.forEach(e => {
+      let dx = e.t.x - e.s.x, dy = e.t.y - e.s.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const f = K_SPRING * (d - SPRING_LEN) * (0.7 + e.w);
+      const ux = dx / d, uy = dy / d;
+      e.s.vx += ux * f; e.s.vy += uy * f; e.t.vx -= ux * f; e.t.vy -= uy * f;
+    });
+    nodes.forEach(n => {
+      const c = gCenter[n.group];
+      n.vx += (c.x - n.x) * K_GROUP + (W / 2 - n.x) * 0.002;
+      n.vy += (c.y - n.y) * K_GROUP + (H / 2 - n.y) * 0.002;
+      if (n === dragged) return;
+      n.vx *= DAMP; n.vy *= DAMP;
+      n.x += n.vx; n.y += n.vy;
+      n.x = Math.max(24, Math.min(W - 24, n.x));
+      n.y = Math.max(24, Math.min(H - 24, n.y));
+    });
+  }
+  for (let i = 0; i < 320; i++) step();
+
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const edgeEls = edges.map(e => {
+    const l = document.createElementNS(SVGNS, 'line');
+    l.setAttribute('class', 'edge ' + e.kind);
+    l.setAttribute('stroke-width', Math.min(5, 1 + e.w * 4));
+    gEdges.appendChild(l); e.el = l; return e;
+  });
+  gkeys.forEach(g => {
+    const t = document.createElementNS(SVGNS, 'text');
+    t.setAttribute('class', 'glabel');
+    t.textContent = (groups[g][0].group_label || g);
+    gLabels.appendChild(t); gCenter[g].el = t;
+  });
+  const nodeEls = nodes.map(n => {
+    const c = document.createElementNS(SVGNS, 'circle');
+    c.setAttribute('class', 'node ' + n.status);
+    c.setAttribute('r', n.r);
+    const tt = document.createElementNS(SVGNS, 'title');
+    tt.textContent = n.label + '  (' + Math.round(n.miss_rate * 100) + '% miss rate)';
+    c.appendChild(tt);
+    gNodes.appendChild(c); n.el = c;
+    const lab = document.createElementNS(SVGNS, 'text');
+    lab.setAttribute('class', 'nlabel');
+    lab.textContent = n.short_label.replace(/^[^·]*· /, '');
+    lab.style.display = 'none';
+    gLabels.appendChild(lab); n.lab = lab;
+    return n;
+  });
+  const adj = {}; nodes.forEach(n => adj[n.id] = new Set());
+  const wById = {}; nodes.forEach(n => wById[n.id] = []);
+  edges.forEach(e => {
+    adj[e.s.id].add(e.t.id); adj[e.t.id].add(e.s.id);
+    wById[e.s.id].push({ id: e.t.id, w: e.w }); wById[e.t.id].push({ id: e.s.id, w: e.w });
+  });
+
+  function paint() {
+    edgeEls.forEach(e => {
+      e.el.setAttribute('x1', e.s.x); e.el.setAttribute('y1', e.s.y);
+      e.el.setAttribute('x2', e.t.x); e.el.setAttribute('y2', e.t.y);
+    });
+    nodeEls.forEach(n => {
+      n.el.setAttribute('cx', n.x); n.el.setAttribute('cy', n.y);
+      n.lab.setAttribute('x', n.x); n.lab.setAttribute('y', n.y - n.r - 3);
+    });
+    gkeys.forEach(g => {
+      let mx = 0, my = 1e9;
+      groups[g].forEach(n => { mx += n.x; my = Math.min(my, n.y); });
+      gCenter[g].el.setAttribute('x', mx / groups[g].length);
+      gCenter[g].el.setAttribute('y', my - 14);
+    });
+  }
+  paint();
+
+  let vb = { x: 0, y: 0, w: W, h: H };
+  function applyVB() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+  applyVB();
+  svg.addEventListener('wheel', ev => {
+    ev.preventDefault();
+    const scale = ev.deltaY > 0 ? 1.1 : 0.9;
+    const pt = svgPoint(ev);
+    vb.x = pt.x - (pt.x - vb.x) * scale;
+    vb.y = pt.y - (pt.y - vb.y) * scale;
+    vb.w *= scale; vb.h *= scale; applyVB();
+  }, { passive: false });
+  function svgPoint(ev) {
+    const r = svg.getBoundingClientRect();
+    return { x: vb.x + (ev.clientX - r.left) / r.width * vb.w,
+             y: vb.y + (ev.clientY - r.top) / r.height * vb.h };
+  }
+
+  function selectNode(n) {
+    const on = adj[n.id];
+    nodeEls.forEach(m => {
+      m.el.classList.toggle('dim', m !== n && !on.has(m.id));
+      m.el.classList.toggle('sel', m === n);
+      m.lab.style.display = (m === n || on.has(m.id)) ? '' : 'none';
+    });
+    edgeEls.forEach(e => {
+      const hot = e.s === n || e.t === n;
+      e.el.classList.toggle('hot', hot);
+      e.el.classList.toggle('dim', !hot);
+    });
+    const pct = v => v == null ? '—' : Math.round(v * 100) + '%';
+    const linked = (wById[n.id] || []).slice().sort((a, b) => b.w - a.w).slice(0, 3)
+      .map(x => esc((byId[x.id].short_label || x.id).replace(/^[^·]*· /, '')) + ' (' + pct(x.w) + ')')
+      .join(', ');
+    panel.innerHTML =
+      '<h4>' + esc(n.label) + '</h4>' +
+      '<span class="pill ' + n.status + '">' + n.status + '</span>' +
+      '<dl>' +
+      '<dt>Group</dt><dd>' + esc(n.group_label) + '</dd>' +
+      '<dt>Miss rate</dt><dd>' + pct(n.miss_rate) + '</dd>' +
+      '<dt>Misses</dt><dd>' + n.misses + '</dd>' +
+      '<dt>Attempts</dt><dd>' + n.attempts + '</dd>' +
+      '</dl>' +
+      '<div class="nbrs">' + (on.size
+        ? 'Most correlated: ' + linked + '. Click empty space to reset.'
+        : 'No correlated mistakes yet. Click empty space to reset.') + '</div>';
+    panel.classList.add('show');
+  }
+  function clearSel() {
+    nodeEls.forEach(m => { m.el.classList.remove('dim', 'sel'); m.lab.style.display = 'none'; });
+    edgeEls.forEach(e => e.el.classList.remove('hot', 'dim'));
+    panel.classList.remove('show');
+  }
+  function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  nodeEls.forEach(n => {
+    n.el.addEventListener('mousedown', ev => { ev.stopPropagation(); dragged = n; last = svgPoint(ev); });
+    n.el.addEventListener('click', ev => { ev.stopPropagation(); selectNode(n); });
+  });
+  svg.addEventListener('mousedown', ev => { panning = true; last = svgPoint(ev); });
+  svg.addEventListener('click', () => { if (!dragged) clearSel(); });
+  window.addEventListener('mousemove', ev => {
+    if (dragged) { const p = svgPoint(ev); dragged.x = p.x; dragged.y = p.y; dragged.vx = 0; dragged.vy = 0; paint(); }
+    else if (panning) { const p = svgPoint(ev); vb.x -= (p.x - last.x); vb.y -= (p.y - last.y); applyVB(); }
+  });
+  window.addEventListener('mouseup', () => { dragged = null; panning = false; });
+
+  let ticks = 0;
+  (function anneal() { if (ticks++ < 120) { step(); paint(); requestAnimationFrame(anneal); } })();
+}
+srMistakeGraph();
 """
 
 
@@ -754,6 +952,45 @@ def _trap_banner(col) -> str:
     )
 
 
+def _contrast_practice_banner() -> str:
+    """Report contrasting-pairs practice. Honesty rule: self-ratings are training
+    signal only and are NOT part of the memory/performance/readiness scores."""
+    from speedrun.contrasting import contrasting_practice_summary
+
+    s = contrasting_practice_summary()
+    if not s["n"]:
+        return ""
+    transfer = "—" if s["transfer"] is None else f"{s['transfer']:.0%}"
+    return (
+        f'<div class="sr-trap-banner">Contrasting-pairs practice: '
+        f"<b>{s['n']}</b> pairs · self-rated transfer <b>{transfer}</b> "
+        f"({s['got_it']} got it · {s['partial']} partial · {s['missed']} missed). "
+        f"Comparison builds schema abstraction (SPOV1); this is training signal, not a score.</div>"
+    )
+
+
+def _cold_open_practice_banner() -> str:
+    """Report predict-the-schema cold-open practice. Honesty rule: these self-driven
+    grades are diagnostic signal only and are NOT part of the scores. Schema-ID
+    accuracy is shown separately from answer accuracy so the transfer gap is visible."""
+    from speedrun.cold_open import cold_open_summary
+
+    s = cold_open_summary()
+    if not s["n"]:
+        return ""
+    schema = "—" if s["schema_accuracy"] is None else f"{s['schema_accuracy']:.0%}"
+    answer = "—" if s["answer_accuracy"] is None else f"{s['answer_accuracy']:.0%}"
+    gap = s["transfer_gap"]
+    gap_txt = "" if gap is None else f" · transfer gap {gap:+.0%}"
+    return (
+        f'<div class="sr-trap-banner">Cold-open predictions: '
+        f"<b>{s['n']}</b> items · schema-ID accuracy <b>{schema}</b> vs "
+        f"answer accuracy <b>{answer}</b>{gap_txt}. "
+        f"Naming the flaw from the stimulus alone is the transfer skill (SPOV1); "
+        f"diagnostic only, not a score.</div>"
+    )
+
+
 def render_config_editor_html() -> str:
     cfg = load_config()
     budgets = cfg.get("latency_budget_ms", {})
@@ -830,6 +1067,62 @@ def render_concept_map_html(col) -> str:
     return _shell(body, title="Concept map")
 
 
+def _mistake_graph_section(col, *, heading: bool = True) -> str:
+    """Interactive graph of the schemas the student gets wrong, edges linking
+    mistakes that tend to happen together (correlation)."""
+    graph = build_mistake_graph(col)
+    head = "<h3>Mistake graph</h3>" if heading else ""
+    if not graph.nodes:
+        return (
+            f'<div class="sr-section">{head}'
+            f'<div class="sr-map"><div class="sr-map-empty">'
+            f"No mistakes recorded yet — miss a few cards (answer <b>Again</b>) and "
+            f"this graph will map which flaws and traps you tend to get wrong together."
+            f"</div></div></div>"
+        )
+    s = graph.stats
+    # Raw JSON in a <script type="application/json"> block (see concept map note).
+    data_json = json.dumps(graph.to_dict()).replace("<", "\\u003c")
+    legend = (
+        '<div class="sr-map-legend">'
+        '<span><i class="sr-dot weak"></i>Chronic</span>'
+        '<span><i class="sr-dot learning"></i>Shaky</span>'
+        '<span><i class="sr-dot strong"></i>Occasional</span>'
+        "</div>"
+    )
+    corr = "day" if s["bucket_mode"] == "day" else "sitting"
+    summary = (
+        f"{s['n_nodes']} mistake types · {s['total_misses']} misses · "
+        f'<b style="color:var(--low)">{s["chronic"]} chronic</b> · '
+        f"{s['n_edges']} correlations (by {corr})"
+    )
+    hint = (
+        '<span class="sr-map-hint">Click a node to see correlated mistakes · '
+        "drag to rearrange · scroll to zoom</span>"
+    )
+    return (
+        f'<div class="sr-section">{head}'
+        f'<div class="sr-map" id="sr-mistake">'
+        f'<div class="sr-map-toolbar">{legend}<span>{summary}</span>{hint}</div>'
+        f'<svg class="sr-map-svg" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">'
+        f'<g class="edges"></g><g class="glabels"></g><g class="nodes"></g></svg>'
+        f'<div class="sr-map-panel"></div>'
+        f'<script type="application/json" id="sr-mistake-data">{data_json}</script>'
+        f"</div></div>"
+    )
+
+
+def render_mistake_graph_html(col) -> str:
+    body = (
+        '<div class="sr-header"><h1>Mistake graph</h1>'
+        "<p>Only the schemas you get wrong, sized by how often you miss them and "
+        "linked when you tend to miss them together. Red is chronic, green is "
+        "occasional — hunt for the clusters and remediate a whole cluster at once.</p></div>"
+        f"{_mistake_graph_section(col, heading=False)}"
+    )
+    return _shell(body, title="Mistake graph")
+
+
 def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
     gate = evidence_gate(col)
     mem = memory_score(col, gate=gate)
@@ -845,8 +1138,11 @@ def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
         f"{_gate_panel(gate)}"
         f'<div class="sr-grid">{_goal_card(col)}{_memory_card(mem)}{_performance_card(perf)}{_readiness_card(ready)}</div>'
         f"{_trap_banner(col)}"
+        f"{_contrast_practice_banner()}"
+        f"{_cold_open_practice_banner()}"
         f"{_weakness_heatmap(perf_rows)}"
         f"{_concept_map_section(col)}"
+        f"{_mistake_graph_section(col)}"
         f'<div class="sr-section"><h3>Schema breakdown — memory</h3>{_schema_table("mem-table", _mem_schema_rows(mem), score_label="recall")}</div>'
         f'<div class="sr-section"><h3>Schema breakdown — performance</h3>{_schema_table("perf-table", perf_rows, score_label="transfer")}</div>'
         f"{_timeline_chart(col, days=timeline_days)}{_mastery_table(col)}{_wrong_patterns_table(col)}"

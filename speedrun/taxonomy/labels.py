@@ -2,6 +2,7 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 """Human-readable labels for taxonomy schema ids and Anki tag strings."""
+
 from __future__ import annotations
 
 import html
@@ -56,8 +57,20 @@ def schema_label(schema_id: str) -> str:
     if name:
         return f"{prefix} · {name}"
     parts = raw.split(".")
-    tail = _title_case_segment(parts[-1]) if len(parts) > 1 else _title_case_segment(raw)
+    tail = (
+        _title_case_segment(parts[-1]) if len(parts) > 1 else _title_case_segment(raw)
+    )
     return f"{prefix} · {tail}"
+
+
+def category_label(schema_id: str) -> str:
+    """Human label for a taxonomy family, e.g. ``flaw.causal`` -> ``Causal``.
+
+    Accepts a full schema id (uses its second segment) or a bare category token."""
+    raw = normalize_schema_id(schema_id)
+    parts = raw.split(".")
+    category = parts[1] if len(parts) >= 2 else parts[0]
+    return _title_case_segment(category)
 
 
 def schema_short_label(schema_id: str) -> str:
@@ -67,7 +80,9 @@ def schema_short_label(schema_id: str) -> str:
         return "(none)"
     prefix = _axis_label(raw)
     parts = raw.split(".")
-    tail = _title_case_segment(parts[-1]) if len(parts) > 1 else _title_case_segment(raw)
+    tail = (
+        _title_case_segment(parts[-1]) if len(parts) > 1 else _title_case_segment(raw)
+    )
     return f"{prefix} · {tail}"
 
 
