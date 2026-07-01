@@ -118,7 +118,8 @@ def setup_menu(mw) -> None:
     ):
         act = QAction(label, mw)
         qconnect(
-            act.triggered, lambda _mw=mw, _fn=fn, _t=label: _show_report(_mw, _fn, _t)
+            act.triggered,
+            lambda _checked=False, _fn=fn, _t=label: _show_report(mw, _fn, _t),
         )
         menu.addAction(act)
 
