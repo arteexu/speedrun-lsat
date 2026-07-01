@@ -49,8 +49,26 @@ def test_dashboard_html_abstains_without_reviews():
     assert "Memory" in html
     assert "Performance" in html
     assert "Readiness" in html
-    # memory abstains (no reviews) and the honest wording is present
-    assert "No score" in html
+    # all three abstain without reviews
+    assert html.count("No score") >= 3
+    col.close()
+
+
+def test_dashboard_html_shows_scores_after_reviews():
+    col = getEmptyCol()
+    result = import_seed_deck(col)
+    col.decks.select(result.deck_id)
+    col.reset()
+    while True:
+        card = col.sched.getCard()
+        if card is None:
+            break
+        col.sched.answerCard(card, 3)
+    html = render_dashboard_html(col)
+    assert "transfer" in html.lower()
+    assert "graded attempts" in html
+    # readiness still abstains at default thresholds
+    assert "No score yet" in html or "projected LSAT" in html
     col.close()
 
 

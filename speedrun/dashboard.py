@@ -4,15 +4,17 @@
 """Render the three-score dashboard and the schema-weighted study preview as HTML.
 
 Qt-free so it can be unit-tested; the aqt layer just drops the returned HTML into
-a dialog. Honesty rule: performance and readiness abstain with an explicit reason
-until their models exist, and memory shows a range + give-up rule.
+a dialog. Honesty rule: each score shows a range + give-up rule and abstains
+when data is insufficient.
 """
 from __future__ import annotations
 
 import html
 
 from speedrun.scoring.memory import memory_score
+from speedrun.scoring.performance import performance_score
 from speedrun.scoring.queue import ordered_cards
+from speedrun.scoring.readiness import readiness_score
 
 
 def _esc(text: object) -> str:
@@ -64,31 +66,92 @@ def _memory_section(col) -> str:
     return _score_card("Memory", body, subtitle)
 
 
-def _abstain_section(title: str, reason: str) -> str:
-    body = f'<span style="color:#b00">No score</span> — {_esc(reason)}'
-    return _score_card(title, body, "honesty rule: abstains until its model is built")
+def _performance_section(col) -> str:
+    result = performance_score(col)
+    o = result["overall"]
+    if o.gave_up:
+        body = f'<span style="color:#b00">No score</span> — {_esc(o.reason)}'
+    else:
+        body = (
+            f'<span style="font-size:22px;color:#1a7f37"><b>{o.point:.0%}</b></span>'
+            f' &nbsp;transfer &nbsp;·&nbsp; likely range {o.low:.0%}–{o.high:.0%}'
+        )
+        if o.speed_flag:
+            body += (
+                '<div style="color:#b85c00;margin-top:4px;font-size:13px">'
+                "Accurate but slow — would lose points on the clock."
+                "</div>"
+            )
+    if o.raw_accuracy is not None:
+        subtitle = (
+            f"{o.n_attempts} graded attempts · raw accuracy {o.raw_accuracy:.0%}"
+        )
+    else:
+        subtitle = f"{o.n_attempts} graded attempts"
+    if o.on_budget_rate is not None:
+        subtitle += f" · on-budget {o.on_budget_rate:.0%}"
+    subtitle += " · source: revlog (latency-adjusted)"
+
+    rows = ""
+    for schema, s in result["per_schema"].items():
+        if s.gave_up:
+            continue
+        rows += (
+            f'<tr><td>{_esc(schema)}</td>'
+            f'<td align="right">{s.point:.0%}</td>'
+            f'<td align="right" style="color:#777">{s.low:.0%}–{s.high:.0%}</td>'
+            f'<td align="right" style="color:#777">n={s.n_attempts}</td></tr>'
+        )
+    if rows:
+        body += (
+            '<table width="100%" cellpadding="4" style="margin-top:8px;font-size:13px">'
+            '<tr style="color:#777"><td>schema</td><td align="right">transfer</td>'
+            '<td align="right">range</td><td align="right">n</td></tr>'
+            f"{rows}</table>"
+        )
+    return _score_card("Performance", body, subtitle)
+
+
+def _readiness_section(col) -> str:
+    result = readiness_score(col)
+    if result.gave_up:
+        body = f'<span style="color:#b00">No score</span> — {_esc(result.reason)}'
+    else:
+        body = (
+            f'<span style="font-size:22px;color:#1a7f37"><b>{result.point:.0f}</b></span>'
+            f" &nbsp;projected LSAT &nbsp;·&nbsp; likely range "
+            f"{result.low:.0f}–{result.high:.0f}"
+        )
+        if result.speed_flag:
+            body += (
+                '<div style="color:#b85c00;margin-top:4px;font-size:13px">'
+                "Latency penalty applied — accurate but slow."
+                "</div>"
+            )
+        if result.best_next_step:
+            body += (
+                f'<div style="margin-top:6px;font-size:13px">'
+                f"Best next step: <b>{_esc(result.best_next_step)}</b></div>"
+            )
+    subtitle = (
+        f"coverage {result.coverage:.0%} · {result.n_attempts} attempts · "
+        f"confidence {result.confidence} · linear map (stated approximation)"
+    )
+    return _score_card("Readiness (projected LSAT 120–180)", body, subtitle)
 
 
 def render_dashboard_html(col) -> str:
     """Full three-score dashboard as an HTML string."""
     memory = _memory_section(col)
-    performance = _abstain_section(
-        "Performance",
-        "the memory→transfer model is not built yet; a performance number now "
-        "would just echo memory.",
-    )
-    readiness = _abstain_section(
-        "Readiness (projected LSAT 120–180)",
-        "needs the performance model plus coverage/latency; showing a score now "
-        "would be a guess in a nice font.",
-    )
+    performance = _performance_section(col)
+    readiness = _readiness_section(col)
     preview = render_study_list_html(col, limit=10, heading=False)
     return (
         '<div style="font-family:system-ui,sans-serif">'
         '<h2 style="margin:0 0 4px 0">LSAT Speedrun — Scores</h2>'
         '<div style="color:#777;font-size:12px;margin-bottom:10px">'
         "Three separate scores, each with a range and a give-up rule. "
-        "Memory is live; performance and readiness abstain until their models exist."
+        "Scores abstain when data is insufficient."
         "</div>"
         f"{memory}{performance}{readiness}"
         '<h3 style="margin:14px 0 4px 0">Next up — schema-weighted queue</h3>'
