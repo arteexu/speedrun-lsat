@@ -12,6 +12,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import json  # noqa: E402
+
+SEED_ITEM_COUNT = len(
+    json.loads(
+        (REPO_ROOT / "speedrun/data/seed_deck.json").read_text(encoding="utf-8")
+    )["items"]
+)
+
 from speedrun.eval.transfer_gap import (  # noqa: E402
     generate_reworded_variants,
     transfer_gap_report,
@@ -22,7 +30,7 @@ from tests.shared import getEmptyCol  # noqa: E402
 
 def test_generate_reworded_variants():
     variants = generate_reworded_variants()
-    assert len(variants) == 11 * 2  # seed deck × 2 variants
+    assert len(variants) == SEED_ITEM_COUNT * 2  # seed deck × 2 variants
     assert (
         variants[0].stimulus != variants[1].stimulus or variants[0].variant_index != 1
     )

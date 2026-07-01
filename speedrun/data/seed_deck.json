@@ -1,13 +1,16 @@
 {
-    "deck": "LSAT Speedrun — seed",
-    "version": "0.1.0",
+    "deck": "LSAT Speedrun \u2014 seed",
+    "version": "0.2.0",
     "content_note": "All items are ORIGINAL, authored for this project to stay license-clean. They are NOT real LSAT questions. schema ids reference speedrun/taxonomy/lsat_taxonomy.json. This is a small scaffold to exercise the pipeline; expand with a chosen licensed/original source before scoring.",
     "items": [
         {
             "id": "lr-0001",
             "section": "LR",
             "stem_type": "qt.weaken",
-            "schemas": ["flaw.causal.correlation_causation", "qt.weaken"],
+            "schemas": [
+                "flaw.causal.correlation_causation",
+                "qt.weaken"
+            ],
             "difficulty": 2,
             "source": "original",
             "stimulus": "Employees who use the company's new standing desks report fewer afternoon headaches than those who use ordinary desks. Clearly, standing while working reduces headaches.",
@@ -53,7 +56,10 @@
             "id": "lr-0002",
             "section": "LR",
             "stem_type": "qt.flaw",
-            "schemas": ["flaw.conditional.mistaken_reversal", "qt.flaw"],
+            "schemas": [
+                "flaw.conditional.mistaken_reversal",
+                "qt.flaw"
+            ],
             "difficulty": 3,
             "source": "original",
             "stimulus": "Anyone who has mastered calculus can solve these puzzles. Maria solved these puzzles, so she has mastered calculus.",
@@ -99,7 +105,10 @@
             "id": "lr-0003",
             "section": "LR",
             "stem_type": "qt.necessary_assumption",
-            "schemas": ["flaw.gap.unwarranted_assumption", "qt.necessary_assumption"],
+            "schemas": [
+                "flaw.gap.unwarranted_assumption",
+                "qt.necessary_assumption"
+            ],
             "difficulty": 3,
             "source": "original",
             "stimulus": "The new bridge will reduce commute times, so the city council should approve it: shorter commutes make residents happier.",
@@ -138,14 +147,17 @@
             ],
             "two_answer_fork": {
                 "runner_up": "B",
-                "why_runner_up_wrong": "B is 'too strong' — the argument needs some commute benefit, not that everyone commutes daily; negating B does not destroy the argument. A is required: if approving the bridge caused offsetting harms, the recommendation would collapse (negation test)."
+                "why_runner_up_wrong": "B is 'too strong' \u2014 the argument needs some commute benefit, not that everyone commutes daily; negating B does not destroy the argument. A is required: if approving the bridge caused offsetting harms, the recommendation would collapse (negation test)."
             }
         },
         {
             "id": "lr-0004",
             "section": "LR",
             "stem_type": "qt.strengthen",
-            "schemas": ["flaw.causal.common_cause", "qt.strengthen"],
+            "schemas": [
+                "flaw.causal.common_cause",
+                "qt.strengthen"
+            ],
             "difficulty": 3,
             "source": "original",
             "stimulus": "Towns that added bike lanes saw retail sales rise. Adding bike lanes must boost local retail.",
@@ -175,7 +187,12 @@
                     "trap": "trap.opposite",
                     "correct": false
                 },
-                { "id": "E", "text": "Bike lanes reduce car traffic.", "trap": "trap.out_of_scope", "correct": false }
+                {
+                    "id": "E",
+                    "text": "Bike lanes reduce car traffic.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
             ],
             "two_answer_fork": {
                 "runner_up": "C",
@@ -186,7 +203,9 @@
             "id": "lr-0005",
             "section": "LR",
             "stem_type": "qt.paradox",
-            "schemas": ["qt.paradox"],
+            "schemas": [
+                "qt.paradox"
+            ],
             "difficulty": 2,
             "source": "original",
             "stimulus": "The clinic saw more patients this year than last, yet its total revenue fell.",
@@ -232,7 +251,10 @@
             "id": "lr-0006",
             "section": "LR",
             "stem_type": "qt.flaw",
-            "schemas": ["flaw.sampling.unrepresentative", "qt.flaw"],
+            "schemas": [
+                "flaw.sampling.unrepresentative",
+                "qt.flaw"
+            ],
             "difficulty": 3,
             "source": "original",
             "stimulus": "A magazine asked its readers to mail in whether they exercise daily; 80% said yes. So most people in the country exercise daily.",
@@ -278,7 +300,10 @@
             "id": "lr-0007",
             "section": "LR",
             "stem_type": "qt.flaw",
-            "schemas": ["flaw.scope.percent_vs_number", "qt.flaw"],
+            "schemas": [
+                "flaw.scope.percent_vs_number",
+                "qt.flaw"
+            ],
             "difficulty": 4,
             "source": "original",
             "stimulus": "A larger percentage of Startup A's employees are managers than at giant Corp B. So Startup A has more managers than Corp B.",
@@ -324,7 +349,10 @@
             "id": "lr-0008",
             "section": "LR",
             "stem_type": "qt.parallel_flaw",
-            "schemas": ["flaw.scope.part_whole", "qt.parallel_flaw"],
+            "schemas": [
+                "flaw.scope.part_whole",
+                "qt.parallel_flaw"
+            ],
             "difficulty": 4,
             "source": "original",
             "stimulus": "Each part of this machine is lightweight, so the whole machine must be lightweight.",
@@ -370,7 +398,9 @@
             "id": "rc-0001-q1",
             "section": "RC",
             "stem_type": "rc.main_point",
-            "schemas": ["rc.main_point"],
+            "schemas": [
+                "rc.main_point"
+            ],
             "difficulty": 3,
             "source": "original",
             "passage_id": "rc-0001",
@@ -417,7 +447,9 @@
             "id": "rc-0001-q2",
             "section": "RC",
             "stem_type": "rc.author_attitude",
-            "schemas": ["rc.author_attitude"],
+            "schemas": [
+                "rc.author_attitude"
+            ],
             "difficulty": 3,
             "source": "original",
             "passage_id": "rc-0001",
@@ -430,21 +462,43 @@
                     "trap": null,
                     "correct": true
                 },
-                { "id": "B", "text": "enthusiastic endorsement.", "trap": "trap.rc.tone_mismatch", "correct": false },
-                { "id": "C", "text": "dismissive rejection.", "trap": "trap.rc.tone_mismatch", "correct": false },
-                { "id": "D", "text": "complete indifference.", "trap": "trap.rc.tone_mismatch", "correct": false },
-                { "id": "E", "text": "confusion about its claims.", "trap": "trap.out_of_scope", "correct": false }
+                {
+                    "id": "B",
+                    "text": "enthusiastic endorsement.",
+                    "trap": "trap.rc.tone_mismatch",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "dismissive rejection.",
+                    "trap": "trap.rc.tone_mismatch",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "complete indifference.",
+                    "trap": "trap.rc.tone_mismatch",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "confusion about its claims.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
             ],
             "two_answer_fork": {
                 "runner_up": "B",
-                "why_runner_up_wrong": "The author agrees the old view was too simple but says revisionists 'sometimes overreach' — a reservation, so partial agreement (A), not enthusiasm."
+                "why_runner_up_wrong": "The author agrees the old view was too simple but says revisionists 'sometimes overreach' \u2014 a reservation, so partial agreement (A), not enthusiasm."
             }
         },
         {
             "id": "rc-0001-q3",
             "section": "RC",
             "stem_type": "rc.function_of_detail",
-            "schemas": ["rc.function_of_detail"],
+            "schemas": [
+                "rc.function_of_detail"
+            ],
             "difficulty": 4,
             "source": "original",
             "passage_id": "rc-0001",
@@ -485,6 +539,1463 @@
             "two_answer_fork": {
                 "runner_up": "C",
                 "why_runner_up_wrong": "The example supports the revisionist point being described, not the author's later middle position; C misattributes its function."
+            }
+        },
+        {
+            "id": "lr-0009",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.causal.reversed",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "People who sleep less tend to drink more coffee. Therefore, drinking coffee causes sleep loss.",
+            "question": "The reasoning is most vulnerable to criticism on the grounds that it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "confuses a possible effect with a cause.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes all coffee drinkers sleep poorly.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to specify how much coffee is consumed.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "relies on a sample of only coffee drinkers.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "ignores the health benefits of coffee.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B overstates the conclusion; the error is reversed causation (A): poor sleep may drive coffee use, not the reverse."
+            }
+        },
+        {
+            "id": "lr-0010",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.causal.post_hoc",
+                "qt.flaw"
+            ],
+            "difficulty": 2,
+            "source": "original",
+            "stimulus": "The team started wearing blue socks, then won three games in a row. The blue socks caused the winning streak.",
+            "question": "The argument is flawed because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "treats a sequence of events as proof of causation.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes the team will keep winning.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "does not mention the team's coach.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "overlooks that other teams also wear blue.",
+                    "trap": "trap.real_world_plausible",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "fails to define what counts as a winning streak.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D is plausible but irrelevant; A names the post hoc error: temporal succession is not causation."
+            }
+        },
+        {
+            "id": "lr-0011",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.conditional.nec_suff_confusion",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Only members may use the pool. Jordan used the pool, so Jordan must be a member.",
+            "question": "The reasoning is questionable because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "treats a necessary condition for pool use as if it were sufficient to guarantee membership.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes the pool is open year-round.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to consider non-members who never swim.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "confuses sufficient with necessary by inferring pool use from membership.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "relies on a single instance.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D describes the reverse inference; the argument goes from pool use to membership, treating necessary-for-use as proof of membership (A)."
+            }
+        },
+        {
+            "id": "lr-0012",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.conditional.mistaken_negation",
+                "qt.flaw"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "stimulus": "If the alarm had sounded, we would have evacuated. The alarm did not sound, so we did not need to evacuate.",
+            "question": "The reasoning is flawed because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "denies the antecedent and treats that as disproving the consequent.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes the alarm always works.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "overlooks that evacuation can be warranted for other reasons.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "confuses sufficient with necessary conditions.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "relies on the testimony of one person.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "C",
+                "why_runner_up_wrong": "C adds a plausible real-world caveat but the formal error is denying the antecedent (A): no alarm does not prove no need to evacuate."
+            }
+        },
+        {
+            "id": "lr-0013",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.sampling.appeal_to_ignorance",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "No study has proven that the supplement is harmful, so it is safe to take daily.",
+            "question": "The argument is most vulnerable to criticism on the grounds that it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "treats a lack of evidence as evidence of absence.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes all supplements are identical.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to recommend a dosage.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "overlooks people who take the supplement weekly.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "relies on anecdotal reports of benefit.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "E",
+                "why_runner_up_wrong": "E describes a different flaw; A is appeal to ignorance: unproven harm is not proof of safety."
+            }
+        },
+        {
+            "id": "lr-0014",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.scope.equivocation",
+                "qt.flaw"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "stimulus": "The law says no one may endanger the public interest. Publishing this article would interest the public, so it must be banned.",
+            "question": "The reasoning is flawed because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "uses 'interest' in two different senses.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes all articles endanger someone.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to define 'public'.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "overlooks freedom of the press.",
+                    "trap": "trap.real_world_plausible",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "relies on a single law.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D raises a policy concern; A identifies equivocation between public welfare and public curiosity."
+            }
+        },
+        {
+            "id": "lr-0015",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.structure.circular",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "This policy is fair because it treats everyone the same, and it treats everyone the same because it is fair.",
+            "question": "The argument is most vulnerable to criticism on the grounds that it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "assumes in the premises what it tries to establish in the conclusion.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "fails to define fairness.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "overlooks policies that treat people differently.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "relies on the opinion of policymakers.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "assumes everyone wants equal treatment.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B is a vagueness complaint; A names circular reasoning: fairness and equal treatment are used to prove each other."
+            }
+        },
+        {
+            "id": "lr-0016",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.structure.ad_hominem",
+                "qt.flaw"
+            ],
+            "difficulty": 2,
+            "source": "original",
+            "stimulus": "You cannot trust Dr. Lee's climate report \u2014 she drives a gas-powered car.",
+            "question": "The reasoning is flawed because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "attacks the person rather than the evidence offered.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes all scientists agree on climate.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to describe the report's methods.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "overlooks electric vehicles.",
+                    "trap": "trap.real_world_plausible",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "confuses correlation with causation.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "C",
+                "why_runner_up_wrong": "C asks for more detail but does not name the fallacy; A is ad hominem \u2014 personal behavior is irrelevant to the report's merits."
+            }
+        },
+        {
+            "id": "lr-0017",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.structure.straw_man",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "My opponent wants to abolish all roads. Obviously we need some roads, so her transportation plan is absurd.",
+            "question": "The argument is most vulnerable to criticism on the grounds that it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "misrepresents the opposing view to make it easier to attack.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes roads are always necessary.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to consider rail transport.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "relies on emotional language.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "overlooks maintenance costs.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "Tone may be heated, but the core error is straw man (A): the opponent likely proposed reducing roads, not abolishing all."
+            }
+        },
+        {
+            "id": "lr-0018",
+            "section": "LR",
+            "stem_type": "qt.flaw",
+            "schemas": [
+                "flaw.structure.false_dilemma",
+                "qt.flaw"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Either we ban all social media for teens or youth mental health will keep collapsing. We cannot ban all social media, so the collapse is inevitable.",
+            "question": "The reasoning is flawed because it",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "presents only two options when others may exist.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "assumes social media is the sole cause of mental health problems.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "fails to define 'collapse'.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "overlooks adults' use of social media.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "relies on a single expert.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B may be true but the structural flaw is false dilemma (A): regulation short of a total ban is a third path."
+            }
+        },
+        {
+            "id": "lr-0019",
+            "section": "LR",
+            "stem_type": "qt.sufficient_assumption",
+            "schemas": [
+                "flaw.gap.unwarranted_assumption",
+                "qt.sufficient_assumption"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "stimulus": "The museum will exceed last year's attendance because it is hosting a major exhibit.",
+            "question": "Which one of the following, if assumed, enables the conclusion to follow logically?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Nothing else will reduce attendance below last year's level.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Major exhibits always attract more visitors than minor ones.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Last year's attendance was a record.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "The exhibit will run for six months.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Some visitors will come more than once.",
+                    "trap": "trap.could_be_true",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B is too strong and not required; A closes the gap: the exhibit must be enough net of any countervailing factors."
+            }
+        },
+        {
+            "id": "lr-0020",
+            "section": "LR",
+            "stem_type": "qt.inference_must_be_true",
+            "schemas": [
+                "qt.inference_must_be_true"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "All interns attend orientation. Some orientation sessions are held online. No online session includes a lab tour.",
+            "question": "If the statements above are true, which one of the following must be true?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Some interns attend a session that does not include a lab tour.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "All interns attend an online session.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "No intern attends a lab tour.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Every orientation includes a lab tour.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Most interns prefer online orientation.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "C",
+                "why_runner_up_wrong": "C overreaches; we only know some orientations are online without tours. A follows: those online sessions are attended by interns (all attend orientation) and lack tours."
+            }
+        },
+        {
+            "id": "lr-0021",
+            "section": "LR",
+            "stem_type": "qt.most_strongly_supported",
+            "schemas": [
+                "qt.most_strongly_supported"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "After the library extended its hours, evening visits rose sharply while daytime visits stayed flat.",
+            "question": "Which one of the following is most strongly supported by the information above?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "The extended hours likely drew visitors who could not come earlier.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Daytime visitors no longer use the library.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "The library should close during the day.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Every new visitor came only in the evening.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Extended hours reduced staffing costs.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D is too strong; A is the modest inference that new evening capacity attracted a different crowd."
+            }
+        },
+        {
+            "id": "lr-0022",
+            "section": "LR",
+            "stem_type": "qt.principle_identify",
+            "schemas": [
+                "qt.principle_identify"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Editor: We will not publish op-eds that cite unnamed sources on factual claims, because readers cannot verify them.",
+            "question": "Which one of the following principles, if valid, most helps to justify the editor's decision?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Publications should not present as fact what readers cannot check.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "All op-eds should include at least two sources.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Unnamed sources are always unreliable.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Editors should publish controversial views.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Readers prefer named sources.",
+                    "trap": "trap.real_world_plausible",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "C",
+                "why_runner_up_wrong": "C is too absolute; A matches the verifiability rationale without banning all unnamed sources in every context."
+            }
+        },
+        {
+            "id": "lr-0023",
+            "section": "LR",
+            "stem_type": "qt.method_of_reasoning",
+            "schemas": [
+                "qt.method_of_reasoning"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Critic: The director claims the film is historically accurate because she consulted archivists. But consulting archivists does not guarantee accuracy, since she may have ignored their advice.",
+            "question": "The critic's argument proceeds by",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "showing that a premise does not ensure the stated conclusion.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "attacking the director's character.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "offering an alternative film that is accurate.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "proving the film is inaccurate.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "appealing to popular opinion.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "The critic does not prove inaccuracy; A describes undermining the link between consultation and guaranteed accuracy."
+            }
+        },
+        {
+            "id": "lr-0024",
+            "section": "LR",
+            "stem_type": "qt.parallel_reasoning",
+            "schemas": [
+                "qt.parallel_reasoning"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "stimulus": "If the package arrives today, the lab can start the trial. The trial has not started, so the package did not arrive today.",
+            "question": "Which one of the following exhibits reasoning most similar to that above?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "If it rains, the game is canceled. The game was canceled, so it must have rained.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "B",
+                    "text": "Only members may vote. Sam voted, so Sam is a member.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "If the gate is locked, we cannot enter. We did not enter, so the gate was locked.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "D",
+                    "text": "All dogs bark. This animal barks, so it is a dog.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "The store is open unless it is a holiday. It is not a holiday, so the store is open.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "A",
+                "why_runner_up_wrong": "A affirms the consequent; the stimulus denies the consequent to infer the antecedent \u2014 matched by C."
+            }
+        },
+        {
+            "id": "lr-0025",
+            "section": "LR",
+            "stem_type": "qt.main_conclusion",
+            "schemas": [
+                "qt.main_conclusion"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Some argue that remote work eliminates mentorship. That worry is overstated. Junior staff in our firm report more frequent check-ins with mentors than before, and retention has improved. Companies should therefore expand remote options rather than retreat from them.",
+            "question": "Which one of the following most accurately expresses the main conclusion of the argument?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Companies should expand remote work options.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Remote work eliminates mentorship.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Junior staff receive more check-ins than before.",
+                    "trap": "trap.premise_restatement",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "The worry about mentorship is true.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Retention has improved in every company.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "C",
+                "why_runner_up_wrong": "C is evidence supporting the conclusion; A is the recommendation the argument builds toward."
+            }
+        },
+        {
+            "id": "rc-0002-q1",
+            "section": "RC",
+            "stem_type": "rc.passage_organization",
+            "schemas": [
+                "rc.passage_organization"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "passage_id": "rc-0002",
+            "passage": "Biologists long classified species mainly by visible traits. Molecular tools later revealed hidden divisions within groups that looked alike. Some researchers resisted the new taxonomy as impractical; others embraced it for conservation planning. The author argues that both views miss the point: classification should serve the question being asked, whether that is evolutionary history or field identification.",
+            "question": "Which one of the following best describes the organization of the passage?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "A traditional view is described, a challenge is introduced, competing responses are noted, and a pragmatic resolution is offered.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Two scientific theories are compared and the second is rejected.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "A problem is stated and three solutions are evaluated in detail.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Historical events are narrated in chronological order.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "The author summarizes a single study's methods and results.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "The author does not reject molecular taxonomy; A captures the old view \u2192 challenge \u2192 debate \u2192 purpose-based resolution arc."
+            }
+        },
+        {
+            "id": "rc-0002-q2",
+            "section": "RC",
+            "stem_type": "rc.inference",
+            "schemas": [
+                "rc.inference"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "passage_id": "rc-0002",
+            "passage": "(see rc-0002)",
+            "question": "It can be inferred from the passage that the author would most likely agree that",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "no single classification system is best for every biological purpose.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "visible traits are useless for classification.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "conservation planners should ignore molecular data.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "researchers who resisted new taxonomy were simply lazy.",
+                    "trap": "trap.rc.tone_mismatch",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "field identification and evolutionary history always coincide.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "E",
+                "why_runner_up_wrong": "The passage says the two can diverge; A follows from classification serving the question at hand."
+            }
+        },
+        {
+            "id": "lr-0026",
+            "section": "LR",
+            "stem_type": "qt.principle_apply",
+            "schemas": [
+                "qt.principle_apply"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Principle: A policy should not burden a group unless it produces a compensating benefit to society.",
+            "question": "Which situation most clearly violates the principle?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "A tax on textbooks funds schools but raises costs for low-income students without improving outcomes.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "A toll funds road repairs that help commuters.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "A subsidy helps farmers and lowers food prices.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "A fee funds parks enjoyed by the payers.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "A regulation protects workers and raises wages.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B has compensating benefit; A burdens a group without offsetting societal gain."
+            }
+        },
+        {
+            "id": "lr-0027",
+            "section": "LR",
+            "stem_type": "qt.method_of_reasoning",
+            "schemas": [
+                "qt.method_of_reasoning"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "The critic argues that the novel fails because its hero never changes; yet the hero's refusal to change is precisely what the author uses to critique society.",
+            "question": "The argument responds by",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "claiming a feature treated as a flaw serves the author's purpose.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "denying that the hero exists.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "appealing to popular opinion.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "asserting all novels must have changing heroes.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "attacking the critic personally.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D invents a rule; A reframes the alleged flaw as intentional."
+            }
+        },
+        {
+            "id": "lr-0028",
+            "section": "LR",
+            "stem_type": "qt.parallel_reasoning",
+            "schemas": [
+                "qt.parallel_reasoning"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "stimulus": "If the server is down, emails queue. Emails are queuing, so the server is down.",
+            "question": "Which argument has the most similar pattern?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "If it rains, the game is canceled. The game is canceled, so it rained.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "If it rains, streets get wet. Streets are wet, so it rained.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Only members may park here. Sam parked here, so Sam is a member.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "All dogs bark. Rex barks, so Rex is a dog.",
+                    "trap": "trap.reversed_relationship",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Either A or B. Not A, so B.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B is also affirming the consequent but A matches the conditional structure of the stimulus more directly."
+            }
+        },
+        {
+            "id": "lr-0029",
+            "section": "LR",
+            "stem_type": "qt.main_conclusion",
+            "schemas": [
+                "qt.main_conclusion"
+            ],
+            "difficulty": 2,
+            "source": "original",
+            "stimulus": "Since the river flooded twice this decade, and flood walls were never upgraded, the city should invest in levees now.",
+            "question": "The main conclusion is that",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "the city should invest in levees now.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "the river flooded twice this decade.",
+                    "trap": "trap.premise_restatement",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "flood walls were never upgraded.",
+                    "trap": "trap.premise_restatement",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "levees always prevent flooding.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "the decade is unusually wet.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B is a premise; A is the recommendation (conclusion)."
+            }
+        },
+        {
+            "id": "lr-0030",
+            "section": "LR",
+            "stem_type": "qt.role_of_statement",
+            "schemas": [
+                "qt.role_of_statement"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "The plan will fail unless costs fall. Costs have not fallen. Therefore the plan will fail.",
+            "question": "The claim that costs have not fallen plays which role?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "It is a premise supporting the conclusion.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "It is the main conclusion.",
+                    "trap": "trap.premise_restatement",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "It is background context with no logical role.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "It is an intermediate conclusion.",
+                    "trap": "trap.half_right",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "It contradicts the argument.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D overstates; the statement is a direct premise, not a sub-conclusion."
+            }
+        },
+        {
+            "id": "lr-0031",
+            "section": "LR",
+            "stem_type": "qt.point_at_issue",
+            "schemas": [
+                "qt.point_at_issue"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "Alex: The policy reduced crime. Jordan: Crime fell everywhere this year, so we can't credit the policy.",
+            "question": "Alex and Jordan disagree over whether",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "the policy caused the local crime reduction.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "crime fell locally.",
+                    "trap": "trap.premise_restatement",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "crime is measurable.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "policies ever work.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Jordan supports the policy.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "Both accept local decline; they dispute causation (A)."
+            }
+        },
+        {
+            "id": "lr-0032",
+            "section": "LR",
+            "stem_type": "qt.evaluate",
+            "schemas": [
+                "qt.evaluate"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "stimulus": "The new curriculum improved test scores, so it should be adopted nationwide.",
+            "question": "Which would be most useful to evaluate the argument?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Whether other factors changed in the pilot schools at the same time.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Whether teachers liked the curriculum.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Whether students enjoy school.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Whether textbooks are expensive.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Whether the nation has many schools.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B is tangential; A tests whether the curriculum caused the gain."
+            }
+        },
+        {
+            "id": "rc-0002-q3",
+            "section": "RC",
+            "stem_type": "rc.inference",
+            "schemas": [
+                "rc.inference"
+            ],
+            "difficulty": 3,
+            "source": "original",
+            "passage_id": "rc-0002",
+            "passage": "(see rc-0002)",
+            "question": "It can be inferred that the author would most likely agree that",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "combining morphological and genetic data improves classification.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "molecular tools should replace morphology entirely.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "resistance to revision was entirely unreasonable.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "visible traits are useless for biology.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "the debate has been settled permanently.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "Author favors complementarity, not replacement (A)."
+            }
+        },
+        {
+            "id": "rc-0002-q4",
+            "section": "RC",
+            "stem_type": "rc.comparative_relationship",
+            "schemas": [
+                "rc.comparative_relationship"
+            ],
+            "difficulty": 4,
+            "source": "original",
+            "passage_id": "rc-0002",
+            "passage": "(see rc-0002)",
+            "question": "The relationship between morphology-based classification and molecular classification is best described as",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "initially sequential, later treated as mutually informative.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "entirely unrelated disciplines.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "identical in practice.",
+                    "trap": "trap.too_strong_extreme",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "one disproving the other completely.",
+                    "trap": "trap.rc.wrong_viewpoint",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "competitive with no overlap.",
+                    "trap": "trap.rc.wrong_viewpoint",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "E",
+                "why_runner_up_wrong": "Passage ends with complementarity; A captures historical then integrative relation."
+            }
+        },
+        {
+            "id": "lr-0033",
+            "section": "LR",
+            "stem_type": "qt.strengthen",
+            "schemas": [
+                "trap.could_be_true",
+                "qt.strengthen"
+            ],
+            "difficulty": 2,
+            "source": "original",
+            "stimulus": "The witness saw a red car flee the scene, so the suspect's red car places him at the scene.",
+            "question": "Which strengthens the argument?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "No other red cars were reported in the area that night.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "The suspect owns a red car.",
+                    "trap": "trap.could_be_true",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Red cars are common.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "The witness wears glasses.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "The suspect denies being there.",
+                    "trap": "trap.opposite",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "B",
+                "why_runner_up_wrong": "B could be true but doesn't strengthen identification; A reduces alternative red-car sources."
+            }
+        },
+        {
+            "id": "lr-0034",
+            "section": "LR",
+            "stem_type": "qt.weaken",
+            "schemas": [
+                "trap.real_world_plausible",
+                "qt.weaken"
+            ],
+            "difficulty": 2,
+            "source": "original",
+            "stimulus": "Organic foods are healthier because they are natural.",
+            "question": "Which weakens the argument?",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Many natural substances are harmful and many processed foods are safe.",
+                    "trap": null,
+                    "correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "Organic farming uses more land.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "Consumers prefer organic labels.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "Some organic foods taste better.",
+                    "trap": "trap.real_world_plausible",
+                    "correct": false
+                },
+                {
+                    "id": "E",
+                    "text": "Farmers markets are popular.",
+                    "trap": "trap.out_of_scope",
+                    "correct": false
+                }
+            ],
+            "two_answer_fork": {
+                "runner_up": "D",
+                "why_runner_up_wrong": "D is plausible but irrelevant to health; A attacks the natural=healthy assumption."
             }
         }
     ]
