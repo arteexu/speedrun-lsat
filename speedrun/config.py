@@ -23,6 +23,7 @@ DEFAULTS: dict[str, Any] = {
     "ai_enabled": False,
     "section_filter": None,
     "schema_drill_count": 3,
+    "show_schema_ids": False,
 }
 
 
@@ -114,3 +115,8 @@ def section_filter(*, config: dict[str, Any] | None = None) -> str | None:
 def schema_drill_count(*, config: dict[str, Any] | None = None) -> int:
     cfg = config or load_config()
     return int(cfg.get("schema_drill_count", 3))
+
+
+def show_schema_ids(*, config: dict[str, Any] | None = None) -> bool:
+    cfg = config or load_config()
+    return bool(cfg.get("show_schema_ids", False))

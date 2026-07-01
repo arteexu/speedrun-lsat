@@ -220,7 +220,11 @@ def _readiness_card(result: Any) -> str:
     else:
         val = f'<div class="sr-value">{result.point:.0f}</div><div class="sr-range">likely {result.low:.0f}–{result.high:.0f} LSAT</div>'
     warn = '<div class="sr-warn">Latency penalty applied.</div>' if result.speed_flag else ""
-    next_step = f"<div class='sr-meta'>Best next: <b>{_esc(result.best_next_step)}</b></div>" if result.best_next_step else ""
+    next_step = (
+        f"<div class='sr-meta'>Best next: {schema_display_html(result.best_next_step)}</div>"
+        if result.best_next_step
+        else ""
+    )
     return (
         f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Readiness</h2>'
         f"{_confidence_badge(result.confidence)}</div>{val}{warn}{next_step}"
@@ -418,6 +422,7 @@ def render_config_editor_html() -> str:
         f"<tr><td>Daily goal (cards)</td><td><b>{cfg.get('daily_study_goal_cards')}</b></td></tr>"
         f"<tr><td>Interleaving</td><td>{interleaving_enabled()}</td></tr>"
         f"<tr><td>Section filter</td><td>{section_filter() or 'all'}</td></tr>"
+        f"<tr><td>Show schema ids</td><td>{cfg.get('show_schema_ids', False)}</td></tr>"
         f"<tr><td>LR budget</td><td>{budgets.get('LR', 84000) / 1000:.0f}s</td></tr>"
         f"<tr><td>RC budget</td><td>{budgets.get('RC', 96000) / 1000:.0f}s</td></tr>"
         f"</tbody></table>"

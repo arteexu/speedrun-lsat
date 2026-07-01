@@ -79,15 +79,21 @@ def schema_tooltip(schema_id: str) -> str:
     return f"{schema_label(schema_id)} ({raw})"
 
 
-def schema_display_html(schema_id: str, *, compact: bool = False) -> str:
-    """Render friendly label with raw id as subtitle or tooltip-only when compact."""
+def schema_display_html(
+    schema_id: str, *, compact: bool = False, show_id: bool | None = None
+) -> str:
+    """Render friendly label; raw id in tooltip by default, subtitle when show_id is true."""
     raw = normalize_schema_id(schema_id)
     label = schema_short_label(schema_id) if compact else schema_label(schema_id)
     title = html.escape(schema_tooltip(schema_id))
     esc_label = html.escape(label)
     if not raw:
         return f'<span class="sr-schema-cell">{esc_label}</span>'
-    if compact:
+    if show_id is None:
+        from speedrun.config import show_schema_ids
+
+        show_id = show_schema_ids()
+    if compact or not show_id:
         return f'<span class="sr-schema-cell sr-schema-compact" title="{title}">{esc_label}</span>'
     esc_raw = html.escape(raw)
     return (

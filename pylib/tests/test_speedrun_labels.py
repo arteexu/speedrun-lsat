@@ -65,15 +65,23 @@ def test_schema_tooltip_includes_raw_id():
     assert "flaw.conditional.mistaken_negation" in tip
 
 
-def test_schema_display_html_shows_label_and_id():
+def test_schema_display_html_hides_id_by_default():
     html = schema_display_html("rc.main_point")
     assert "Main point / primary purpose" in html
-    assert "rc.main_point" in html
+    assert 'class="sr-schema-id"' not in html
+    assert "rc.main_point" in html  # in title attribute only
+
+
+def test_schema_display_html_shows_id_when_requested():
+    html = schema_display_html("rc.main_point", show_id=True)
+    assert "Main point / primary purpose" in html
     assert 'class="sr-schema-id"' in html
+    assert "rc.main_point" in html
 
 
 def test_schema_display_html_compact_omits_subtitle():
     html = schema_display_html("rc.main_point", compact=True)
     assert "RC · Main Point" in html
     assert 'class="sr-schema-id"' not in html
+    assert 'title="' in html
     assert "rc.main_point" in html  # in title attribute

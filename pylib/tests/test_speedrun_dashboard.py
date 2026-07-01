@@ -92,6 +92,16 @@ def test_study_list_html_lists_cards():
     html = render_study_list_html(col, limit=5)
     assert "Schema-weighted queue" in html or "sr-queue-item" in html
     assert "sr:schema" not in html  # tags are stripped to bare schema ids
+    assert 'class="sr-schema-id"' not in html
     assert "sr-schema-cell" in html
     assert " · " in html  # friendly axis · name labels
+    col.close()
+
+
+def test_dashboard_html_hides_raw_schema_ids():
+    col = getEmptyCol()
+    import_seed_deck(col, backup=False)
+    html = render_dashboard_html(col)
+    assert 'class="sr-schema-id"' not in html
+    assert " · " in html
     col.close()
