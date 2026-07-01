@@ -1,0 +1,16 @@
+{
+    "version": "0.3.0",
+    "latency_budget_ms": {
+        "default": 90000,
+        "LR": 84000,
+        "RC": 96000,
+        "LG": 84000
+    },
+    "daily_study_goal_cards": 20,
+    "daily_study_goal_minutes": null,
+    "interleaving_enabled": true,
+    "ai_enabled": false,
+    "section_filter": null,
+    "schema_drill_count": 3,
+    "notes": "Per-section time budgets (ms) for the performance model. daily_study_goal_minutes is optional. section_filter: null | LR | RC | LG. interleaving_enabled toggles schema-weighted vs plain Anki queue."
+}
