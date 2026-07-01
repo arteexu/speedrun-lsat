@@ -55,7 +55,10 @@ def test_dashboard_html_abstains_without_reviews():
     col.close()
 
 
-def test_dashboard_html_shows_scores_after_reviews():
+def test_dashboard_gate_stays_locked_after_seed_pass():
+    # The default evidence gate is strict (250 cards + 80% coverage of every
+    # axis). A single pass of the small seed deck must NOT be enough to unlock a
+    # score -- that is the whole point of the guardrail.
     col = getEmptyCol()
     result = import_seed_deck(col)
     col.decks.select(result.deck_id)
@@ -66,10 +69,10 @@ def test_dashboard_html_shows_scores_after_reviews():
             break
         col.sched.answerCard(card, 3)
     html = render_dashboard_html(col)
-    assert "transfer" in html.lower()
-    assert "graded attempts" in html
-    # readiness still abstains at default thresholds
-    assert "No score yet" in html or "projected LSAT" in html
+    assert "Evidence gate" in html
+    assert "Locked" in html
+    # Scores abstain while the gate is locked.
+    assert "No score" in html
     col.close()
 
 

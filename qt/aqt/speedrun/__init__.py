@@ -101,6 +101,7 @@ def setup_menu(mw) -> None:
 
     from speedrun.dashboard import (
         render_calibration_html,
+        render_concept_map_html,
         render_memory_report_html,
         render_performance_report_html,
         render_readiness_report_html,
@@ -108,6 +109,7 @@ def setup_menu(mw) -> None:
     )
 
     for label, fn in (
+        ("Concept map", render_concept_map_html),
         ("Memory report", render_memory_report_html),
         ("Performance report", render_performance_report_html),
         ("Readiness report", render_readiness_report_html),
