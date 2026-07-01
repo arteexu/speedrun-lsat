@@ -24,10 +24,14 @@ fi
 
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim >/dev/null
 
+# Minimum iOS version for C deps (zstd, ring, sqlite) and the Rust link step.
+export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-15.0}"
+export MACOSX_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET}"
+
 # Build ---------------------------------------------------------------------
-echo "Building device (aarch64-apple-ios)…"
+echo "Building device (aarch64-apple-ios, min ${IPHONEOS_DEPLOYMENT_TARGET})…"
 cargo build -p "$CRATE" --release --target aarch64-apple-ios
-echo "Building simulator (aarch64-apple-ios-sim)…"
+echo "Building simulator (aarch64-apple-ios-sim, min ${IPHONEOS_DEPLOYMENT_TARGET})…"
 cargo build -p "$CRATE" --release --target aarch64-apple-ios-sim
 
 TARGET_DIR="$(cargo metadata --format-version=1 \
