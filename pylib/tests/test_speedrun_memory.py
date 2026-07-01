@@ -12,6 +12,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import json  # noqa: E402
+
+SEED_ITEM_COUNT = len(
+    json.loads(
+        (REPO_ROOT / "speedrun/data/seed_deck.json").read_text(encoding="utf-8")
+    )["items"]
+)
+
 from speedrun.scoring.memory import (  # noqa: E402
     mean_ci,
     memory_score,
@@ -59,20 +67,20 @@ def test_importer_creates_notetype_deck_and_tags():
     result = import_seed_deck(col)
 
     assert result.notetype_created is True
-    assert result.added == 11
+    assert result.added == SEED_ITEM_COUNT
     assert col.models.by_name(NOTETYPE_NAME) is not None
     assert DECK_NAME in [d.name for d in col.decks.all_names_and_ids()]
 
     # every imported note carries a schema tag the queue can read
     nids = col.find_notes(f'"note:{NOTETYPE_NAME}"')
-    assert len(nids) == 11
+    assert len(nids) == SEED_ITEM_COUNT
     note = col.get_note(nids[0])
     assert any(t.startswith(SCHEMA_TAG) for t in note.tags)
 
     # idempotent: importing again adds nothing
     again = import_seed_deck(col)
     assert again.added == 0
-    assert again.skipped == 11
+    assert again.skipped == SEED_ITEM_COUNT
     col.close()
 
 

@@ -13,6 +13,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import json  # noqa: E402
+
+SEED_ITEM_COUNT = len(
+    json.loads(
+        (REPO_ROOT / "speedrun/data/seed_deck.json").read_text(encoding="utf-8")
+    )["items"]
+)
+
 from speedrun.ai.baseline import keyword_score, load_gold_set  # noqa: E402
 from speedrun.ai.card_checker import PASSING_CUTOFF, check_seed_deck  # noqa: E402
 from speedrun.ai.client import StubLLMClient  # noqa: E402
@@ -46,7 +54,7 @@ def test_keyword_baseline():
 
 def test_card_checker_runs():
     report = check_seed_deck()
-    assert report.n_checked == 11
+    assert report.n_checked == SEED_ITEM_COUNT
     assert report.cutoff == PASSING_CUTOFF
 
 

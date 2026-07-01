@@ -31,7 +31,7 @@ def test_load_schema_weights():
 
 def test_ordered_cards_sorted_by_priority():
     col = getEmptyCol()
-    import_seed_deck(col)
+    import_seed_deck(col, backup=False)
     cards = ordered_cards(col, limit=50)
     assert cards, "expected the imported deck to yield cards"
     priorities = [c.priority for c in cards]
@@ -44,11 +44,12 @@ def test_ordered_cards_sorted_by_priority():
 
 def test_dashboard_html_abstains_without_reviews():
     col = getEmptyCol()
-    import_seed_deck(col)
+    import_seed_deck(col, backup=False)
     html = render_dashboard_html(col)
     assert "Memory" in html
     assert "Performance" in html
     assert "Readiness" in html
+    assert "sr-dash" in html
     # all three abstain without reviews
     assert html.count("No score") >= 3
     col.close()
@@ -74,9 +75,9 @@ def test_dashboard_html_shows_scores_after_reviews():
 
 def test_study_list_html_lists_cards():
     col = getEmptyCol()
-    import_seed_deck(col)
+    import_seed_deck(col, backup=False)
     html = render_study_list_html(col, limit=5)
-    assert "priority" in html
+    assert "Schema-weighted queue" in html or "sr-queue-item" in html
     assert "sr:schema" not in html  # tags are stripped to bare schema ids
     assert "flaw." in html or "qt." in html or "rc." in html
     col.close()

@@ -1071,6 +1071,12 @@ title="{}" {}>{}</button>""".format(
         from aqt.reviewer import Reviewer
 
         self.reviewer = Reviewer(self)
+        try:
+            from aqt import speedrun as _speedrun
+
+            _speedrun.setup_reviewer_hooks(self.reviewer)
+        except Exception:
+            pass
 
     # Syncing
     ##########################################################################
