@@ -16,7 +16,14 @@ from pathlib import Path
 
 from aqt import gui_hooks
 from aqt.qt import QAction, QKeySequence, QMenu, QShortcut, qconnect
-from aqt.utils import disable_help_button, showInfo, tooltip
+from aqt.utils import (
+    disable_help_button,
+    ensureWidgetInScreenBoundaries,
+    restoreGeom,
+    saveGeom,
+    showInfo,
+    tooltip,
+)
 
 DECK_NAME = "LSAT Speedrun"
 _score_action: QAction | None = None
@@ -168,6 +175,108 @@ def _require_col(mw) -> bool:
     return True
 
 
+_GEOM_KEY = "speedrunHtml"
+
+
+def _profile_has_saved_geom(key: str) -> bool:
+    import aqt
+    from aqt.utils import _QtStateKeyKind, _qt_state_key
+
+    assert aqt.mw.pm.profile is not None
+    geom_key = _qt_state_key(_QtStateKeyKind.GEOMETRY, key)
+    return bool(aqt.mw.pm.profile.get(geom_key))
+
+
+def _center_dialog_on_primary_screen(diag, minWidth: int, minHeight: int) -> None:
+    from aqt.qt import QApplication
+    from speedrun.dialog_geometry import centered_in_available_geometry
+
+    screen = QApplication.primaryScreen()
+    if screen is None:
+        diag.resize(minWidth, minHeight)
+        return
+    geom = screen.availableGeometry()
+    x, y, width, height = centered_in_available_geometry(
+        geom.x(),
+        geom.y(),
+        geom.width(),
+        geom.height(),
+        minWidth,
+        minHeight,
+    )
+    diag.setGeometry(x, y, width, height)
+
+
+class SpeedrunHtmlDialog:
+    """Non-modal HTML dialog using QWebEngineView (Anki stats/emptycards pattern)."""
+
+    def __init__(
+        self,
+        mw,
+        html: str,
+        *,
+        title: str,
+        minWidth: int,
+        minHeight: int,
+    ) -> None:
+        from aqt.qt import (
+            QDialog,
+            QDialogButtonBox,
+            Qt,
+            QUrl,
+            QVBoxLayout,
+            QWebEngineView,
+        )
+
+        class _Dialog(QDialog):
+            silentlyClose = True
+
+            def closeWithCallback(self, callback) -> None:
+                self.reject()
+                callback()
+
+        self.mw = mw
+        self._dialog = _Dialog(mw, Qt.WindowType.Window)
+        diag = self._dialog
+        diag.setWindowTitle(title)
+        diag.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        disable_help_button(diag)
+        mw.garbage_collect_on_dialog_finish(diag)
+
+        layout = QVBoxLayout(diag)
+        self._web = QWebEngineView(diag)
+        self._web.setHtml(html, QUrl("about:blank"))
+        layout.addWidget(self._web)
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        layout.addWidget(box)
+        qconnect(box.rejected, diag.reject)
+        qconnect(box.accepted, diag.accept)
+
+        diag.setMinimumWidth(minWidth)
+        diag.setMinimumHeight(minHeight)
+        restoreGeom(diag, _GEOM_KEY, default_size=(minWidth, minHeight))
+        if not _profile_has_saved_geom(_GEOM_KEY):
+            _center_dialog_on_primary_screen(diag, minWidth, minHeight)
+
+        qconnect(diag.finished, self._on_finished)
+
+    def _on_finished(self) -> None:
+        if self._web is not None:
+            self._web.setHtml("")
+            self._web.deleteLater()
+            self._web = None
+        saveGeom(self._dialog, _GEOM_KEY)
+
+    def show(self) -> None:
+        self._dialog.show()
+        ensureWidgetInScreenBoundaries(self._dialog)
+        self._dialog.activateWindow()
+        self._dialog.raise_()
+
+    def close(self) -> None:
+        self._dialog.close()
+
+
 def _show_html(
     mw,
     html: str,
@@ -181,28 +290,25 @@ def _show_html(
     Anki's showText(type=\"html\") uses QTextBrowser, which strips <style> tags
     and ignores most CSS — the Speedrun dashboard relies on a <style> block.
     """
-    from aqt.qt import (
-        QDialog,
-        QDialogButtonBox,
-        QUrl,
-        QVBoxLayout,
-        QWebEngineView,
-    )
+    existing = getattr(mw, "_speedrun_html_dialog", None)
+    if existing is not None:
+        existing.close()
 
-    diag = QDialog(mw)
-    diag.setWindowTitle(title)
-    disable_help_button(diag)
-    layout = QVBoxLayout(diag)
-    web = QWebEngineView(diag)
-    web.setHtml(html, QUrl("about:blank"))
-    layout.addWidget(web)
-    box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-    layout.addWidget(box)
-    qconnect(box.rejected, diag.reject)
-    qconnect(box.accepted, diag.accept)
-    diag.setMinimumWidth(minWidth)
-    diag.setMinimumHeight(minHeight)
-    diag.exec()
+    dialog = SpeedrunHtmlDialog(
+        mw,
+        html,
+        title=title,
+        minWidth=minWidth,
+        minHeight=minHeight,
+    )
+    mw._speedrun_html_dialog = dialog
+
+    def on_finished(_code: int) -> None:
+        if getattr(mw, "_speedrun_html_dialog", None) is dialog:
+            mw._speedrun_html_dialog = None
+
+    qconnect(dialog._dialog.finished, on_finished)
+    dialog.show()
 
 
 def _show_report(mw, renderer, title: str) -> None:
