@@ -16,6 +16,7 @@ pub(crate) mod queue;
 mod reviews;
 pub mod schema_weighted;
 mod service;
+pub mod speedrun_scores;
 pub mod states;
 pub mod timespan;
 pub mod timing;

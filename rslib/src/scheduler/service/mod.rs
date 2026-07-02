@@ -141,6 +141,120 @@ impl crate::services::SchedulerService for Collection {
         })
     }
 
+    /// Speedrun LSAT: compute the three honest scores (memory / performance /
+    /// readiness) with ranges + give-up. Read-only. Shared by desktop and phone.
+    fn compute_speedrun_scores(
+        &mut self,
+        input: scheduler::SpeedrunScoresRequest,
+    ) -> Result<scheduler::SpeedrunScoresResponse> {
+        use std::collections::HashMap;
+
+        use crate::scheduler::speedrun_scores::{
+            memory_score, per_schema_performance, performance_score, readiness_score, Attempt,
+            ScoreOut,
+        };
+
+        let prefix = if input.schema_tag_prefix.is_empty() {
+            "sr:schema:".to_string()
+        } else {
+            input.schema_tag_prefix.clone()
+        };
+        let lr_budget = if input.lr_budget_ms == 0 { 84_000 } else { input.lr_budget_ms } as i64;
+        let rc_budget = if input.rc_budget_ms == 0 { 96_000 } else { input.rc_budget_ms } as i64;
+        let min_reviewed_overall =
+            if input.min_reviewed_overall == 0 { 5 } else { input.min_reviewed_overall as usize };
+        let min_attempts_overall =
+            if input.min_attempts_overall == 0 { 10 } else { input.min_attempts_overall as usize };
+        let readiness_min_attempts =
+            if input.readiness_min_attempts == 0 { 200 } else { input.readiness_min_attempts as usize };
+        let readiness_min_coverage =
+            if input.readiness_min_coverage == 0.0 { 0.5 } else { input.readiness_min_coverage };
+
+        let schema_of = |tags: &str| -> Option<String> {
+            tags.split_whitespace()
+                .find_map(|t| t.strip_prefix(&prefix).map(str::to_string))
+        };
+
+        // Memory: per-card FSRS retrievability via the engine's SQL function.
+        let timing = self.timing_today()?;
+        let today = timing.days_elapsed as i64;
+        let next_day_at = timing.next_day_at.0;
+        let now = TimestampSecs::now().0;
+        let mut retr_all: Vec<Option<f64>> = Vec::new();
+        {
+            let mut stmt = self.storage.db.prepare(
+                "SELECT n.tags, extract_fsrs_retrievability(c.data, \
+                 CASE WHEN c.odue != 0 THEN c.odue ELSE c.due END, c.ivl, ?, ?, ?) \
+                 FROM cards c JOIN notes n ON c.nid = n.id",
+            )?;
+            let rows = stmt.query_map(rusqlite::params![today, next_day_at, now], |row| {
+                let tags: String = row.get(0)?;
+                let retr: Option<f64> = row.get(1)?;
+                Ok((tags, retr))
+            })?;
+            for row in rows {
+                let (tags, retr) = row?;
+                if schema_of(&tags).is_some() {
+                    retr_all.push(retr);
+                }
+            }
+        }
+
+        // Performance: graded attempts from the revlog (latency-adjusted).
+        let mut attempts_all: Vec<Attempt> = Vec::new();
+        let mut by_schema: HashMap<String, Vec<Attempt>> = HashMap::new();
+        {
+            let mut stmt = self.storage.db.prepare(
+                "SELECT n.tags, r.ease, r.time FROM revlog r \
+                 JOIN cards c ON r.cid = c.id JOIN notes n ON c.nid = n.id WHERE r.ease > 0",
+            )?;
+            let rows = stmt.query_map([], |row| {
+                let tags: String = row.get(0)?;
+                let ease: i64 = row.get(1)?;
+                let latency: i64 = row.get(2)?;
+                Ok((tags, ease, latency))
+            })?;
+            for row in rows {
+                let (tags, ease, latency) = row?;
+                let Some(schema) = schema_of(&tags) else { continue };
+                let correct = ease != 1;
+                let budget = if schema.starts_with("rc.") { rc_budget } else { lr_budget };
+                let att = Attempt { correct, on_budget: correct && latency <= budget };
+                attempts_all.push(att);
+                by_schema.entry(schema).or_default().push(att);
+            }
+        }
+
+        let memory = memory_score(&retr_all, min_reviewed_overall);
+        let performance = performance_score(&attempts_all, min_attempts_overall);
+        let per_schema = per_schema_performance(&by_schema);
+        let weights: HashMap<String, f64> = input.schema_weight.clone();
+        let readiness = readiness_score(
+            &per_schema,
+            &weights,
+            performance.n,
+            readiness_min_attempts,
+            readiness_min_coverage,
+        );
+
+        fn to_proto(s: ScoreOut) -> scheduler::ScoreValue {
+            scheduler::ScoreValue {
+                gave_up: s.gave_up,
+                point: s.point,
+                low: s.low,
+                high: s.high,
+                n: s.n,
+                reason: s.reason,
+            }
+        }
+
+        Ok(scheduler::SpeedrunScoresResponse {
+            memory: Some(to_proto(memory)),
+            performance: Some(to_proto(performance)),
+            readiness: Some(to_proto(readiness)),
+        })
+    }
+
     fn update_stats(&mut self, input: scheduler::UpdateStatsRequest) -> Result<()> {
         self.transact_no_undo(|col| {
             let today = col.current_due_day(0)?;
