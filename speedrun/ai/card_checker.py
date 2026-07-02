@@ -1,26 +1,32 @@
 # Copyright: Speedrun LSAT contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-"""Card checker against gold set with pre-set cutoff (spec 7f).
+"""Card checker with a pre-set cutoff (spec 7f).
 
-Works with AI_OFF=true using keyword overlap; LLM path optional when enabled.
+Two layers:
+  * Keyword topicality vs the gold set (works fully offline, AI off).
+  * Optional LLM correctness check: when a usable client is supplied, the model
+    is asked whether the item's marked-correct answer is actually best; a "no"
+    forces the item to fail as ``wrong`` regardless of keyword score.
+
+`block_failing` returns only the items at/above cutoff, so generated cards can be
+gated before students ever see them.
 """
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
-from dataclasses import dataclass
+import re
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from speedrun.ai.baseline import keyword_score
-from speedrun.ai.baseline import load_gold_set
-from speedrun.ai.client import default_client
+from speedrun.ai.baseline import keyword_score, load_gold_set
+from speedrun.ai.client import LLMClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_GOLD = REPO_ROOT / "speedrun" / "data" / "gold_set.json"
 
-# Pre-set cutoff — stated before looking at results.
+# Pre-set cutoff - stated before looking at results.
 PASSING_CUTOFF = 0.35
 
 
@@ -31,6 +37,7 @@ class CheckResult:
     score: float
     category: str  # correct_useful | wrong | correct_bad_teaching
     reason: str
+    llm_verified: bool | None = None  # None when no LLM check was run
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -56,11 +63,37 @@ class CheckerReport:
 def _classify(score: float, passed: bool, item: dict) -> tuple[str, str]:
     if not passed:
         if score < 0.1:
-            return "wrong", "No overlap with gold set — likely wrong or off-topic."
-        return "correct_bad_teaching", "Below cutoff — vague or weak teaching value."
+            return "wrong", "No overlap with gold set - likely wrong or off-topic."
+        return "correct_bad_teaching", "Below cutoff - vague or weak teaching value."
     if item.get("difficulty", 1) <= 1:
         return "correct_bad_teaching", "Trivial or duplicate content."
     return "correct_useful", "Passes keyword baseline cutoff."
+
+
+def _llm_verify_correct(item: dict, client: LLMClient) -> bool | None:
+    """Ask the model whether the item's marked-correct answer is truly best.
+    Returns True/False, or None if AI unavailable / unparseable."""
+    choices = item.get("choices", [])
+    correct = next((c for c in choices if c.get("correct")), None)
+    if not correct:
+        return None
+    rendered = "\n".join(f"({c.get('id')}) {c.get('text','')}" for c in choices)
+    prompt = (
+        "You are checking an LSAT item. Is the marked answer actually the single "
+        "best answer to the question given the stimulus? Reply ONLY as JSON: "
+        '{"correct": true|false}.\n\n'
+        f"Stimulus: {item.get('stimulus') or item.get('passage','')}\n"
+        f"Question: {item.get('question','')}\n"
+        f"Choices:\n{rendered}\n"
+        f"Marked answer: {correct.get('id')}"
+    )
+    resp = client.complete(prompt, max_tokens=64)
+    if not resp.ok:
+        return None
+    m = re.search(r'"correct"\s*:\s*(true|false)', resp.text, re.I)
+    if not m:
+        return None
+    return m.group(1).lower() == "true"
 
 
 def check_card(
@@ -68,17 +101,28 @@ def check_card(
     gold: list[dict],
     *,
     cutoff: float = PASSING_CUTOFF,
+    client: LLMClient | None = None,
 ) -> CheckResult:
-    q = item.get("question", "") + " " + item.get("stimulus", "")
+    q = item.get("question", "") + " " + (item.get("stimulus") or item.get("passage", ""))
     score = keyword_score(q, "", gold)
     passed = score >= cutoff
     category, reason = _classify(score, passed, item)
+
+    llm_verified: bool | None = None
+    if client is not None:
+        llm_verified = _llm_verify_correct(item, client)
+        if llm_verified is False:
+            passed = False
+            category = "wrong"
+            reason = "LLM check: the marked answer is not the best answer."
+
     return CheckResult(
         item_id=item.get("id", "?"),
         passed=passed,
         score=score,
         category=category,
         reason=reason,
+        llm_verified=llm_verified,
     )
 
 
@@ -87,10 +131,10 @@ def check_items(
     *,
     gold_path: Path = DEFAULT_GOLD,
     cutoff: float = PASSING_CUTOFF,
+    client: LLMClient | None = None,
 ) -> CheckerReport:
     gold = load_gold_set(gold_path)
-    _ = default_client()  # reserved for LLM-enhanced check when AI on
-    results = [check_card(it, gold, cutoff=cutoff) for it in items]
+    results = [check_card(it, gold, cutoff=cutoff, client=client) for it in items]
     counts = {"correct_useful": 0, "wrong": 0, "correct_bad_teaching": 0}
     for r in results:
         counts[r.category] += 1
@@ -104,6 +148,21 @@ def check_items(
         correct_bad_teaching=counts["correct_bad_teaching"],
         results=results,
     )
+
+
+def block_failing(
+    items: list[dict],
+    *,
+    gold_path: Path = DEFAULT_GOLD,
+    cutoff: float = PASSING_CUTOFF,
+    client: LLMClient | None = None,
+) -> tuple[list[dict], CheckerReport]:
+    """Return (only items that passed the checker, report). This is the gate that
+    keeps wrong/weak generated cards away from students."""
+    report = check_items(items, gold_path=gold_path, cutoff=cutoff, client=client)
+    passed_ids = {r.item_id for r in report.results if r.passed}
+    kept = [it for it in items if it.get("id", "?") in passed_ids]
+    return kept, report
 
 
 def check_seed_deck(seed_path: Path | None = None) -> CheckerReport:

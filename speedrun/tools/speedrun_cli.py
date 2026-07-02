@@ -136,6 +136,14 @@ def cmd_pretest(args) -> int:
     return 0
 
 
+def cmd_ai_eval(args) -> int:
+    from speedrun.eval.ai_eval import format_report, run_ai_eval
+
+    report = run_ai_eval()
+    print(format_report(report))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     ap = argparse.ArgumentParser(description=__doc__)
@@ -167,6 +175,9 @@ def main(argv: list[str] | None = None) -> int:
         func=cmd_transfer_gap
     )
     sub.add_parser("health", help="health check").set_defaults(func=cmd_health)
+    sub.add_parser(
+        "ai-eval", help="AI vs baseline eval on held-out gold set"
+    ).set_defaults(func=cmd_ai_eval)
 
     gaps = sub.add_parser("gaps", help="coverage gap report from collection")
     gaps.add_argument("--top", type=int, default=20)
@@ -177,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     pt.set_defaults(func=cmd_pretest)
 
     args = ap.parse_args(argv)
-    if not args.col and not args.base and args.cmd not in ("coverage", "calibrate"):
+    if not args.col and not args.base and args.cmd not in ("coverage", "calibrate", "ai-eval"):
         ap.error("Pass --col or --base for this subcommand")
     return args.func(args)
 

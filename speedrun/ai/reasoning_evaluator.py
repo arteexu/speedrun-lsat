@@ -37,6 +37,7 @@ class ReasoningEval:
     matched_rationale: bool
     weakness_patterns: list[WeaknessPattern]
     feedback: str
+    source: str = "offline"  # "offline" or the model id (traceability rule)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -44,14 +45,42 @@ class ReasoningEval:
         return d
 
 
+def _llm_grade(student_text: str, fork_rationale: str, client) -> tuple[float, str, str] | None:
+    """LLM grade grounded to the fork rationale. Returns (score, feedback, source)
+    or None if AI unavailable/unparseable, so callers fall back to the heuristic."""
+    if not fork_rationale.strip():
+        return None
+    prompt = (
+        "You are grading a student's LSAT explanation against the official "
+        "rationale for why the runner-up answer is wrong. Ground your judgment "
+        "ONLY in the rationale. Reply as JSON: "
+        '{"score": 0.0-1.0, "feedback": "one sentence"}.\n\n'
+        f"Official rationale: {fork_rationale}\n"
+        f"Student explanation: {student_text}"
+    )
+    resp = client.complete(prompt, max_tokens=128)
+    if not resp.ok:
+        return None
+    s = re.search(r'"score"\s*:\s*([0-9]*\.?[0-9]+)', resp.text)
+    f = re.search(r'"feedback"\s*:\s*"([^"]*)"', resp.text)
+    if not s:
+        return None
+    score = max(0.0, min(1.0, float(s.group(1))))
+    feedback = f.group(1) if f else "Graded against the fork rationale."
+    return score, feedback, resp.source
+
+
 def evaluate_explanation(
     student_text: str,
     *,
     expected_schema: str | None = None,
     fork_rationale: str = "",
+    client=None,
 ) -> ReasoningEval:
-    """Stub evaluator: keyword match against rationale + trap pattern tally."""
-    _ = default_client()
+    """Grade a student's explanation. Uses the LLM (grounded to the fork
+    rationale) when available, else an offline keyword heuristic. Always tallies
+    recurring flaw/trap weakness patterns (Insight 8)."""
+    client = client or default_client()
     text = student_text.lower()
     rationale_hit = False
     if fork_rationale:
@@ -86,9 +115,15 @@ def evaluate_explanation(
     if patterns:
         feedback += f" Weakness patterns: {', '.join(p.schema for p in patterns)}."
 
+    source = "offline"
+    graded = _llm_grade(student_text, fork_rationale, client)
+    if graded is not None:
+        score, feedback, source = graded
+
     return ReasoningEval(
         score=score,
         matched_rationale=rationale_hit,
         weakness_patterns=patterns,
         feedback=feedback,
+        source=source,
     )

@@ -121,6 +121,28 @@ PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/offline_test.py
 - **Offline test:** `SPEEDRUN_AI_OFF=1` → memory 100%, performance 93%, readiness
   computes with lowered thresholds.
 
+## AI (checked, off-switchable)
+
+See [ai.md](ai.md) for the full note. AI is off by default; the three scores
+never import `speedrun.ai` (`test_three_scores_compute_with_ai_off`).
+
+```bash
+# baseline-only (AI off): honest gate failure
+PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/speedrun_cli.py ai-eval
+# real numbers (needs a key):
+SPEEDRUN_AI_OFF=0 OPENAI_API_KEY=sk-... PYTHONPATH=out/pylib \
+  out/pyenv/bin/python speedrun/tools/speedrun_cli.py ai-eval
+```
+
+- Held-out eval (10 test / 40 corpus, 50-item gold set) reports per-method
+  **accuracy** and **wrong-answer rate** vs a pre-set cutoff; side-by-side AI vs
+  keyword vs TF-IDF vector.
+- With AI off, baselines score (keyword ~10%, vector ~20%) and the AI gate fails
+  honestly (0%). Real AI numbers to be recorded here after a live key run.
+- Card generation is gated by `block_failing` (cutoff 0.35) with an optional LLM
+  correctness veto; every AI output carries a named `source`.
+- 21 AI unit tests pass fully offline (scripted client, no network).
+
 ## iOS engine
 
 ```bash

@@ -405,9 +405,10 @@ def commentate(
 
                 client = default_client()
             resp = client.complete(build_commentary_prompt(passage_text))
-            if getattr(resp, "text", "").strip():
+            # Source enforcement: only show AI text with a real, named source.
+            if getattr(resp, "ok", False):
                 return CommentaryResult(
-                    source=getattr(resp, "source", "ai"),
+                    source=resp.source,
                     ai_used=True,
                     analysis=analysis,
                     ai_text=resp.text.strip(),
@@ -427,10 +428,11 @@ def answer_question(passage_text: str, question: str, *, client=None) -> dict[st
 
                 client = default_client()
             resp = client.complete(build_commentary_prompt(passage_text, question))
-            if getattr(resp, "text", "").strip():
+            # Source enforcement: only show AI text with a real, named source.
+            if getattr(resp, "ok", False):
                 return {
                     "answer": resp.text.strip(),
-                    "source": getattr(resp, "source", "ai"),
+                    "source": resp.source,
                     "ai_used": True,
                     "evidence": [],
                 }
