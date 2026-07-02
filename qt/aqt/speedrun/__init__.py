@@ -755,23 +755,27 @@ def _import_seed(mw) -> None:
     try:
         from speedrun.tools import import_seed_deck as importer
 
-        if importer.is_seed_deck_imported(mw.col):
-            showInfo(
-                "The LSAT Speedrun seed deck is already imported "
-                f"({importer.SEED_ITEM_COUNT} notes).",
-                title="Already imported",
-            )
-            return
-
+        # Always run: it is idempotent (skips existing notes) and also refreshes
+        # display fields, so re-running upgrades older decks to friendly labels.
         result = importer.import_seed_deck(mw.col)
     except Exception as exc:  # pragma: no cover - defensive
         tooltip(f"Import error: {exc}")
         return
     mw.reset()
-    msg = (
-        f"LSAT Speedrun: {result.added} card(s) imported, "
-        f"{result.skipped} already present."
-    )
+    if result.added == 0 and result.relabeled == 0:
+        msg = (
+            f"LSAT Speedrun seed deck already present and up to date "
+            f"({importer.SEED_ITEM_COUNT} notes)."
+        )
+    else:
+        parts = []
+        if result.added:
+            parts.append(f"{result.added} card(s) imported")
+        if result.skipped:
+            parts.append(f"{result.skipped} already present")
+        if result.relabeled:
+            parts.append(f"{result.relabeled} relabeled to friendly names")
+        msg = "LSAT Speedrun: " + ", ".join(parts) + "."
     if result.backup_path:
         msg += f" Backup: {result.backup_path}"
     tooltip(msg)

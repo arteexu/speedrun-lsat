@@ -41,9 +41,40 @@ SEED_ITEM_COUNT = len(
     json.loads(DEFAULT_DECK_JSON.read_text(encoding="utf-8"))["items"]
 )
 
+from speedrun.taxonomy.labels import schema_label
+
 NOTETYPE_NAME = "LSAT Speedrun"
 DECK_NAME = "LSAT Speedrun"
 SCHEMA_TAG = "sr:schema:"
+
+# Friendly, human-readable display values for the card faces. The engine keys off
+# the machine `sr:*` tags (see build_tags); these fields are display-only, so we
+# store readable labels instead of raw ids like `flaw.causal`.
+SECTION_LABELS = {
+    "LR": "Logical Reasoning",
+    "RC": "Reading Comprehension",
+    "LG": "Logic Games",
+}
+
+
+def _section_label(section: str) -> str:
+    return SECTION_LABELS.get(section, section)
+
+
+def _qtype_label(stem_type: str) -> str:
+    """`qt.weaken` -> `Weaken`, `necessary_assumption` -> `Necessary Assumption`."""
+    if not stem_type:
+        return ""
+    raw = stem_type
+    # Drop a leading axis token (e.g. `qt.`, `lg.`) so we show just the type.
+    if "." in raw:
+        raw = raw.split(".", 1)[1]
+    return raw.replace("_", " ").replace(".", " ").strip().title()
+
+
+def _schema_display(item: dict[str, Any]) -> str:
+    primary = _primary_schema(item)
+    return schema_label(primary) if primary else ""
 QTYPE_TAG = "sr:qtype:"
 TRAP_TAG = "sr:trap:"
 SECTION_TAG = "sr:section:"
@@ -96,6 +127,7 @@ class ImportResult:
     notetype_created: bool
     deck_id: int
     backup_path: str | None = None
+    relabeled: int = 0
 
 
 def is_seed_deck_imported(col) -> bool:
@@ -215,17 +247,22 @@ def import_seed_deck(
 
     added = 0
     skipped = 0
+    relabeled = 0
     for item in data["items"]:
         item_id = item["id"]
-        # idempotency: skip if an ItemId note already exists
-        if col.find_notes(f'"note:{NOTETYPE_NAME}" "ItemId:{item_id}"'):
+        # idempotency: skip if an ItemId note already exists, but refresh its
+        # display fields so decks imported before friendly labels get upgraded.
+        existing = col.find_notes(f'"note:{NOTETYPE_NAME}" "ItemId:{item_id}"')
+        if existing:
             skipped += 1
+            if _relabel_note(col, existing[0], item):
+                relabeled += 1
             continue
         note = col.new_note(nt)
         note["ItemId"] = item_id
-        note["Section"] = item.get("section", "")
-        note["QuestionType"] = item.get("stem_type", "")
-        note["Schema"] = _primary_schema(item)
+        note["Section"] = _section_label(item.get("section", ""))
+        note["QuestionType"] = _qtype_label(item.get("stem_type", ""))
+        note["Schema"] = _schema_display(item)
         note["Difficulty"] = str(item.get("difficulty", ""))
         note["Stimulus"] = item.get("stimulus") or item.get("passage", "")
         note["Question"] = item.get("question", "")
@@ -250,8 +287,31 @@ def import_seed_deck(
         added += 1
 
     return ImportResult(
-        added, skipped, created, deck_id, backup_path=str(backup_path) if backup_path else None
+        added,
+        skipped,
+        created,
+        deck_id,
+        backup_path=str(backup_path) if backup_path else None,
+        relabeled=relabeled,
     )
+
+
+def _relabel_note(col, note_id: int, item: dict[str, Any]) -> bool:
+    """Refresh display-only fields on an existing note. Returns True if changed."""
+    note = col.get_note(note_id)
+    updates = {
+        "Section": _section_label(item.get("section", "")),
+        "QuestionType": _qtype_label(item.get("stem_type", "")),
+        "Schema": _schema_display(item),
+    }
+    changed = False
+    for field, value in updates.items():
+        if field in note and note[field] != value:
+            note[field] = value
+            changed = True
+    if changed:
+        col.update_note(note)
+    return changed
 
 
 def _open_collection(args):
@@ -284,8 +344,8 @@ def main(argv: list[str]) -> int:
         col.close()
     print(
         f"Imported into '{DECK_NAME}': {result.added} added, {result.skipped} "
-        f"skipped (already present). Note type "
-        f"{'created' if result.notetype_created else 'reused'}."
+        f"skipped (already present), {result.relabeled} relabeled to friendly "
+        f"names. Note type {'created' if result.notetype_created else 'reused'}."
     )
     if result.backup_path:
         print(f"Backup: {result.backup_path}")
