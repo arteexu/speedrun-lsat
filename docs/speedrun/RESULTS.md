@@ -143,6 +143,30 @@ SPEEDRUN_AI_OFF=0 OPENAI_API_KEY=sk-... PYTHONPATH=out/pylib \
   correctness veto; every AI output carries a named `source`.
 - 21 AI unit tests pass fully offline (scripted client, no network).
 
+## Shared scores RPC (desktop + phone)
+
+- `ComputeSpeedrunScores` (scheduler service 13, method 40) computes memory /
+  performance / readiness in Rust; 8 Rust unit tests pass.
+- Python<->Rust **parity** verified on the exam deck
+  (`pylib/tests/test_speedrun_scores_rpc.py`, 4 tests) - the phone and desktop
+  get identical scores from one implementation.
+- Phone renders the three scores via this RPC (AnkiKit `testComputeScores...`).
+
+## Two-way sync
+
+```bash
+PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/sync_test.py
+```
+
+- Two collections against a live self-hosted server: reviews from both land
+  exactly once (6 each, then 10 each), no cards duplicated. **No lost or
+  double-counted reviews.**
+- iOS sync client verified against the running server on the simulator
+  (`testSyncAgainstLocalServerIfAvailable`): real login + full-upload round-trip.
+- Conflict semantics documented in [SYNC.md](SYNC.md) (Anki USN+mtime merge).
+- Phone->desktop demo steps: [SYNC-SERVER.md](SYNC-SERVER.md) (recording is
+  human-captured: review on phone -> Sync -> Sync desktop -> review appears).
+
 ## iOS engine
 
 ```bash
@@ -151,16 +175,15 @@ bash ios/run-tests.sh
 ```
 
 - XCFramework builds (~166 MB artifact, gitignored; rebuild locally).
-- Host `rslib-ffi` tests pass.
-- Simulator target compiles and links `anki_buildhash`.
-- Xcode: open `ios/AnkiKit`, run **AnkiKitTests** on simulator for runtime proof.
+- Host `rslib-ffi` tests pass; AnkiKit simulator tests pass (deck load,
+  schema-weighted queue, card content, three scores, sync).
 
 ## Not yet measured
 
 - 50k-card benchmark (PRD §18 p95 targets)
 - 20× crash test per platform
-- Two-way sync phone ↔ desktop
+- Real LLM eval numbers (harness + gate ready; run `ai-eval` with a key)
+- On-device FSRS grading on the phone (`answer_card`; needs nested-state protos)
 - Human interleaving study
-- Real LLM card generation eval
 - Clean-machine installer recording
 - TestFlight / signed iOS build
