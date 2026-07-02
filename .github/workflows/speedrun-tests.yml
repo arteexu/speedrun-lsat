@@ -23,7 +23,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install protobuf compiler
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+          # anki_proto's build.rs uses prost-build, which needs protoc; point it
+          # at the binary explicitly so it is found regardless of PATH nuances.
+          echo "PROTOC=$(command -v protoc)" >> "$GITHUB_ENV"
 
       # Rust 1.92.0 is pinned in rust-toolchain.toml and auto-installed by cargo.
       - name: Cache cargo build
