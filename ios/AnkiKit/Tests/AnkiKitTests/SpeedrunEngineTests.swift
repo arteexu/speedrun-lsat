@@ -40,6 +40,19 @@ final class SpeedrunEngineTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(schemas.count, 2, "review interleaves schemas")
     }
 
+    func testReviewQueueAttachesReadableCardContent() throws {
+        let engine = try SpeedrunEngine()
+        let cards = engine.reviewQueue(limit: 10)
+        XCTAssertFalse(cards.isEmpty)
+        // At least one card resolves to real note content with a question + choices.
+        let withContent = cards.compactMap { $0.content }
+        XCTAssertFalse(withContent.isEmpty, "cards should carry readable content")
+        let sample = try XCTUnwrap(withContent.first)
+        XCTAssertFalse(sample.question.isEmpty, "question stem should be present")
+        XCTAssertFalse(sample.choices.isEmpty, "answer choices should be present")
+        XCTAssertFalse(sample.correct.isEmpty, "correct answer should be present")
+    }
+
     func testBundledDeckIsPresent() {
         XCTAssertNotNil(
             Bundle.module.url(forResource: "collection", withExtension: "anki2"),

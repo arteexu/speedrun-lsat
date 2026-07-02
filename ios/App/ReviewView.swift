@@ -10,14 +10,14 @@ import AnkiKit
 import SwiftUI
 
 struct ReviewView: View {
-    @State private var queue: [ScoredCard] = []
+    @State private var queue: [ReviewCard] = []
     @State private var index = 0
     @State private var reviewed = 0
     @State private var revealed = false
     @State private var loadError: String?
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 0) {
             if let loadError {
                 ContentUnavailableView(
                     "Couldn't load the exam deck",
@@ -28,43 +28,72 @@ struct ReviewView: View {
                 ProgressView("Loading exam deck on the shared engine…")
             } else {
                 let card = queue[index]
-                Text("Card \(index + 1) of \(queue.count)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Card \(index + 1) of \(queue.count)  ·  \(prettySchema(card.schema))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
-                VStack(spacing: 8) {
-                    Text("SCHEMA UNDER TEST")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(prettySchema(card.schema))
-                        .font(.title2).bold()
-                        .multilineTextAlignment(.center)
-                    Text(String(format: "points at stake: %.3f", card.priority))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        if let c = card.content {
+                            Text(c.stimulus)
+                                .font(.body)
+                            Text(c.question)
+                                .font(.callout).bold()
+                            Text(c.choices)
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            Text("Schema under test: \(prettySchema(card.schema))")
+                                .font(.title3).bold()
+                            Text("(Card text unavailable for this note.)")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 16))
 
-                if revealed {
-                    HStack(spacing: 12) {
-                        Button("Again", role: .destructive) { advance() }
-                            .buttonStyle(.bordered)
-                        Button("Good") { advance() }
+                // Pinned bottom area: the answer appears here on reveal so it is
+                // always visible, never buried below the choices.
+                VStack(spacing: 10) {
+                    if revealed, let c = card.content {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Correct answer: \(c.correct)")
+                                .font(.headline)
+                                .foregroundStyle(.green)
+                            if !c.whyRunnerUpWrong.isEmpty {
+                                Text("Why the runner-up (\(c.runnerUp)) is wrong")
+                                    .font(.subheadline).bold()
+                                Text(c.whyRunnerUpWrong)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(.green.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    if revealed {
+                        HStack(spacing: 12) {
+                            Button("Again", role: .destructive) { advance() }
+                                .buttonStyle(.bordered)
+                            Button("Good") { advance() }
+                                .buttonStyle(.borderedProminent)
+                        }
+                    } else {
+                        Button("Reveal answer") { revealed = true }
                             .buttonStyle(.borderedProminent)
                     }
-                } else {
-                    Button("Reveal") { revealed = true }
-                        .buttonStyle(.borderedProminent)
+                    Text("Reviewed \(reviewed) this session")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-
-                Text("Reviewed \(reviewed) this session")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                .padding()
             }
         }
-        .padding()
         .navigationTitle("Review")
         .onAppear(perform: load)
     }
@@ -73,7 +102,11 @@ struct ReviewView: View {
         guard queue.isEmpty, loadError == nil else { return }
         do {
             let engine = try SpeedrunEngine()
-            queue = engine.schemaWeightedQueue(limit: 100)
+            queue = engine.reviewQueue(limit: 100)
+            // Demo/test hook: start with the answer revealed.
+            if ProcessInfo.processInfo.environment["SPEEDRUN_REVEAL"] == "1" {
+                revealed = true
+            }
         } catch {
             loadError = "\(error)"
         }

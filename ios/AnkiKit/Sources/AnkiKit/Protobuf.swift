@@ -44,6 +44,12 @@ enum Proto {
             varint(UInt64(value))
         }
 
+        mutating func int64(_ field: Int, _ value: Int64) {
+            if value == 0 { return }
+            tag(field, 0)
+            varint(UInt64(bitPattern: value))
+        }
+
         mutating func double(_ field: Int, _ value: Double) {
             if value == 0 { return }
             tag(field, 1)
