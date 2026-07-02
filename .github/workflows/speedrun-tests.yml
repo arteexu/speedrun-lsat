@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # anki_i18n gathers Fluent translations from the ftl/*-repo submodules.
+          submodules: recursive
 
       - name: Install protobuf compiler
         run: |
