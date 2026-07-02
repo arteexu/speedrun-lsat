@@ -66,9 +66,15 @@ jobs:
       - name: Install pytest
         run: pip install pytest
       - name: AI unit tests (scripted client, no LLM, no anki build)
-        # Excludes the one test that needs the built anki backend; everything
-        # else (client, guard, generation, checker, eval, baselines) is stdlib.
+        # Copy the test out of pylib/tests so pytest does not trigger that
+        # package's __init__ (which imports the built anki backend). Excludes the
+        # one test needing anki; the rest (client, guard, generation, checker,
+        # eval, baselines) are stdlib-only.
         env:
           SPEEDRUN_AI_OFF: "1"
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m pytest pylib/tests/test_speedrun_ai.py -k "not compute_with_ai_off" -q -o addopts=""
+        run: |
+          mkdir -p "$RUNNER_TEMP/aitests"
+          cp pylib/tests/test_speedrun_ai.py "$RUNNER_TEMP/aitests/"
+          cd "$RUNNER_TEMP/aitests"
+          python -m pytest test_speedrun_ai.py -k "not compute_with_ai_off" -q
