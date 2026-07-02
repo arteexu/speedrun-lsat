@@ -64,6 +64,22 @@ final class SpeedrunEngineTests: XCTestCase {
         XCTAssertFalse(scores.memory.reason.isEmpty)
     }
 
+    func testSyncAgainstLocalServerIfAvailable() throws {
+        // Verifies the iOS sync client end-to-end when a dev server is running at
+        // 127.0.0.1:8080 (see docs/speedrun/SYNC-SERVER.md). Skips in CI where no
+        // server is present, so this never breaks the offline build.
+        let engine = try SpeedrunEngine()
+        let result = engine.sync(url: "http://127.0.0.1:8080/", username: "dev", password: "pass")
+        if result.hasPrefix("Login failed") || result.hasPrefix("Sync failed") {
+            throw XCTSkip("no dev sync server reachable: \(result)")
+        }
+        // A reachable server yields a real outcome (uploaded/downloaded/synced).
+        XCTAssertTrue(
+            ["Uploaded", "Downloaded", "Synced", "Up to date"].contains { result.hasPrefix($0) },
+            "unexpected sync result: \(result)"
+        )
+    }
+
     func testBundledDeckIsPresent() {
         XCTAssertNotNil(
             Bundle.module.url(forResource: "collection", withExtension: "anki2"),

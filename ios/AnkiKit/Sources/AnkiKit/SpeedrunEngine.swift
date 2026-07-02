@@ -217,6 +217,91 @@ public final class SpeedrunEngine {
         return Self.decodeThreeScores(res.data)
     }
 
+    // Sync (BackendSyncService = service 1). Same RPCs the desktop uses.
+    private static let svcSync: UInt32 = 1
+    private static let mSyncLogin: UInt32 = 3
+    private static let mSyncCollection: UInt32 = 5
+    private static let mFullUpload: UInt32 = 6
+
+    /// Two-way sync against a self-hosted server. Logs in, runs a collection
+    /// sync, and performs a full up/down when the server requires it. Returns a
+    /// short human-readable status. Reviews done offline upload on the next call.
+    public func sync(url: String, username: String, password: String) -> String {
+        var login = Proto.Writer()
+        login.string(1, username)  // SyncLoginRequest.username
+        login.string(2, password)  // password
+        login.string(3, url)       // endpoint
+        let lr = backend.runCommand(service: Self.svcSync, method: Self.mSyncLogin, input: login.data)
+        if lr.isError { return "Login failed" }
+        let (hkey, endpoint) = Self.decodeAuth(lr.data)
+        if hkey.isEmpty { return "Login failed: bad credentials" }
+
+        var auth = Proto.Writer()
+        auth.string(1, hkey)
+        auth.string(2, endpoint.isEmpty ? url : endpoint)
+        let authData = auth.data
+
+        var colReq = Proto.Writer()
+        colReq.message(1, authData)  // SyncCollectionRequest.auth
+        // sync_media (field 2) omitted = false
+        let cr = backend.runCommand(
+            service: Self.svcSync, method: Self.mSyncCollection, input: colReq.data
+        )
+        if cr.isError { return "Sync failed" }
+
+        // SyncCollectionResponse.required (field 3): 0 none,1 normal,2 full,3 down,4 up
+        switch Self.decodeRequired(cr.data) {
+        case 0: return "Up to date"
+        case 1: return "Synced"
+        case 2, 4: return fullSync(auth: authData, upload: true)
+        case 3: return fullSync(auth: authData, upload: false)
+        default: return "Synced"
+        }
+    }
+
+    private func fullSync(auth: Data, upload: Bool) -> String {
+        var req = Proto.Writer()
+        req.message(1, auth)   // FullUploadOrDownloadRequest.auth
+        req.bool(2, upload)    // upload
+        let r = backend.runCommand(service: Self.svcSync, method: Self.mFullUpload, input: req.data)
+        if r.isError { return upload ? "Full upload failed" : "Full download failed" }
+        return upload ? "Uploaded (full)" : "Downloaded (full)"
+    }
+
+    /// Decode SyncAuth { hkey=1, endpoint=2 }.
+    private static func decodeAuth(_ data: Data) -> (String, String) {
+        var reader = Proto.Reader(data)
+        var hkey = "", endpoint = ""
+        while !reader.atEnd {
+            let key = reader.varint()
+            let (field, wire) = (Int(key >> 3), Int(key & 0x7))
+            if field == 1, wire == 2 {
+                hkey = String(bytes: reader.lengthDelimited(), encoding: .utf8) ?? ""
+            } else if field == 2, wire == 2 {
+                endpoint = String(bytes: reader.lengthDelimited(), encoding: .utf8) ?? ""
+            } else {
+                reader.skip(wire: wire)
+            }
+        }
+        return (hkey, endpoint)
+    }
+
+    /// Decode SyncCollectionResponse.required (field 3, varint).
+    private static func decodeRequired(_ data: Data) -> Int {
+        var reader = Proto.Reader(data)
+        var required = 1
+        while !reader.atEnd {
+            let key = reader.varint()
+            let (field, wire) = (Int(key >> 3), Int(key & 0x7))
+            if field == 3, wire == 0 {
+                required = Int(reader.varint())
+            } else {
+                reader.skip(wire: wire)
+            }
+        }
+        return required
+    }
+
     deinit {
         if ephemeral {
             try? FileManager.default.removeItem(at: workDir)

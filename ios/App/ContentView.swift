@@ -74,6 +74,11 @@ struct ContentView: View {
                     } label: {
                         Label("Study the exam deck", systemImage: "play.circle.fill")
                     }
+                    NavigationLink {
+                        SyncView()
+                    } label: {
+                        Label("Sync with desktop", systemImage: "arrow.triangle.2.circlepath")
+                    }
                 }
             }
             .navigationTitle("Speedrun LSAT")
