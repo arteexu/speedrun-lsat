@@ -55,6 +55,9 @@ DEFAULTS: dict[str, Any] = {
     "contrasting_pairs_count": 6,
     "cold_open_count": 12,
     "fork_trainer_count": 10,
+    # Multiplier applied to the priority of accurate-but-slow schemas in the
+    # schema-weighted queue (SPOV4). 1.0 = off; >1 surfaces speed-drill targets.
+    "speed_pressure_factor": 1.5,
     "show_schema_ids": False,
     "guardrail": dict(GUARDRAIL_DEFAULTS),
     "fading": dict(FADING_DEFAULTS),
@@ -126,6 +129,9 @@ def validate_config(cfg: dict[str, Any] | None = None) -> list[str]:
     fork = cfg.get("fork_trainer_count")
     if not isinstance(fork, int) or isinstance(fork, bool) or fork < 1:
         errors.append("fork_trainer_count must be a positive integer")
+    spf = cfg.get("speed_pressure_factor")
+    if not isinstance(spf, (int, float)) or isinstance(spf, bool) or spf < 1.0:
+        errors.append("speed_pressure_factor must be a number >= 1.0")
     guardrail = cfg.get("guardrail", {})
     if not isinstance(guardrail, dict):
         errors.append("guardrail must be an object")
@@ -223,6 +229,11 @@ def cold_open_count(*, config: dict[str, Any] | None = None) -> int:
 def fork_trainer_count(*, config: dict[str, Any] | None = None) -> int:
     cfg = config or load_config()
     return int(cfg.get("fork_trainer_count", 10))
+
+
+def speed_pressure_factor(*, config: dict[str, Any] | None = None) -> float:
+    cfg = config or load_config()
+    return float(cfg.get("speed_pressure_factor", 1.5))
 
 
 def show_schema_ids(*, config: dict[str, Any] | None = None) -> bool:

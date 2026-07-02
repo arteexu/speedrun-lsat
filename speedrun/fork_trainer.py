@@ -248,6 +248,9 @@ _FORK_CSS = """
 .sr-fk-choice.chosen-wrong { border-color: var(--low); background: rgba(220,38,38,0.08); }
 .sr-fk-hint { font-size: 0.82rem; color: var(--muted); margin: 10px 0; }
 .sr-fk-ask { font-weight: 700; font-size: 0.95rem; margin: 14px 0 8px; }
+.sr-fk-conf { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.sr-fk-conf-lbl { font-size:0.85rem; color:var(--muted); font-weight:600; }
+.sr-btn.conf.sel { background: var(--accent); color:#fff; border-color: var(--accent); }
 .sr-fk-select { width: 100%; font-family: inherit; font-size: 0.9rem; padding: 10px 12px;
   border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
 .sr-fk-actions { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
@@ -359,16 +362,30 @@ _FORK_JS = """
       '<div class="sr-fk-ask">You picked (' + esc(picked) + '). Before the reveal: the runner-up answer is a trap — which trap?</div>' +
       '<div class="sr-fk-hint">Being able to say precisely why the loser loses is the transferable skill (Insight 8).</div>' +
       '<select class="sr-fk-select" id="sr-fk-pick">' + optionsHtml() + '</select>' +
+      '<div class="sr-fk-conf" id="sr-fk-conf"><span class="sr-fk-conf-lbl">How sure is your pick?</span>' +
+      '<button class="sr-btn conf" data-c="0.5">Guess</button>' +
+      '<button class="sr-btn conf" data-c="0.75">Fairly sure</button>' +
+      '<button class="sr-btn conf" data-c="0.95">Certain</button></div>' +
       '<div class="sr-fk-actions"><button class="sr-btn primary" id="sr-fk-lock" disabled>Lock in &amp; reveal</button></div>';
     const timerEl = document.getElementById('sr-fk-timer');
     if (timerEl) { timerEl.textContent = fmtSec(pickedAt); if (pickedAt > it.budget_ms) timerEl.classList.add('over'); }
     const sel = document.getElementById('sr-fk-pick');
     const lock = document.getElementById('sr-fk-lock');
-    sel.addEventListener('change', function () { lock.disabled = !sel.value; });
-    lock.addEventListener('click', function () { grade(sel.value, loserId); });
+    let conf = null;
+    function refresh() { lock.disabled = !(sel.value && conf !== null); }
+    sel.addEventListener('change', refresh);
+    stage.querySelectorAll('#sr-fk-conf .conf').forEach(function (b) {
+      b.addEventListener('click', function () {
+        conf = parseFloat(b.dataset.c);
+        stage.querySelectorAll('#sr-fk-conf .conf').forEach(function (x) { x.classList.remove('sel'); });
+        b.classList.add('sel');
+        refresh();
+      });
+    });
+    lock.addEventListener('click', function () { grade(sel.value, loserId, conf); });
   }
 
-  function grade(trapPick, loserId) {
+  function grade(trapPick, loserId, confidence) {
     const it = items[idx];
     const forkOk = picked === it.winner_id;
     const trapOk = trapPick === it.runner_trap;
@@ -383,6 +400,7 @@ _FORK_JS = """
         pycmd('speedrun:fork:' + JSON.stringify({
           item_id: it.id, picked: picked, fork_correct: forkOk,
           trap_pick: trapPick, actual_trap: it.runner_trap, trap_correct: trapOk,
+          confidence: confidence,
           latency_ms: Math.round(pickedAt), budget_ms: it.budget_ms, over_budget: overBudget
         }));
       }
@@ -517,6 +535,7 @@ def record_fork_result(logger, payload: dict[str, Any]) -> None:
             "trap_pick": payload.get("trap_pick"),
             "actual_trap": payload.get("actual_trap"),
             "trap_correct": bool(payload.get("trap_correct")),
+            "confidence": payload.get("confidence"),
             "budget_ms": payload.get("budget_ms"),
             "over_budget": bool(payload.get("over_budget")),
         },

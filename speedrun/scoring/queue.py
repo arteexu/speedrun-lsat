@@ -50,6 +50,13 @@ def weakness_from_collection(col, **performance_kwargs: Any) -> dict[str, float]
     return weakness_map(perf["per_schema"])
 
 
+def speed_pressured_schemas(per_schema: dict[str, Any]) -> list[str]:
+    """Schemas the student is accurate-but-slow on (SPOV4): they'd lose points on
+    the clock, so the queue up-weights them for speed drilling. This is what
+    populates the Rust queue's ``time_pressured_schemas`` parameter."""
+    return sorted(s for s, score in per_schema.items() if getattr(score, "speed_flag", False))
+
+
 def plain_due_cards(col, *, limit: int = 20, search: str = DEFAULT_DECK_SEARCH) -> list[Any]:
     """Anki's default due order (no schema weighting) for interleaving-off mode."""
     cids = col.find_cards(f"{search} is:due")
@@ -89,13 +96,18 @@ def ordered_cards(
     interleaving: bool | None = None,
     weaknesses: dict[str, float] | None = None,
     time_pressured: list[str] | None = None,
-    time_pressure_factor: float = 1.0,
+    time_pressure_factor: float | None = None,
     use_performance_weakness: bool = True,
     **performance_kwargs: Any,
 ) -> list[Any]:
     """Return cards ordered by schema points-at-stake (list of ScoredCard).
 
-    When interleaving is off, returns plain Anki due order instead."""
+    When interleaving is off, returns plain Anki due order instead.
+
+    ``time_pressured``/``time_pressure_factor`` default to *auto*: the
+    accurate-but-slow schemas (SPOV4) are pulled from the performance model and
+    up-weighted by the configured speed-pressure factor, activating the Rust
+    queue's time-pressure path. Pass explicit values to override."""
     sec = section if section is not None else section_filter()
     effective_search = build_search(search or DEFAULT_DECK_SEARCH, section=sec)
     use_interleave = interleaving_enabled() if interleaving is None else interleaving
@@ -103,8 +115,21 @@ def ordered_cards(
         return plain_due_cards(col, limit=limit, search=effective_search)
 
     weights = load_schema_weights()
+
+    # Compute the performance model once if we need weakness and/or the
+    # accurate-but-slow set from it.
+    perf = None
+    if (weaknesses is None and use_performance_weakness) or time_pressured is None:
+        perf = performance_score(col, **performance_kwargs)
     if weaknesses is None and use_performance_weakness:
-        weaknesses = weakness_from_collection(col, **performance_kwargs)
+        weaknesses = weakness_map(perf["per_schema"])
+    if time_pressured is None:
+        time_pressured = speed_pressured_schemas(perf["per_schema"]) if perf else []
+    if time_pressure_factor is None:
+        from speedrun.config import speed_pressure_factor as _spf
+
+        time_pressure_factor = _spf() if time_pressured else 1.0
+
     return list(
         col._backend.build_schema_weighted_queue(
             search=effective_search,

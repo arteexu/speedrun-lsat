@@ -991,6 +991,29 @@ def _cold_open_practice_banner() -> str:
     )
 
 
+def _calibration_banner() -> str:
+    """Confidence-calibration summary. Honesty rule: training signal, not a score.
+    Surfaces the schema where the student's certainty is most misplaced."""
+    from speedrun.confidence_calibration import calibration_summary
+
+    s = calibration_summary()
+    if not s["n"] or s["gave_up"]:
+        return ""
+    over = s["overconfidence"]
+    direction = "overconfident" if over and over > 0 else "well-calibrated"
+    worst = (
+        f" Most misplaced certainty: <b>{_esc(s['most_overconfident'])}</b>."
+        if s["most_overconfident"]
+        else ""
+    )
+    return (
+        f'<div class="sr-trap-banner">Confidence calibration: '
+        f"<b>{s['n']}</b> judged decisions · Brier <b>{s['brier']:.2f}</b> · "
+        f"<b>{over:+.0%}</b> ({direction}).{worst} "
+        f"Confidence rarely tracks accuracy (Karpicke &amp; Roediger); training signal, not a score.</div>"
+    )
+
+
 def _fork_practice_banner() -> str:
     """Report two-answer fork practice. Honesty rule: training signal only, never
     part of the scores. Fork accuracy is the SPOV3 metric (the final binary
@@ -1170,6 +1193,7 @@ def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
         f"{_contrast_practice_banner()}"
         f"{_cold_open_practice_banner()}"
         f"{_fork_practice_banner()}"
+        f"{_calibration_banner()}"
         f"{_weakness_heatmap(perf_rows)}"
         f"{_concept_map_section(col)}"
         f"{_mistake_graph_section(col)}"

@@ -144,6 +144,8 @@ def setup_menu(mw) -> None:
         render_readiness_report_html,
         render_transfer_gap_html,
     )
+    from speedrun.confidence_calibration import render_confidence_calibration_html
+    from speedrun.confusion import render_confusion_report_html
     from speedrun.explanations import render_explanations_report_html
     from speedrun.fading import render_mastery_ladder_html
     from speedrun.logic_diagram import render_logic_diagram_html
@@ -152,6 +154,8 @@ def setup_menu(mw) -> None:
     for label, fn in (
         ("Problem explanations", render_explanations_report_html),
         ("Mastery ladder (adaptive fading)", render_mastery_ladder_html),
+        ("Confusion-pair interleaving", render_confusion_report_html),
+        ("Confidence calibration", render_confidence_calibration_html),
         ("Concept map", render_concept_map_html),
         ("Mistake graph", render_mistake_graph_html),
         ("Conditional logic visualizer", render_logic_diagram_html),
