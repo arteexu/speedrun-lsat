@@ -34,6 +34,14 @@ jobs:
           # at the binary explicitly so it is found regardless of PATH nuances.
           echo "PROTOC=$(command -v protoc)" >> "$GITHUB_ENV"
 
+      - name: Provide build hash
+        # rslib/build.rs reads out/buildhash (normally written by Anki's build
+        # system) and bakes it in as BUILDHASH; without it the hash is empty and
+        # the engine's buildhash smoke test fails.
+        run: |
+          mkdir -p out
+          echo "${GITHUB_SHA}" > out/buildhash
+
       # Rust 1.92.0 is pinned in rust-toolchain.toml and auto-installed by cargo.
       - name: Cache cargo build
         uses: Swatinem/rust-cache@v2
