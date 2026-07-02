@@ -1,41 +1,65 @@
 # Sync and conflict resolution (Speedrun LSAT)
 
-**Status:** Documented for Friday deliverable; full two-way sync not yet implemented.
+**Status:** Desktop sync works (inherited from Anki). The self-hosted server and
+a two-collection sync test are wired below. iOS has a sync client
+(`ios/AnkiKit` `SpeedrunSync`); a phone <-> desktop round-trip is verified on a
+device/simulator against the dev server.
 
-## Mechanism (planned)
+## Mechanism
 
-Both desktop and iOS use Anki's existing sync protocol via a self-hosted sync
-server built from `rslib`. Reviews flow both ways with none lost and none
-double-counted.
+Both desktop and iOS use **Anki's existing sync protocol** via a self-hosted sync
+server built from `rslib` (`anki-sync-server` / `python -m anki.syncserver`). The
+phone reaches the engine through the same protobuf RPCs as the desktop
+(`BackendSyncService`, service `1`): `SyncLogin` (m3), `SyncStatus` (m4),
+`SyncCollection` (m5), `FullUploadOrDownload` (m6).
 
-## Conflict rule (stated)
+## Conflict rule (how Anki actually merges)
 
-When the same card is reviewed on two devices while offline:
+The earlier draft of this doc said "later timestamp wins"; that is not how the
+engine merges, so this is corrected to the real behavior we rely on:
 
-1. Compare review timestamps (real wall-clock time, not device-local guess).
-2. **Winner:** the review with the **later timestamp**.
-3. **Loser:** recorded in history but does **not** double-count scheduling state.
+- **Cards / notes:** merged by **USN + modification time**. A record is taken
+  from the incoming side when it is newer (`existing.usn.is_pending_sync(...)` is
+  false, or `existing.mtime < incoming.mtime`). See
+  `rslib/src/sync/collection/chunks.rs` (`add_or_update_card_if_newer`).
+- **Revlog (review history):** entries are keyed by their unique id and added if
+  not already present (`merge_revlog`, `uniquify: false`). Reviews from **both**
+  devices are preserved, and because ids are unique there is **no double-count**.
+- **Card scheduling state** follows the newer card mtime, so a card reviewed on
+  two devices ends in one consistent state (no duplicated FSRS state), while both
+  review rows remain in history.
+- **Clock safety:** if client/server clocks differ by > 300s the server aborts
+  the sync (`ClockIncorrect`) rather than guessing an order; fix the clock and
+  retry. Normal sync is wrapped in a DB transaction (atomic; mid-sync disconnect
+  rolls back).
 
-This prevents FSRS state corruption from duplicate reviews.
+Net effect required by the milestone: **no reviews lost, none double-counted.**
+`speedrun/tools/sync_test.py` verifies this against a live server.
 
-## Offline-first requirements
+## Offline-first
 
-- iOS reviews offline; sync when connection returns.
-- Wrong device clock must not corrupt or double-count (server validates ordering).
-- Mid-sync disconnect must leave collection consistent (Anki's existing atomic sync).
+- iOS reviews offline; pending changes carry USN `-1` and upload on the next sync.
+- A mid-sync disconnect leaves the collection consistent (atomic sync).
 
-## Sync test outline (must pass before ship)
+## Dev sync server
+
+See [SYNC-SERVER.md](SYNC-SERVER.md) for the runbook. Quick start:
 
 ```bash
-# speedrun/tools/sync_test.py (outline — not yet automated)
-# 1. Review 10 cards on phone offline, 10 different on desktop offline.
-# 2. Reconnect — verify all 20 reviews appear exactly once.
-# 3. Review same card on both offline with different answers.
-# 4. Sync — verify later timestamp wins, loser in history only.
+SYNC_USER1=dev:pass SYNC_HOST=127.0.0.1 SYNC_PORT=8080 \
+  PYTHONPATH=out/pylib out/pyenv/bin/python -m anki.syncserver
 ```
 
-## Implementation notes
+Point the desktop at it: Preferences -> Syncing -> self-hosted sync server URL
+`http://127.0.0.1:8080/`. Point the phone at the same URL in the app's sync screen.
 
-- Reuse `rslib` sync RPCs; no custom merge logic beyond timestamp rule.
-- Document merge outcome in sync logs for auditability.
-- See PRD §13 for grading requirements.
+## Automated test
+
+```bash
+PYTHONPATH=out/pylib out/pyenv/bin/python speedrun/tools/sync_test.py
+```
+
+Creates two collections (a "desktop" and a "phone"), full-syncs the exam deck up
+and down, reviews different cards on each, syncs both, and asserts every review
+lands exactly once; then reviews the same card on both and asserts a single
+consistent card state with both review rows preserved.
