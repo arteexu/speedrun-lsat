@@ -30,6 +30,23 @@ public struct ReviewCard: Equatable {
     public let content: CardContent?
 }
 
+/// One of the three honest scores, mirroring the Rust ScoreValue.
+public struct ScoreValue: Equatable {
+    public let gaveUp: Bool
+    public let point: Double
+    public let low: Double
+    public let high: Double
+    public let n: Int
+    public let reason: String
+}
+
+/// The three scores as returned by the shared ComputeSpeedrunScores RPC.
+public struct ThreeScores: Equatable {
+    public let memory: ScoreValue
+    public let performance: ScoreValue
+    public let readiness: ScoreValue
+}
+
 /// High-level review engine for the phone, built on `AnkiBackend`.
 ///
 /// It opens the bundled Speedrun exam deck and orders it with the *same*
@@ -44,6 +61,7 @@ public final class SpeedrunEngine {
     private static let mOpenCollection: UInt32 = 0
     private static let svcScheduler: UInt32 = 13
     private static let mBuildSchemaWeightedQueue: UInt32 = 39
+    private static let mComputeSpeedrunScores: UInt32 = 40
     private static let svcNotes: UInt32 = 25
     private static let mGetNote: UInt32 = 6
 
@@ -56,6 +74,7 @@ public final class SpeedrunEngine {
     private static let fWhyRunnerUpWrong = 10
 
     private let backend: AnkiBackend
+    private let ephemeral: Bool
     public let workDir: URL
     public let collectionPath: URL
 
@@ -65,30 +84,34 @@ public final class SpeedrunEngine {
         case commandFailed(String)
     }
 
-    /// Open a backend and a writable copy of a collection file.
-    public init(collectionSource: URL) throws {
+    /// Designated init. Opens the collection at `collectionURL`, copying `copyFrom`
+    /// into place first if it does not exist. When `ephemeral`, the working
+    /// directory is deleted on deinit (tests); otherwise it persists (the app, so
+    /// reviews survive and can sync).
+    public init(collectionURL: URL, copyFrom: URL?, ephemeral: Bool) throws {
         var initWriter = Proto.Writer()
         initWriter.string(1, "en") // BackendInit.preferred_langs
         guard let backend = AnkiBackend(initBytes: initWriter.data) else {
             throw EngineError.backendOpenFailed
         }
         self.backend = backend
+        self.ephemeral = ephemeral
 
-        let work = FileManager.default.temporaryDirectory
-            .appendingPathComponent("speedrun-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
-        let colDest = work.appendingPathComponent("collection.anki2")
-        try FileManager.default.copyItem(at: collectionSource, to: colDest)
-        workDir = work
-        collectionPath = colDest
+        let dir = collectionURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: collectionURL.path), let copyFrom {
+            try FileManager.default.copyItem(at: copyFrom, to: collectionURL)
+        }
+        workDir = dir
+        collectionPath = collectionURL
 
-        let mediaDir = work.appendingPathComponent("media", isDirectory: true)
+        let mediaDir = dir.appendingPathComponent("media", isDirectory: true)
         try FileManager.default.createDirectory(at: mediaDir, withIntermediateDirectories: true)
 
         var open = Proto.Writer()
-        open.string(1, colDest.path)            // OpenCollectionRequest.collection_path
+        open.string(1, collectionURL.path)      // OpenCollectionRequest.collection_path
         open.string(2, mediaDir.path)           // media_folder_path
-        open.string(3, work.appendingPathComponent("media.db").path) // media_db_path
+        open.string(3, dir.appendingPathComponent("media.db").path) // media_db_path
         let res = backend.runCommand(
             service: Self.svcCollection, method: Self.mOpenCollection, input: open.data
         )
@@ -97,12 +120,35 @@ public final class SpeedrunEngine {
         }
     }
 
-    /// Convenience: open the exam deck bundled in AnkiKit's resources.
+    /// Ephemeral engine over a copy of `collectionSource` (used by tests).
+    public convenience init(collectionSource: URL) throws {
+        let work = FileManager.default.temporaryDirectory
+            .appendingPathComponent("speedrun-\(UUID().uuidString)", isDirectory: true)
+        try self.init(
+            collectionURL: work.appendingPathComponent("collection.anki2"),
+            copyFrom: collectionSource,
+            ephemeral: true,
+        )
+    }
+
+    /// Convenience: ephemeral engine over the bundled exam deck (tests/scores demo).
     public convenience init() throws {
+        try self.init(collectionSource: Self.bundledDeckURL())
+    }
+
+    /// The app's persistent engine: a writable collection in Documents, seeded
+    /// once from the bundled deck. Survives launches and is what sync operates on.
+    public convenience init(persistent: Bool) throws {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let col = docs.appendingPathComponent("speedrun/collection.anki2")
+        try self.init(collectionURL: col, copyFrom: Self.bundledDeckURL(), ephemeral: !persistent)
+    }
+
+    private static func bundledDeckURL() throws -> URL {
         guard let url = Bundle.module.url(forResource: "collection", withExtension: "anki2") else {
             throw EngineError.deckResourceMissing
         }
-        try self.init(collectionSource: url)
+        return url
     }
 
     /// Build the schema-weighted review queue on the shared engine.
@@ -156,8 +202,25 @@ public final class SpeedrunEngine {
         }
     }
 
+    /// Compute the three honest scores via the shared Rust RPC (service 13,
+    /// method 40). Thresholds/weights default in Rust when omitted (0).
+    public func computeScores(schemaWeight: [String: Double] = [:]) -> ThreeScores? {
+        var req = Proto.Writer()
+        req.string(1, "sr:schema:")               // schema_tag_prefix
+        req.mapStringDouble(2, schemaWeight)       // schema_weight
+        let res = backend.runCommand(
+            service: Self.svcScheduler,
+            method: Self.mComputeSpeedrunScores,
+            input: req.data
+        )
+        if res.isError { return nil }
+        return Self.decodeThreeScores(res.data)
+    }
+
     deinit {
-        try? FileManager.default.removeItem(at: workDir)
+        if ephemeral {
+            try? FileManager.default.removeItem(at: workDir)
+        }
     }
 
     // MARK: - decoding
@@ -202,6 +265,57 @@ public final class SpeedrunEngine {
             }
         }
         return ScoredCard(cardId: cardId, noteId: noteId, schema: schema, priority: priority)
+    }
+
+    /// Decode `SpeedrunScoresResponse { memory=1, performance=2, readiness=3 }`.
+    static func decodeThreeScores(_ data: Data) -> ThreeScores? {
+        var reader = Proto.Reader(data)
+        var mem: ScoreValue?
+        var perf: ScoreValue?
+        var ready: ScoreValue?
+        while !reader.atEnd {
+            let key = reader.varint()
+            let field = Int(key >> 3)
+            let wire = Int(key & 0x7)
+            if wire == 2, (1...3).contains(field) {
+                let sv = decodeScoreValue(reader.lengthDelimited())
+                switch field {
+                case 1: mem = sv
+                case 2: perf = sv
+                default: ready = sv
+                }
+            } else {
+                reader.skip(wire: wire)
+            }
+        }
+        guard let mem, let perf, let ready else { return nil }
+        return ThreeScores(memory: mem, performance: perf, readiness: ready)
+    }
+
+    /// Decode `ScoreValue { gave_up=1, point=2, low=3, high=4, n=5, reason=6 }`.
+    private static func decodeScoreValue(_ slice: ArraySlice<UInt8>) -> ScoreValue {
+        var reader = Proto.Reader(slice)
+        var gaveUp = false
+        var point = 0.0, low = 0.0, high = 0.0
+        var n = 0
+        var reason = ""
+        while !reader.atEnd {
+            let key = reader.varint()
+            let field = Int(key >> 3)
+            let wire = Int(key & 0x7)
+            switch (field, wire) {
+            case (1, 0): gaveUp = reader.varint() != 0
+            case (2, 1): point = reader.double()
+            case (3, 1): low = reader.double()
+            case (4, 1): high = reader.double()
+            case (5, 0): n = Int(Int64(bitPattern: reader.varint()))
+            case (6, 2):
+                let bytes = reader.lengthDelimited()
+                reason = String(bytes: bytes, encoding: .utf8) ?? ""
+            default: reader.skip(wire: wire)
+            }
+        }
+        return ScoreValue(gaveUp: gaveUp, point: point, low: low, high: high, n: n, reason: reason)
     }
 
     /// Decode `Note { repeated string fields = 7 }` into the fields array (in order).

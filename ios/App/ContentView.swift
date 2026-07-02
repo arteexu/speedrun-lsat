@@ -80,35 +80,40 @@ struct ContentView: View {
         }
         .onAppear {
             engineBuild = AnkiBackend.buildHash()
-            loadPlaceholderState()
-            loadDeckCount()
+            config = SpeedrunConfig.default
+            loadEngineState()
         }
     }
 
     @State private var deckCount = -1
 
-    private func loadDeckCount() {
-        // Prove the shared engine can open the exam deck at launch.
-        if let engine = try? SpeedrunEngine() {
-            deckCount = engine.schemaWeightedQueue(limit: 500).count
-        } else {
+    private func loadEngineState() {
+        // Single shared engine (persistent collection) computes the real scores
+        // via the shared Rust RPC. On a fresh deck (no reviews) all three abstain;
+        // after a sync brings desktop reviews down, they become real numbers.
+        guard let engine = SpeedrunSession.shared.engine else {
             deckCount = 0
+            return
         }
+        deckCount = engine.schemaWeightedQueue(limit: 500).count
+        if let s = engine.computeScores() {
+            memoryLabel = Self.fmtProb(s.memory)
+            performanceLabel = Self.fmtProb(s.performance)
+            readinessLabel = Self.fmtScale(s.readiness)
+        }
+        weakest = engine.schemaWeightedQueue(limit: 3).map { $0.schema }
     }
 
-    private func loadPlaceholderState() {
-        // Offline placeholders until collection sync; mirrors speedrun/config.json keys.
-        config = SpeedrunConfig.default
-        cardsToday = 0
-        streakDays = 0
-        memoryLabel = "No score yet"
-        performanceLabel = "No score yet"
-        readinessLabel = "No score yet"
-        weakest = [
-            "flaw.causal.correlation_causation",
-            "flaw.conditional.mistaken_reversal",
-            "qt.necessary_assumption",
-        ]
+    private static func fmtProb(_ s: ScoreValue) -> String {
+        s.gaveUp
+            ? "No score yet"
+            : String(format: "%.0f%% (likely %.0f–%.0f%%)", s.point * 100, s.low * 100, s.high * 100)
+    }
+
+    private static func fmtScale(_ s: ScoreValue) -> String {
+        s.gaveUp
+            ? "No score yet"
+            : String(format: "%.0f (range %.0f–%.0f)", s.point, s.low, s.high)
     }
 }
 

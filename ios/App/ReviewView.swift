@@ -100,15 +100,15 @@ struct ReviewView: View {
 
     private func load() {
         guard queue.isEmpty, loadError == nil else { return }
-        do {
-            let engine = try SpeedrunEngine()
-            queue = engine.reviewQueue(limit: 100)
-            // Demo/test hook: start with the answer revealed.
-            if ProcessInfo.processInfo.environment["SPEEDRUN_REVEAL"] == "1" {
-                revealed = true
-            }
-        } catch {
-            loadError = "\(error)"
+        // Use the shared persistent engine so review and scores see one collection.
+        guard let engine = SpeedrunSession.shared.engine else {
+            loadError = "engine unavailable"
+            return
+        }
+        queue = engine.reviewQueue(limit: 100)
+        // Demo/test hook: start with the answer revealed.
+        if ProcessInfo.processInfo.environment["SPEEDRUN_REVEAL"] == "1" {
+            revealed = true
         }
     }
 

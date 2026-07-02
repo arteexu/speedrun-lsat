@@ -53,6 +53,17 @@ final class SpeedrunEngineTests: XCTestCase {
         XCTAssertFalse(sample.correct.isEmpty, "correct answer should be present")
     }
 
+    func testComputeScoresReturnsThreeScoresViaSharedRpc() throws {
+        let engine = try SpeedrunEngine()
+        let scores = try XCTUnwrap(engine.computeScores(), "scores RPC should return")
+        // Fresh bundled deck has no review history, so all three abstain honestly
+        // (proves the shared Rust give-up rule reaches the phone).
+        XCTAssertTrue(scores.memory.gaveUp)
+        XCTAssertTrue(scores.performance.gaveUp)
+        XCTAssertTrue(scores.readiness.gaveUp)
+        XCTAssertFalse(scores.memory.reason.isEmpty)
+    }
+
     func testBundledDeckIsPresent() {
         XCTAssertNotNil(
             Bundle.module.url(forResource: "collection", withExtension: "anki2"),

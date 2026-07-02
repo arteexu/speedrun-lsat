@@ -56,6 +56,29 @@ enum Proto {
             var bits = value.bitPattern.littleEndian
             withUnsafeBytes(of: &bits) { data.append(contentsOf: $0) }
         }
+
+        mutating func bool(_ field: Int, _ value: Bool) {
+            if !value { return }
+            tag(field, 0)
+            varint(1)
+        }
+
+        /// Embed a length-delimited sub-message.
+        mutating func message(_ field: Int, _ sub: Data) {
+            tag(field, 2)
+            varint(UInt64(sub.count))
+            data.append(sub)
+        }
+
+        /// Encode a proto3 map<string,double> as repeated {key=1,value=2} entries.
+        mutating func mapStringDouble(_ field: Int, _ dict: [String: Double]) {
+            for (k, v) in dict {
+                var entry = Writer()
+                entry.string(1, k)
+                entry.double(2, v)
+                message(field, entry.data)
+            }
+        }
     }
 
     // MARK: Reader
