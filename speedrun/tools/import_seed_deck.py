@@ -13,6 +13,10 @@ Tag conventions:
     sr:trap:<id>     trap types (item schemas + per-choice traps)
     sr:section:<LR|RC>
 
+Each machine tag also gets a friendly, hierarchical companion for the Browse
+sidebar, e.g. ``LSAT::Traps::Too_strong_extreme`` (the engine only reads the
+``sr:*`` tags; the ``LSAT::*`` tags are display-only).
+
 Usage:
     # against a specific collection file
     python speedrun/tools/import_seed_deck.py --col /path/to/collection.anki2
@@ -41,7 +45,9 @@ SEED_ITEM_COUNT = len(
     json.loads(DEFAULT_DECK_JSON.read_text(encoding="utf-8"))["items"]
 )
 
-from speedrun.taxonomy.labels import schema_label
+import re
+
+from speedrun.taxonomy.labels import normalize_schema_id, schema_label
 
 NOTETYPE_NAME = "LSAT Speedrun"
 DECK_NAME = "LSAT Speedrun"
@@ -78,6 +84,52 @@ def _schema_display(item: dict[str, Any]) -> str:
 QTYPE_TAG = "sr:qtype:"
 TRAP_TAG = "sr:trap:"
 SECTION_TAG = "sr:section:"
+
+# Friendly, hierarchical Browse tags shown alongside the machine `sr:*` tags.
+# Anki tags cannot contain spaces (it splits on them), so names are slugged with
+# underscores. The engine ignores these; only tags starting with `sr:` are read.
+FRIENDLY_ROOT = "LSAT"
+FRIENDLY_AXIS_GROUP = {
+    "flaw": "Flaws",
+    "rc": "Reading",
+    "qt": "Question_Types",
+    "trap": "Traps",
+    "lg": "Logic_Games",
+}
+
+
+def _slug(text: str) -> str:
+    """`Too strong / extreme` -> `Too_strong_extreme` (space/punct-safe for tags)."""
+    return re.sub(r"[^0-9A-Za-z]+", "_", text).strip("_")
+
+
+def _friendly_name(schema_id: str) -> str:
+    """Specific taxonomy name without the axis prefix, e.g. `Causal reasoning`."""
+    label = schema_label(schema_id)
+    return label.split("·", 1)[1].strip() if "·" in label else label
+
+
+def _friendly_schema_tag(schema_id: str) -> str:
+    raw = normalize_schema_id(schema_id)
+    axis = raw.split(".", 1)[0]
+    group = FRIENDLY_AXIS_GROUP.get(axis, axis.title())
+    return f"{FRIENDLY_ROOT}::{group}::{_slug(_friendly_name(raw))}"
+
+
+def _friendly_tags(machine_tags: list[str]) -> list[str]:
+    """Derive readable hierarchical tags from the machine `sr:*` tags."""
+    out: list[str] = []
+    for t in machine_tags:
+        if t.startswith(SECTION_TAG):
+            sec = _section_label(t[len(SECTION_TAG) :])
+            if sec:
+                out.append(f"{FRIENDLY_ROOT}::Section::{_slug(sec)}")
+        elif t.startswith((SCHEMA_TAG, QTYPE_TAG, TRAP_TAG)):
+            _, _, sid = t.partition(":")  # drop 'sr'
+            _, _, sid = sid.partition(":")  # drop axis
+            if sid:
+                out.append(_friendly_schema_tag(sid))
+    return out
 
 FIELDS = [
     "ItemId",
@@ -227,6 +279,8 @@ def build_tags(item: dict[str, Any]) -> list[str]:
         if trap:
             tags.append(TRAP_TAG + trap)
     tags.append(SECTION_TAG + item.get("section", ""))
+    # Add friendly, hierarchical Browse tags alongside the machine tags.
+    tags.extend(_friendly_tags(tags))
     # de-duplicate, preserve order
     seen = set()
     out = []
@@ -297,7 +351,7 @@ def import_seed_deck(
 
 
 def _relabel_note(col, note_id: int, item: dict[str, Any]) -> bool:
-    """Refresh display-only fields on an existing note. Returns True if changed."""
+    """Refresh display fields + add missing friendly tags. Returns True if changed."""
     note = col.get_note(note_id)
     updates = {
         "Section": _section_label(item.get("section", "")),
@@ -309,6 +363,12 @@ def _relabel_note(col, note_id: int, item: dict[str, Any]) -> bool:
         if field in note and note[field] != value:
             note[field] = value
             changed = True
+    # Add any missing friendly tags without disturbing existing tags.
+    existing = set(note.tags)
+    missing = [t for t in build_tags(item) if t not in existing]
+    if missing:
+        note.tags = note.tags + missing
+        changed = True
     if changed:
         col.update_note(note)
     return changed

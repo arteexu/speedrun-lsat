@@ -18,7 +18,10 @@ from speedrun.scoring.queue import (  # noqa: E402
     plain_due_cards,
 )
 from speedrun.tools.health_check import run_checks  # noqa: E402
-from speedrun.tools.import_seed_deck import import_seed_deck  # noqa: E402
+from speedrun.tools.import_seed_deck import (  # noqa: E402
+    build_tags,
+    import_seed_deck,
+)
 from speedrun.tools.schema_drill import (
     drill_search,
     schema_drill_queue,
@@ -35,6 +38,26 @@ def test_build_search_section():
 def test_drill_search_includes_schemas():
     q = drill_search(["flaw.causal.correlation_causation", "qt.weaken"])
     assert "sr:schema:flaw.causal.correlation_causation" in q
+
+
+def test_build_tags_keeps_machine_and_adds_friendly():
+    item = {
+        "section": "LR",
+        "stem_type": "qt.weaken",
+        "schemas": ["flaw.causal.correlation_causation", "qt.weaken"],
+        "choices": [{"id": "A", "trap": "trap.too_strong_extreme"}],
+    }
+    tags = build_tags(item)
+    # Machine tags (engine keys) must be present and unchanged.
+    assert "sr:schema:flaw.causal.correlation_causation" in tags
+    assert "sr:trap:trap.too_strong_extreme" in tags
+    assert "sr:section:LR" in tags
+    # Friendly, hierarchical companions for the Browse sidebar.
+    assert "LSAT::Section::Logical_Reasoning" in tags
+    assert "LSAT::Traps::Too_strong_extreme" in tags
+    assert any(t.startswith("LSAT::Flaws::") for t in tags)
+    # No tag contains a space (Anki splits tags on whitespace).
+    assert all(" " not in t for t in tags)
 
 
 def test_weakest_schemas_returns_list():
