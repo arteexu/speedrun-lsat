@@ -1,0 +1,36 @@
+name: Speedrun tests
+
+# Focused CI for the Speedrun LSAT changes. Runs the Rust engine change (the
+# schema-weighted queue) and the iOS C-FFI bridge tests on every push/PR. The
+# full Python/desktop and iOS-simulator suites run locally (they need the full
+# Anki build / Xcode); this job keeps the core engine change honest and green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: speedrun-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust engine + FFI tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protobuf compiler
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      # Rust 1.92.0 is pinned in rust-toolchain.toml and auto-installed by cargo.
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Rust unit tests — schema-weighted queue (the required Rust change)
+        run: cargo test -p anki schema_weighted
+
+      - name: Rust FFI tests — open the exam deck + queue over the C bridge
+        run: cargo test -p rslib-ffi
