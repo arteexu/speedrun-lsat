@@ -66,15 +66,16 @@ jobs:
       - name: Install pytest
         run: pip install pytest
       - name: AI unit tests (scripted client, no LLM, no anki build)
-        # Copy the test out of pylib/tests so pytest does not trigger that
-        # package's __init__ (which imports the built anki backend). Excludes the
-        # one test needing anki; the rest (client, guard, generation, checker,
-        # eval, baselines) are stdlib-only.
+        # Copy the test two levels under the repo root so its REPO_ROOT
+        # (parents[2]) still resolves and pytest does NOT import
+        # pylib/tests/__init__.py (which pulls in the built anki backend). The one
+        # anki-dependent test is excluded; the rest (client, guard, generation,
+        # checker, eval, baselines) are stdlib-only.
         env:
           SPEEDRUN_AI_OFF: "1"
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          mkdir -p "$RUNNER_TEMP/aitests"
-          cp pylib/tests/test_speedrun_ai.py "$RUNNER_TEMP/aitests/"
-          cd "$RUNNER_TEMP/aitests"
-          python -m pytest test_speedrun_ai.py -k "not compute_with_ai_off" -q
+          mkdir -p .citmp/t
+          cp pylib/tests/test_speedrun_ai.py .citmp/t/
+          python -m pytest .citmp/t/test_speedrun_ai.py -k "not compute_with_ai_off" \
+            -o addopts="" -p no:cacheprovider -q
