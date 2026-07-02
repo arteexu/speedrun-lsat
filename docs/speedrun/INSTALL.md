@@ -4,10 +4,34 @@ Speedrun LSAT is a fork of Anki: a custom Rust engine (the schema-weighted
 review queue) plus a Python package (`speedrun`) that adds the three honest
 scores, the evidence gate, and the learning-science drills.
 
-There are two supported install paths. **Path A (wheels)** is the portable,
-scriptable "installer that runs on a clean machine" and is what the automated
-checks exercise. **Path B (native installer)** produces a double-clickable
-`.dmg` / `.msi` via Briefcase.
+Three paths: the **one-click macOS installer** (easiest for end users), the
+portable **wheels** path, and the native **Briefcase** `.dmg`/`.msi`.
+
+---
+
+## Easiest — one-click macOS installer (for end users)
+
+Build a distributable installer bundle (on a machine with the dev toolchain):
+
+```bash
+tools/build-macos-installer.sh
+# -> dist/SpeedrunLSAT-macOS.zip
+```
+
+Send `SpeedrunLSAT-macOS.zip` to the user. They:
+
+1. Unzip it and **double-click `install.command`** (first time, right-click ->
+   Open, since it is unsigned).
+2. It creates a private environment and puts **"Speedrun LSAT.app" in
+   ~/Applications**. Open it (right-click -> Open the first time).
+3. In the app: **Tools -> LSAT Speedrun -> Import seed deck**.
+
+The only requirement on the user's Mac is **Python 3.12+** (the installer checks
+and points them to python.org if missing). It bundles the three wheels (anki,
+aqt, speedrun-lsat), installs Qt automatically, uses a dedicated profile at
+`~/Library/Application Support/Speedrun LSAT/`, and never touches any other
+Python/Anki install. Verified end to end by installing into a fresh HOME and
+importing `aqt` + `speedrun`.
 
 ---
 
