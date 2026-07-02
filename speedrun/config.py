@@ -26,6 +26,18 @@ GUARDRAIL_DEFAULTS: dict[str, Any] = {
     "min_pattern_coverage": 0.80,  # fraction of question-type + RC patterns practiced
 }
 
+# Adaptive mastery-ordered fading (SPOV3, reconciled with expertise reversal).
+# Scaffolding fades hardest-step-last as per-schema mastery grows; the two-answer
+# fork is the terminal scaffold and only fades at the top rung, which switches to
+# timed pressure (SPOV4).
+FADING_DEFAULTS: dict[str, Any] = {
+    "min_attempts": 10,  # attempts on a schema before any gate is trusted
+    "recognition_gate": 0.70,  # raw accuracy to advance recall -> generation
+    "fork_gate": 0.90,  # fork accuracy to enter timed pressure mode
+    "pressure_accuracy_target": 0.92,  # steep penalty below this at the top rung
+    "pressure_speed_grace_ms": 10_000,  # steep speed penalty beyond budget + grace
+}
+
 DEFAULTS: dict[str, Any] = {
     "version": "0.4.0",
     "latency_budget_ms": {
@@ -42,8 +54,10 @@ DEFAULTS: dict[str, Any] = {
     "schema_drill_count": 3,
     "contrasting_pairs_count": 6,
     "cold_open_count": 12,
+    "fork_trainer_count": 10,
     "show_schema_ids": False,
     "guardrail": dict(GUARDRAIL_DEFAULTS),
+    "fading": dict(FADING_DEFAULTS),
 }
 
 
@@ -59,6 +73,11 @@ def _merge_defaults(raw: dict[str, Any]) -> dict[str, Any]:
     if isinstance(raw.get("guardrail"), dict):
         guardrail.update(raw["guardrail"])
     out["guardrail"] = guardrail
+    # Deep-merge the fading block likewise.
+    fading = dict(FADING_DEFAULTS)
+    if isinstance(raw.get("fading"), dict):
+        fading.update(raw["fading"])
+    out["fading"] = fading
     return out
 
 
@@ -104,6 +123,9 @@ def validate_config(cfg: dict[str, Any] | None = None) -> list[str]:
     cold_open = cfg.get("cold_open_count")
     if not isinstance(cold_open, int) or isinstance(cold_open, bool) or cold_open < 1:
         errors.append("cold_open_count must be a positive integer")
+    fork = cfg.get("fork_trainer_count")
+    if not isinstance(fork, int) or isinstance(fork, bool) or fork < 1:
+        errors.append("fork_trainer_count must be a positive integer")
     guardrail = cfg.get("guardrail", {})
     if not isinstance(guardrail, dict):
         errors.append("guardrail must be an object")
@@ -124,6 +146,24 @@ def validate_config(cfg: dict[str, Any] | None = None) -> list[str]:
                 or not 0.0 <= cov <= 1.0
             ):
                 errors.append(f"guardrail.{key} must be between 0 and 1")
+    fading = cfg.get("fading", {})
+    if not isinstance(fading, dict):
+        errors.append("fading must be an object")
+    else:
+        min_att = fading.get("min_attempts")
+        if not isinstance(min_att, int) or isinstance(min_att, bool) or min_att < 1:
+            errors.append("fading.min_attempts must be a positive integer")
+        for key in ("recognition_gate", "fork_gate", "pressure_accuracy_target"):
+            val = fading.get(key)
+            if (
+                not isinstance(val, (int, float))
+                or isinstance(val, bool)
+                or not 0.0 <= val <= 1.0
+            ):
+                errors.append(f"fading.{key} must be between 0 and 1")
+        grace = fading.get("pressure_speed_grace_ms")
+        if not isinstance(grace, int) or isinstance(grace, bool) or grace < 0:
+            errors.append("fading.pressure_speed_grace_ms must be a non-negative integer")
     return errors
 
 
@@ -180,9 +220,24 @@ def cold_open_count(*, config: dict[str, Any] | None = None) -> int:
     return int(cfg.get("cold_open_count", 12))
 
 
+def fork_trainer_count(*, config: dict[str, Any] | None = None) -> int:
+    cfg = config or load_config()
+    return int(cfg.get("fork_trainer_count", 10))
+
+
 def show_schema_ids(*, config: dict[str, Any] | None = None) -> bool:
     cfg = config or load_config()
     return bool(cfg.get("show_schema_ids", False))
+
+
+def fading_config(*, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return the adaptive-fading thresholds, filled from defaults for any missing key."""
+    cfg = config or load_config()
+    out = dict(FADING_DEFAULTS)
+    raw = cfg.get("fading")
+    if isinstance(raw, dict):
+        out.update(raw)
+    return out
 
 
 def guardrail_thresholds(*, config: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -991,6 +991,35 @@ def _cold_open_practice_banner() -> str:
     )
 
 
+def _fork_practice_banner() -> str:
+    """Report two-answer fork practice. Honesty rule: training signal only, never
+    part of the scores. Fork accuracy is the SPOV3 metric (the final binary
+    decision); trap-ID accuracy and pacing are shown beside it (Insight 8, SPOV4)."""
+    from speedrun.fork_trainer import fork_summary
+
+    s = fork_summary()
+    if not s["n"]:
+        return ""
+    fork = "—" if s["fork_accuracy"] is None else f"{s['fork_accuracy']:.0%}"
+    trap = "—" if s["trap_id_accuracy"] is None else f"{s['trap_id_accuracy']:.0%}"
+    pace = ""
+    if s["avg_latency_ms"] is not None:
+        pace = f" · avg decision {s['avg_latency_ms'] / 1000:.0f}s"
+        if s["in_budget_rate"] is not None:
+            pace += f" ({s['in_budget_rate']:.0%} in budget)"
+    missed = ""
+    if s["missed_traps"]:
+        worst = s["missed_traps"][0]
+        missed = f" Most mis-named trap: <b>{_esc(worst['label'])}</b>."
+    return (
+        f'<div class="sr-trap-banner">Two-answer forks: '
+        f"<b>{s['n']}</b> decisions · fork accuracy <b>{fork}</b> · "
+        f"trap-ID accuracy <b>{trap}</b>{pace}.{missed} "
+        f"The final two-answer decision is where points are won (SPOV3); "
+        f"training signal only, not a score.</div>"
+    )
+
+
 def render_config_editor_html() -> str:
     cfg = load_config()
     budgets = cfg.get("latency_budget_ms", {})
@@ -1140,6 +1169,7 @@ def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
         f"{_trap_banner(col)}"
         f"{_contrast_practice_banner()}"
         f"{_cold_open_practice_banner()}"
+        f"{_fork_practice_banner()}"
         f"{_weakness_heatmap(perf_rows)}"
         f"{_concept_map_section(col)}"
         f"{_mistake_graph_section(col)}"

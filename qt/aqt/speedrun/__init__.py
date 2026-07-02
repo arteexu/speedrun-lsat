@@ -109,6 +109,10 @@ def setup_menu(mw) -> None:
     qconnect(cold_open.triggered, lambda: _show_cold_open(mw))
     menu.addAction(cold_open)
 
+    fork = QAction("Two-answer fork trainer", mw)
+    qconnect(fork.triggered, lambda: _show_fork_trainer(mw))
+    menu.addAction(fork)
+
     export = QAction("Export offline report", mw)
     qconnect(export.triggered, lambda: _export_report(mw))
     menu.addAction(export)
@@ -141,11 +145,13 @@ def setup_menu(mw) -> None:
         render_transfer_gap_html,
     )
     from speedrun.explanations import render_explanations_report_html
+    from speedrun.fading import render_mastery_ladder_html
     from speedrun.logic_diagram import render_logic_diagram_html
     from speedrun.rc_commentator import render_rc_commentator_html
 
     for label, fn in (
         ("Problem explanations", render_explanations_report_html),
+        ("Mastery ladder (adaptive fading)", render_mastery_ladder_html),
         ("Concept map", render_concept_map_html),
         ("Mistake graph", render_mistake_graph_html),
         ("Conditional logic visualizer", render_logic_diagram_html),
@@ -520,14 +526,14 @@ def _show_contrasting_drill(mw) -> None:
     )
 
 
-def _cold_open_logger(mw):
-    """One SessionLogger per app run for cold-open diagnostic results."""
-    logger = getattr(mw, "_speedrun_cold_open_logger", None)
+def _drill_logger(mw):
+    """One SessionLogger per app run for drill diagnostic results (cold-open, fork)."""
+    logger = getattr(mw, "_speedrun_drill_logger", None)
     if logger is None:
         from speedrun.session_logger import SessionLogger
 
         logger = SessionLogger()
-        mw._speedrun_cold_open_logger = logger
+        mw._speedrun_drill_logger = logger
     return logger
 
 
@@ -557,7 +563,7 @@ def _show_cold_open(mw) -> None:
 
             try:
                 payload = json.loads(cmd[len(prefix) :])
-                record_cold_open_result(_cold_open_logger(mw), payload)
+                record_cold_open_result(_drill_logger(mw), payload)
             except Exception:  # pragma: no cover - never break the drill on logging
                 pass
         return
@@ -568,6 +574,47 @@ def _show_cold_open(mw) -> None:
         title="LSAT Speedrun — Cold-open",
         minWidth=760,
         minHeight=660,
+        bridge=bridge,
+    )
+
+
+def _show_fork_trainer(mw) -> None:
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.fork_trainer import build_fork_set, render_fork_trainer_html
+
+        fset = build_fork_set(mw.col)
+        html = render_fork_trainer_html(fset, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Fork trainer error: {exc}")
+        return
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return
+        prefix = "speedrun:fork:"
+        if cmd.startswith(prefix):
+            import json
+
+            from speedrun.fork_trainer import record_fork_result
+
+            try:
+                payload = json.loads(cmd[len(prefix) :])
+                record_fork_result(_drill_logger(mw), payload)
+            except Exception:  # pragma: no cover - never break the drill on logging
+                pass
+        return
+
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — Two-answer fork",
+        minWidth=780,
+        minHeight=680,
         bridge=bridge,
     )
 
