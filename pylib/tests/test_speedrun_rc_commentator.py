@@ -48,6 +48,13 @@ class _FakeResp:
         self.text = text
         self.source = source
 
+    @property
+    def ok(self) -> bool:
+        # Mirror LLMResponse.ok: usable text from a real, named source.
+        return bool(self.text.strip()) and not self.source.startswith(
+            ("stub", "openai-error")
+        )
+
 
 class _FakeClient:
     def __init__(self, text: str) -> None:

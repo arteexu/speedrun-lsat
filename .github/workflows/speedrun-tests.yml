@@ -49,5 +49,26 @@ jobs:
       - name: Rust unit tests — schema-weighted queue (the required Rust change)
         run: cargo test -p anki schema_weighted
 
+      - name: Rust unit tests — speedrun scores (memory/performance/readiness)
+        run: cargo test -p anki speedrun_scores
+
       - name: Rust FFI tests — open the exam deck + queue over the C bridge
         run: cargo test -p rslib-ffi
+
+  ai:
+    name: Offline AI tests (no network)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: pip install pytest
+      - name: AI unit tests (scripted client, no LLM, no anki build)
+        # Excludes the one test that needs the built anki backend; everything
+        # else (client, guard, generation, checker, eval, baselines) is stdlib.
+        env:
+          SPEEDRUN_AI_OFF: "1"
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -m pytest pylib/tests/test_speedrun_ai.py -k "not compute_with_ai_off" -q -o addopts=""
