@@ -63,6 +63,31 @@ def _ensure_speedrun_on_path() -> bool:
     return False
 
 
+# The engine keys off machine tags (sr:schema:, sr:trap:, ...). They must stay in
+# the collection, but users shouldn't see raw ids in the editor. Each tag chip
+# carries its full name in data-addon-tag, so we hide the internal ones with CSS
+# and leave the friendly LSAT:: tags visible. Covers the reviewer Edit dialog and
+# the Browse editor (both use aqt.editor.Editor).
+_HIDE_INTERNAL_TAGS_JS = """
+(function () {
+  var id = 'speedrun-hide-internal-tags';
+  if (document.getElementById(id)) return;
+  var s = document.createElement('style');
+  s.id = id;
+  s.textContent = '.tag[data-addon-tag^="sr:"]{display:none !important;}';
+  (document.head || document.documentElement).appendChild(s);
+})();
+"""
+
+
+def _hide_internal_editor_tags(editor) -> None:
+    """Hide machine (sr:*) tag chips in the note editor; keep friendly tags."""
+    try:
+        editor.web.eval(_HIDE_INTERNAL_TAGS_JS)
+    except Exception:
+        pass
+
+
 def _refresh_score_badge(mw) -> None:
     global _score_action
     if _score_action is None or not mw.col:
@@ -215,6 +240,7 @@ def setup_menu(mw) -> None:
     gui_hooks.state_did_change.append(
         lambda state, _old: _refresh_score_badge(mw) if state == "overview" else None
     )
+    gui_hooks.editor_did_load_note.append(_hide_internal_editor_tags)
     _refresh_score_badge(mw)
 
 
