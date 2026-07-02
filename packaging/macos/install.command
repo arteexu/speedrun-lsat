@@ -57,7 +57,7 @@ cat > "$APPDIR/Contents/MacOS/run" <<RUN
 #!/bin/bash
 export ANKI_BASE="\$HOME/Library/Application Support/Speedrun LSAT/profile"
 mkdir -p "\$ANKI_BASE"
-exec "$VENV/bin/python" -m aqt
+exec "$VENV/bin/python" -c "import aqt; aqt.run()"
 RUN
 chmod +x "$APPDIR/Contents/MacOS/run"
 
