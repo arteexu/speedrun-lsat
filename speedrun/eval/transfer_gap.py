@@ -60,6 +60,7 @@ class RewordedItem:
     schema: str
     variant_index: int
     stimulus: str
+    authored: bool = False  # True when drawn from an item's hand-written paraphrases
     correct: bool | None = None  # filled when graded
 
 
@@ -128,15 +129,33 @@ def generate_reworded_variants(
     for item in data["items"]:
         primary_schema = item["schemas"][0]
         source_text = item.get("stimulus") or item.get("question") or item.get("passage", "")
+        # Prefer the item's hand-authored paraphrases (same schema, restated
+        # surface) -- these are the real transfer variants the content plan calls
+        # for. Fall back to synthetic noun-swaps so every card still yields
+        # `variants_per_card` reworded items (keeps the transfer test populated).
+        authored = item.get("paraphrases") or []
         for vi in range(variants_per_card):
-            items.append(
-                RewordedItem(
-                    source_id=item["id"],
-                    schema=primary_schema,
-                    variant_index=vi,
-                    stimulus=_reword_stimulus(source_text, vi),
+            if vi < len(authored):
+                text = authored[vi].get("stimulus") or authored[vi].get("question", "")
+                items.append(
+                    RewordedItem(
+                        source_id=item["id"],
+                        schema=primary_schema,
+                        variant_index=vi,
+                        stimulus=text,
+                        authored=True,
+                    )
                 )
-            )
+            else:
+                items.append(
+                    RewordedItem(
+                        source_id=item["id"],
+                        schema=primary_schema,
+                        variant_index=vi,
+                        stimulus=_reword_stimulus(source_text, vi),
+                        authored=False,
+                    )
+                )
     return items
 
 

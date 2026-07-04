@@ -51,6 +51,17 @@ from speedrun.taxonomy.labels import normalize_schema_id, schema_label
 
 NOTETYPE_NAME = "LSAT Speedrun"
 DECK_NAME = "LSAT Speedrun"
+# Dedicated options group for the Speedrun deck, so raising its daily limits
+# never touches Anki's shared global "Default" config (id 1) or any other deck.
+DECK_CONFIG_NAME = "LSAT Speedrun"
+DEFAULT_DECK_CONF_ID = 1
+# High daily caps so the schema-weighted "Study now" queue can serve all 166
+# items in priority order instead of Anki's stock 20 new/day.
+HIGH_NEW_PER_DAY = 9999
+HIGH_REV_PER_DAY = 9999
+# Records the daily-limit values import last wrote, so a value the student later
+# changed by hand is detected and never clobbered on a re-import.
+_LIMIT_SENTINEL_KEY = "srSpeedrunDailyLimits"
 SCHEMA_TAG = "sr:schema:"
 
 # Friendly, human-readable display values for the card faces. The engine keys off
@@ -84,6 +95,9 @@ def _schema_display(item: dict[str, Any]) -> str:
 QTYPE_TAG = "sr:qtype:"
 TRAP_TAG = "sr:trap:"
 SECTION_TAG = "sr:section:"
+UNIT_TAG = "sr:unit:"
+LESSON_TAG = "sr:lesson:"
+ORDER_TAG = "sr:order:"
 
 # Friendly, hierarchical Browse tags shown alongside the machine `sr:*` tags.
 # Anki tags cannot contain spaces (it splits on them), so names are slugged with
@@ -180,6 +194,7 @@ class ImportResult:
     deck_id: int
     backup_path: str | None = None
     relabeled: int = 0
+    limits_applied: bool = False
 
 
 def is_seed_deck_imported(col) -> bool:
@@ -279,6 +294,21 @@ def build_tags(item: dict[str, Any]) -> list[str]:
         if trap:
             tags.append(TRAP_TAG + trap)
     tags.append(SECTION_TAG + item.get("section", ""))
+    # Course grouping (optional, additive): machine tags for the module, lesson,
+    # and in-lesson order so the dashboard/queue can group per-module without any
+    # scheduler change. Absent on unassigned items -> no unit tags emitted.
+    unit = item.get("unit")
+    if unit:
+        tags.append(UNIT_TAG + str(unit))
+        lesson = item.get("lesson")
+        if lesson is not None:
+            tags.append(LESSON_TAG + f"{unit}:{lesson}")
+        order = item.get("order")
+        if order is not None:
+            tags.append(ORDER_TAG + str(order))
+        tags.append(f"{FRIENDLY_ROOT}::Unit::{_slug(str(unit))}")
+        if lesson is not None:
+            tags.append(f"{FRIENDLY_ROOT}::Unit::{_slug(str(unit))}::L{lesson}")
     # Add friendly, hierarchical Browse tags alongside the machine tags.
     tags.extend(_friendly_tags(tags))
     # de-duplicate, preserve order
@@ -291,6 +321,77 @@ def build_tags(item: dict[str, Any]) -> list[str]:
     return out
 
 
+def _apply_perday_limit(bucket: dict, target: int, last: int | None) -> tuple[bool, int]:
+    """Set ``bucket['perDay']`` to ``target`` unless the student changed it.
+
+    ``last`` is the value import wrote previously (from the sentinel), or None if
+    import has never set it. We treat a current value that differs from ``last``
+    as a deliberate user change and leave it alone. Returns (changed, value_now).
+    """
+    current = bucket.get("perDay")
+    if last is not None and current != last:
+        # Student deliberately changed it since our last import -> respect it.
+        return False, current
+    if current == target:
+        return False, current
+    bucket["perDay"] = target
+    return True, target
+
+
+def ensure_deck_daily_limits(
+    col,
+    deck_id: int,
+    *,
+    new_per_day: int = HIGH_NEW_PER_DAY,
+    rev_per_day: int = HIGH_REV_PER_DAY,
+) -> bool:
+    """Give the Speedrun deck its own options group with high daily limits.
+
+    Scoped strictly to the Speedrun deck. If the deck still shares Anki's global
+    ``Default`` config (id 1), we clone that config into a dedicated
+    ``LSAT Speedrun`` group and reassign the deck, so the global config and every
+    other deck are left untouched. Then we raise New cards/day and Maximum
+    reviews/day so the schema-weighted queue isn't capped at 20.
+
+    Idempotent (a second import is a no-op) and it won't clobber a value the
+    student deliberately changed, detected via a sentinel recording the last
+    value import wrote. Returns True if anything changed. Never raises out on a
+    filtered/dynamic deck (it has no options group).
+    """
+    decks = col.decks
+    deck = decks.get(deck_id, default=False)
+    if not deck or deck.get("dyn"):
+        return False
+
+    changed = False
+    conf_id = int(deck.get("conf", 0) or 0)
+    if conf_id == 0 or conf_id == DEFAULT_DECK_CONF_ID:
+        # Don't mutate the shared global Default: clone it into a dedicated group.
+        base = decks.get_config(conf_id) if conf_id else None
+        new_conf = decks.add_config(DECK_CONFIG_NAME, clone_from=base)
+        decks.set_config_id_for_deck_dict(deck, new_conf["id"])
+        conf_id = int(new_conf["id"])
+        changed = True
+
+    conf = decks.get_config(conf_id)
+    if conf is None:
+        return changed
+
+    sentinel = dict(conf.get(_LIMIT_SENTINEL_KEY) or {})
+    new_changed, new_now = _apply_perday_limit(
+        conf.setdefault("new", {}), new_per_day, sentinel.get("new")
+    )
+    rev_changed, rev_now = _apply_perday_limit(
+        conf.setdefault("rev", {}), rev_per_day, sentinel.get("rev")
+    )
+    updated_sentinel = {"new": new_now, "rev": rev_now}
+    if new_changed or rev_changed or sentinel != updated_sentinel:
+        conf[_LIMIT_SENTINEL_KEY] = updated_sentinel
+        decks.update_config(conf)
+        changed = changed or new_changed or rev_changed
+    return changed
+
+
 def import_seed_deck(
     col, deck_json: Path = DEFAULT_DECK_JSON, *, backup: bool = True
 ) -> ImportResult:
@@ -298,6 +399,7 @@ def import_seed_deck(
     data = json.loads(Path(deck_json).read_text(encoding="utf-8"))
     nt, created = ensure_notetype(col)
     deck_id = col.decks.id(DECK_NAME)
+    limits_applied = ensure_deck_daily_limits(col, deck_id)
 
     added = 0
     skipped = 0
@@ -347,7 +449,33 @@ def import_seed_deck(
         deck_id,
         backup_path=str(backup_path) if backup_path else None,
         relabeled=relabeled,
+        limits_applied=limits_applied,
     )
+
+
+def ensure_friendly_tags(col) -> int:
+    """Backfill friendly LSAT:: tags on notes that predate the friendly-tag feature.
+
+    Older collections have only the machine ``sr:*`` tags. Because the editor hides
+    those, such notes appear to have "N tags" but show no chips. This derives the
+    friendly companions from each note's existing machine tags and adds the missing
+    ones. Idempotent and cheap: the ``-tag:LSAT::*`` filter skips already-migrated
+    notes, so re-running does nothing. Returns the number of notes updated.
+    """
+    try:
+        todo = col.find_notes(f'"note:{NOTETYPE_NAME}" -tag:LSAT::*')
+    except Exception:
+        return 0
+    changed = 0
+    for nid in todo:
+        note = col.get_note(nid)
+        machine = [t for t in note.tags if t.startswith("sr:")]
+        missing = [t for t in _friendly_tags(machine) if t not in note.tags]
+        if missing:
+            note.tags = list(note.tags) + missing
+            col.update_note(note)
+            changed += 1
+    return changed
 
 
 def _relabel_note(col, note_id: int, item: dict[str, Any]) -> bool:
@@ -406,6 +534,12 @@ def main(argv: list[str]) -> int:
         f"Imported into '{DECK_NAME}': {result.added} added, {result.skipped} "
         f"skipped (already present), {result.relabeled} relabeled to friendly "
         f"names. Note type {'created' if result.notetype_created else 'reused'}."
+    )
+    print(
+        f"Daily limits {'set' if result.limits_applied else 'already set'} on the "
+        f"'{DECK_CONFIG_NAME}' options group "
+        f"(new/day={HIGH_NEW_PER_DAY}, rev/day={HIGH_REV_PER_DAY}); "
+        "global Default config untouched."
     )
     if result.backup_path:
         print(f"Backup: {result.backup_path}")

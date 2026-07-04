@@ -13,6 +13,7 @@ Turn it on with `SPEEDRUN_AI_OFF=0` and `OPENAI_API_KEY=...` (optionally
 | Card checker + blocking gate | [speedrun/ai/card_checker.py](../../speedrun/ai/card_checker.py) | Keyword topicality + optional LLM correctness veto; `block_failing` keeps sub-cutoff cards away from students |
 | Pre-ship eval + baselines | [speedrun/eval/ai_eval.py](../../speedrun/eval/ai_eval.py), [speedrun/ai/baseline.py](../../speedrun/ai/baseline.py) | Accuracy + wrong-answer rate on a held-out gold split vs a stated cutoff; side-by-side AI vs keyword vs TF-IDF vector |
 | Reasoning evaluator | [speedrun/ai/reasoning_evaluator.py](../../speedrun/ai/reasoning_evaluator.py) | LLM grades a student explanation grounded in the fork rationale; offline heuristic fallback |
+| AI Tutor (chat) | [speedrun/ai/tutor.py](../../speedrun/ai/tutor.py) | Grounded chat over ONE problem: answers why a choice is right/wrong, the flaw tested, and the two-answer fork. Deterministic offline answerer when AI is off; source-enforced + injection-sanitized when on. Never feeds the scores |
 | RC commentator | [speedrun/rc_commentator.py](../../speedrun/rc_commentator.py) | Passage help; grounded/extractive offline path |
 | Safety helpers | [speedrun/ai/guard.py](../../speedrun/ai/guard.py) | Prompt-injection sanitization of source text; source-enforcement (`resp.ok`) before any AI output is shown |
 | Leakage check | [speedrun/eval/leakage_check.py](../../speedrun/eval/leakage_check.py) | Confirms gold vs training/generated do not overlap |

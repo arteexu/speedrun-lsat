@@ -13,8 +13,12 @@ struct ReviewView: View {
     @State private var queue: [ReviewCard] = []
     @State private var index = 0
     @State private var reviewed = 0
+    @State private var recorded = 0
     @State private var revealed = false
     @State private var loadError: String?
+    // When the current card was first shown, used to record the answer latency
+    // (Anki stores `milliseconds_taken` on every review).
+    @State private var shownAt = Date()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -77,17 +81,24 @@ struct ReviewView: View {
                     }
 
                     if revealed {
-                        HStack(spacing: 12) {
-                            Button("Again", role: .destructive) { advance() }
+                        // The four standard grades. Each records a real review on
+                        // the shared Rust scheduler (Again=0…Easy=3 on the wire),
+                        // then advances to the next engine-ordered card.
+                        HStack(spacing: 8) {
+                            Button("Again", role: .destructive) { grade(.again) }
                                 .buttonStyle(.bordered)
-                            Button("Good") { advance() }
+                            Button("Hard") { grade(.hard) }
+                                .buttonStyle(.bordered)
+                            Button("Good") { grade(.good) }
                                 .buttonStyle(.borderedProminent)
+                            Button("Easy") { grade(.easy) }
+                                .buttonStyle(.bordered)
                         }
                     } else {
                         Button("Reveal answer") { revealed = true }
                             .buttonStyle(.borderedProminent)
                     }
-                    Text("Reviewed \(reviewed) this session")
+                    Text("Reviewed \(reviewed) this session · \(recorded) recorded")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -96,6 +107,11 @@ struct ReviewView: View {
         }
         .navigationTitle("Review")
         .onAppear(perform: load)
+        .onDisappear {
+            // Best-effort: push the reviews we just recorded to a configured
+            // server. No-op if none were recorded or no server is set up.
+            if recorded > 0 { SpeedrunSession.shared.autoSyncAfterReviews() }
+        }
     }
 
     private func load() {
@@ -106,16 +122,42 @@ struct ReviewView: View {
             return
         }
         queue = engine.reviewQueue(limit: 100)
+        shownAt = Date()
         // Demo/test hook: start with the answer revealed.
         if ProcessInfo.processInfo.environment["SPEEDRUN_REVEAL"] == "1" {
             revealed = true
         }
     }
 
+    /// Record the grade on the shared engine, then advance. The engine writes a
+    /// revlog entry and reschedules the card (same scheduler the desktop uses),
+    /// so the dashboard scores update and there is real data to sync.
+    private func grade(_ rating: Rating) {
+        guard index < queue.count else { advance(); return }
+        // Answer latency: how long the card was on screen (capped to 10 min).
+        let elapsed = min(max(Date().timeIntervalSince(shownAt), 0), 600)
+        let millis = UInt32(elapsed * 1000)
+        if let engine = SpeedrunSession.shared.engine,
+           engine.answerCard(cardId: queue[index].cardId, rating: rating, millisecondsTaken: millis) {
+            recorded += 1
+        }
+        advance()
+    }
+
     private func advance() {
         reviewed += 1
         revealed = false
-        index = (index + 1) % max(1, queue.count)
+        // Advance through the engine-ordered queue; when it's exhausted, ask the
+        // engine for a freshly re-scored batch rather than looping a local index.
+        if index + 1 >= queue.count {
+            if let engine = SpeedrunSession.shared.engine {
+                queue = engine.reviewQueue(limit: 100)
+            }
+            index = 0
+        } else {
+            index += 1
+        }
+        shownAt = Date()
     }
 
     private func prettySchema(_ id: String) -> String {

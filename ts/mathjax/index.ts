@@ -22,6 +22,10 @@ window.MathJax = {
     },
     loader: {
         load: packagesForLoading(packages),
+        // These extensions are already bundled in tex-chtml-full, so loading them
+        // by name emits a harmless "No version information available" console
+        // warning. Silence it; it has no effect on rendering.
+        versionWarnings: false,
         paths: {
             mathjax: "/_anki/js/vendor/mathjax",
         },

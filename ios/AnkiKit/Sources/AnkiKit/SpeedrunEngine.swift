@@ -47,6 +47,17 @@ public struct ThreeScores: Equatable {
     public let readiness: ScoreValue
 }
 
+/// A grade for a card, matching `anki.scheduler.CardAnswer.Rating` on the wire
+/// (0-based: AGAIN=0, HARD=1, GOOD=2, EASY=3). The shared Rust engine converts
+/// these to Anki's 1-based revlog `ease` (Again=1, Hard=2, Good=3, Easy=4), so
+/// callers use the proto values here and never do scheduling math in Swift.
+public enum Rating: UInt32 {
+    case again = 0
+    case hard = 1
+    case good = 2
+    case easy = 3
+}
+
 /// High-level review engine for the phone, built on `AnkiBackend`.
 ///
 /// It opens the bundled Speedrun exam deck and orders it with the *same*
@@ -60,6 +71,8 @@ public final class SpeedrunEngine {
     private static let svcCollection: UInt32 = 3
     private static let mOpenCollection: UInt32 = 0
     private static let svcScheduler: UInt32 = 13
+    private static let mAnswerCard: UInt32 = 4
+    private static let mGetSchedulingStates: UInt32 = 23
     private static let mBuildSchemaWeightedQueue: UInt32 = 39
     private static let mComputeSpeedrunScores: UInt32 = 40
     private static let svcNotes: UInt32 = 25
@@ -217,6 +230,73 @@ public final class SpeedrunEngine {
         return Self.decodeThreeScores(res.data)
     }
 
+    // MARK: - Grading (record a real review on the shared scheduler)
+
+    /// The five scheduling states for a card as opaque protobuf blobs: the
+    /// current state plus the state the card would move to for each rating. Held
+    /// as raw bytes so they can be handed straight back to `answerCard` without
+    /// any Swift-side state math — the shared Rust engine owns all scheduling.
+    struct SchedulingStatesRaw: Equatable {
+        let current: [UInt8]
+        let again: [UInt8]
+        let hard: [UInt8]
+        let good: [UInt8]
+        let easy: [UInt8]
+    }
+
+    /// Fetch a card's scheduling states from the shared scheduler via
+    /// `SchedulerService.GetSchedulingStates` (service 13, method 23). Mirrors the
+    /// desktop reviewer, which asks the engine for the next states before grading.
+    func schedulingStates(cardId: Int64) -> SchedulingStatesRaw? {
+        var req = Proto.Writer()
+        req.int64(1, cardId) // cards.CardId.cid
+        let res = backend.runCommand(
+            service: Self.svcScheduler, method: Self.mGetSchedulingStates, input: req.data
+        )
+        if res.isError { return nil }
+        return Self.decodeSchedulingStates(res.data)
+    }
+
+    /// Record a real review for a card through the shared scheduler via
+    /// `SchedulerService.AnswerCard` (service 13, method 4). This writes a revlog
+    /// entry and advances the card's scheduling state exactly as the desktop
+    /// does, so the three scores (derived from the revlog + FSRS memory state)
+    /// update and there is real data to sync.
+    ///
+    /// It first reads the card's current + per-rating states, then sends a
+    /// `CardAnswer { card_id, current_state, new_state, rating, answered_at_millis,
+    /// milliseconds_taken }`. `answeredAtMillis` defaults to now; `millisecondsTaken`
+    /// is the measured time the card was shown (Anki records it as the answer
+    /// latency). Returns whether the engine accepted the review.
+    @discardableResult
+    public func answerCard(
+        cardId: Int64,
+        rating: Rating,
+        millisecondsTaken: UInt32,
+        answeredAtMillis: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
+    ) -> Bool {
+        guard let states = schedulingStates(cardId: cardId) else { return false }
+        let newState: [UInt8]
+        switch rating {
+        case .again: newState = states.again
+        case .hard: newState = states.hard
+        case .good: newState = states.good
+        case .easy: newState = states.easy
+        }
+
+        var req = Proto.Writer()
+        req.int64(1, cardId)                  // CardAnswer.card_id
+        req.message(2, Data(states.current))  // current_state (opaque passthrough)
+        req.message(3, Data(newState))        // new_state (opaque passthrough)
+        req.uint32(4, rating.rawValue)        // rating (AGAIN=0 is omitted by proto3)
+        req.int64(5, answeredAtMillis)        // answered_at_millis
+        req.uint32(6, millisecondsTaken)      // milliseconds_taken
+        let res = backend.runCommand(
+            service: Self.svcScheduler, method: Self.mAnswerCard, input: req.data
+        )
+        return !res.isError
+    }
+
     // Sync (BackendSyncService = service 1). Same RPCs the desktop uses.
     private static let svcSync: UInt32 = 1
     private static let mSyncLogin: UInt32 = 3
@@ -309,6 +389,34 @@ public final class SpeedrunEngine {
     }
 
     // MARK: - decoding
+
+    /// Decode `SchedulingStates { current=1, again=2, hard=3, good=4, easy=5 }`,
+    /// keeping each `SchedulingState` as its raw length-delimited bytes so it can
+    /// be re-embedded verbatim into a `CardAnswer` (the states are opaque to us).
+    static func decodeSchedulingStates(_ data: Data) -> SchedulingStatesRaw? {
+        var reader = Proto.Reader(data)
+        var current: [UInt8]?, again: [UInt8]?, hard: [UInt8]?, good: [UInt8]?, easy: [UInt8]?
+        while !reader.atEnd {
+            let key = reader.varint()
+            let field = Int(key >> 3)
+            let wire = Int(key & 0x7)
+            if wire == 2 {
+                let bytes = Array(reader.lengthDelimited())
+                switch field {
+                case 1: current = bytes
+                case 2: again = bytes
+                case 3: hard = bytes
+                case 4: good = bytes
+                case 5: easy = bytes
+                default: break
+                }
+            } else {
+                reader.skip(wire: wire)
+            }
+        }
+        guard let current, let again, let hard, let good, let easy else { return nil }
+        return SchedulingStatesRaw(current: current, again: again, hard: hard, good: good, easy: easy)
+    }
 
     /// Decode `SchemaWeightedQueueResponse { repeated ScoredCard cards = 1; }`.
     static func decodeScoredCards(_ data: Data) -> [ScoredCard] {

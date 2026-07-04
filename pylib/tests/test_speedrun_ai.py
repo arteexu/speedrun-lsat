@@ -122,6 +122,10 @@ def test_llmresponse_ok_requires_text_and_named_source():
     assert LLMResponse("", "openai:gpt-4o-mini").ok is False
     assert LLMResponse("hi", "stub").ok is False
     assert LLMResponse("hi", "openai-error:URLError").ok is False
+    # Traceability: text with a blank/whitespace source is NOT usable (no named
+    # source to trace the output back to).
+    assert LLMResponse("hi", "").ok is False
+    assert LLMResponse("hi", "   ").ok is False
 
 
 def test_openai_client_no_network_without_key(monkeypatch):
@@ -149,9 +153,13 @@ def test_sanitize_strips_injection_lines():
 def test_source_enforcement_guard():
     assert has_named_source(LLMResponse("x", "openai:m")) is True
     assert has_named_source(LLMResponse("", "stub")) is False
+    # A blank source must never pass the traceability rule, even with real text.
+    assert has_named_source(LLMResponse("x", "")) is False
     require_source(LLMResponse("x", "openai:m"))  # no raise
     with pytest.raises(ValueError):
         require_source(LLMResponse("", "stub"))
+    with pytest.raises(ValueError):
+        require_source(LLMResponse("x", ""))
 
 
 # --------------------------- generation + checker --------------------------
@@ -223,6 +231,32 @@ def test_ai_eval_gate_passes_when_ai_answers_correctly():
     assert report.ai_beats_keyword and report.ai_beats_vector
     assert report.passed is True
     assert report.ai_source == "openai:test"
+
+
+def test_grounding_eval_offline_beats_baselines():
+    """The offline pre-ship gate is deterministic and the grounded method beats
+    both keyword and vector on the held-out gold slice (no network / no key)."""
+    from speedrun.eval.grounding_eval import ACCURACY_CUTOFF, run_grounding_eval
+
+    report = run_grounding_eval()
+    for name in ("keyword", "vector", "grounded"):
+        m = report.methods[name]
+        assert 0.0 <= m.accuracy <= 1.0
+        assert abs(m.accuracy + m.wrong_rate - 1.0) < 1e-9
+    g = report.methods["grounded"]
+    assert g.accuracy > report.methods["keyword"].accuracy
+    assert g.accuracy > report.methods["vector"].accuracy
+    assert g.accuracy >= ACCURACY_CUTOFF
+    assert report.grounded_beats_keyword and report.grounded_beats_vector
+    assert report.passed is True
+
+
+def test_grounding_eval_deterministic():
+    from speedrun.eval.grounding_eval import run_grounding_eval
+
+    a = run_grounding_eval().to_dict()
+    b = run_grounding_eval().to_dict()
+    assert a == b
 
 
 def test_reasoning_evaluator_llm_path():

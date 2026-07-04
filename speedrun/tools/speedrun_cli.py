@@ -141,7 +141,17 @@ def cmd_ai_eval(args) -> int:
 
     report = run_ai_eval()
     print(format_report(report))
-    return 0
+    return 0 if report.passed else 1
+
+
+def cmd_grounding_eval(args) -> int:
+    """Offline, deterministic pre-ship gate: grounded retrieval vs keyword/vector.
+    Exits non-zero when the grounded method fails its cutoff (blocks a release)."""
+    from speedrun.eval.grounding_eval import format_report, run_grounding_eval
+
+    report = run_grounding_eval()
+    print(format_report(report))
+    return 0 if report.passed else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -178,6 +188,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser(
         "ai-eval", help="AI vs baseline eval on held-out gold set"
     ).set_defaults(func=cmd_ai_eval)
+    sub.add_parser(
+        "grounding-eval",
+        help="offline grounded-vs-baseline pre-ship gate (deterministic)",
+    ).set_defaults(func=cmd_grounding_eval)
 
     gaps = sub.add_parser("gaps", help="coverage gap report from collection")
     gaps.add_argument("--top", type=int, default=20)
@@ -188,7 +202,12 @@ def main(argv: list[str] | None = None) -> int:
     pt.set_defaults(func=cmd_pretest)
 
     args = ap.parse_args(argv)
-    if not args.col and not args.base and args.cmd not in ("coverage", "calibrate", "ai-eval"):
+    if not args.col and not args.base and args.cmd not in (
+        "coverage",
+        "calibrate",
+        "ai-eval",
+        "grounding-eval",
+    ):
         ap.error("Pass --col or --base for this subcommand")
     return args.func(args)
 

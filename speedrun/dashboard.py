@@ -74,19 +74,20 @@ def _confidence_badge(label: str) -> str:
 
 _DASHBOARD_CSS = """
 :root {
-  --bg: #eef1f6; --surface: #ffffff; --surface-2: #f7f9fc; --text: #12151a;
-  --muted: #626b78; --border: #e3e8ef; --accent: #2563eb; --accent-soft: rgba(37,99,235,0.10);
-  --abstain: #9aa4b2; --low: #e0332f; --med: #e08a12; --high: #12a150; --warn: #b45309;
-  --bar-bg: #e9edf3;
-  --shadow: 0 1px 2px rgba(16,24,40,0.05), 0 4px 14px rgba(16,24,40,0.06);
-  --shadow-lg: 0 8px 30px rgba(16,24,40,0.10);
+  --bg: #f4f5fb; --surface: #ffffff; --surface-2: #f7f8fd; --text: #1a1c2b;
+  --muted: #656b81; --border: #e6e8f2; --accent: #5b57d1; --accent-soft: rgba(91,87,209,0.10);
+  --abstain: #9aa1b5; --low: #e0415a; --med: #e08c1f; --high: #0ca678; --warn: #bb5a10;
+  --bar-bg: #e8eaf4;
+  --shadow: 0 1px 2px rgba(26,28,43,0.05), 0 4px 14px rgba(26,28,43,0.06);
+  --shadow-lg: 0 8px 30px rgba(26,28,43,0.10);
   --radius: 14px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1117; --surface: #161d29; --surface-2: #1b2432; --text: #e8edf3;
-    --muted: #97a2b3; --border: #28323f; --accent: #6aa6ff; --accent-soft: rgba(106,166,255,0.14);
-    --abstain: #7c8797; --bar-bg: #222c3a;
+    --bg: #0e0f1a; --surface: #181a29; --surface-2: #1e2133; --text: #e7e9f5;
+    --muted: #9aa0b8; --border: #2a2e45; --accent: #8f8cf0; --accent-soft: rgba(143,140,240,0.16);
+    --abstain: #7f869c; --low: #f0577a; --med: #f0a63d; --high: #2dd4a0; --warn: #e08544;
+    --bar-bg: #242840;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 34px rgba(0,0,0,0.5);
   }
@@ -120,12 +121,12 @@ body { margin: 0; background: var(--bg); }
 .sr-range, .sr-meta { font-size: 0.82rem; color: var(--muted); }
 .sr-meta { margin-top: 10px; }
 .sr-warn { margin-top: 10px; padding: 7px 11px; border-radius: 8px;
-  background: rgba(224,138,18,0.13); color: var(--warn); font-size: 0.8rem; font-weight: 500; }
+  background: rgba(224,140,31,0.13); color: var(--warn); font-size: 0.8rem; font-weight: 500; }
 .badge { display: inline-block; padding: 3px 9px; border-radius: 999px;
   font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.badge-high { background: rgba(18,161,80,0.15); color: var(--high); }
-.badge-med { background: rgba(224,138,18,0.15); color: var(--med); }
-.badge-low { background: rgba(154,164,178,0.2); color: var(--muted); }
+.badge-high { background: rgba(12,166,120,0.15); color: var(--high); }
+.badge-med { background: rgba(224,140,31,0.15); color: var(--med); }
+.badge-low { background: rgba(154,161,181,0.2); color: var(--muted); }
 .sr-section { margin-top: 30px; }
 .sr-section h3 { margin: 0 0 12px; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em;
   display: flex; align-items: center; gap: 9px; }
@@ -169,7 +170,7 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 .sr-empty { color: var(--muted); font-size: 0.85rem; padding: 18px; text-align: center;
   background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; }
 .goal-bar { background: var(--bar-bg); height: 10px; border-radius: 999px; margin-top: 10px; max-width: 300px; }
-.goal-fill { background: linear-gradient(90deg, var(--high), #3ecf8e); height: 10px; border-radius: 999px;
+.goal-fill { background: linear-gradient(90deg, var(--high), #3fdda4); height: 10px; border-radius: 999px;
   transition: width .3s ease; }
 .sr-gate { border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px;
   margin-bottom: 22px; background: var(--surface); box-shadow: var(--shadow);
@@ -179,8 +180,8 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 .sr-gate-head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
 .sr-gate-status { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
   padding: 3px 11px; border-radius: 999px; }
-.sr-gate-status.locked { background: rgba(180,83,9,0.15); color: var(--warn); }
-.sr-gate-status.open { background: rgba(18,161,80,0.15); color: var(--high); }
+.sr-gate-status.locked { background: rgba(187,90,16,0.15); color: var(--warn); }
+.sr-gate-status.open { background: rgba(12,166,120,0.15); color: var(--high); }
 .sr-gate-reason { color: var(--muted); font-size: 0.84rem; margin-bottom: 14px; }
 .sr-reqs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .sr-req { font-size: 0.78rem; }
@@ -205,8 +206,18 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 .sr-dot.weak { background: var(--low); } .sr-dot.untested { background: var(--abstain); }
 .sr-map-hint { margin-left: auto; }
 .sr-map-svg { display: block; width: 100%; height: 520px; cursor: grab; background:
-  radial-gradient(circle at 50% 40%, rgba(37,99,235,0.05), transparent 70%); }
-.sr-map-svg:active { cursor: grabbing; }
+  radial-gradient(circle at 50% 40%, rgba(91,87,209,0.05), transparent 70%); }
+.sr-map.active .sr-map-svg:active { cursor: grabbing; }
+.sr-map:not(.active) .sr-map-svg { cursor: default; }
+/* Click-to-interact lock: covers the graph so page scroll/clicks don't zoom or
+   pan it until the user explicitly clicks to activate. Hidden once active. */
+.sr-map-lock { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; background: rgba(30,27,75,0.03); }
+.sr-map.active .sr-map-lock { display: none; }
+.sr-map-lock span { background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+  padding: 8px 16px; font-size: 0.8rem; font-weight: 600; color: var(--text); box-shadow: var(--shadow);
+  opacity: 0; transition: opacity .12s ease; }
+.sr-map:hover .sr-map-lock span { opacity: 1; }
 .sr-map-svg .edge { stroke: var(--border); stroke-opacity: 0.55; }
 .sr-map-svg .edge.shared { stroke: var(--accent); stroke-opacity: 0.4; }
 .sr-map-svg .edge.dim { stroke-opacity: 0.08; }
@@ -229,13 +240,13 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 .sr-map-panel h4 { margin: 0 0 4px; font-size: 0.9rem; }
 .sr-map-panel .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.68rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
-.sr-map-panel .pill.strong { background: rgba(22,163,74,0.15); color: var(--high); }
-.sr-map-panel .pill.learning { background: rgba(217,119,6,0.15); color: var(--med); }
-.sr-map-panel .pill.weak { background: rgba(220,38,38,0.15); color: var(--low); }
-.sr-map-panel .pill.untested { background: rgba(148,163,184,0.2); color: var(--muted); }
-.sr-map-panel .pill.chronic { background: rgba(220,38,38,0.15); color: var(--low); }
-.sr-map-panel .pill.shaky { background: rgba(217,119,6,0.15); color: var(--med); }
-.sr-map-panel .pill.occasional { background: rgba(22,163,74,0.15); color: var(--high); }
+.sr-map-panel .pill.strong { background: rgba(12,166,120,0.15); color: var(--high); }
+.sr-map-panel .pill.learning { background: rgba(224,140,31,0.15); color: var(--med); }
+.sr-map-panel .pill.weak { background: rgba(224,65,90,0.15); color: var(--low); }
+.sr-map-panel .pill.untested { background: rgba(154,161,181,0.2); color: var(--muted); }
+.sr-map-panel .pill.chronic { background: rgba(224,65,90,0.15); color: var(--low); }
+.sr-map-panel .pill.shaky { background: rgba(224,140,31,0.15); color: var(--med); }
+.sr-map-panel .pill.occasional { background: rgba(12,166,120,0.15); color: var(--high); }
 .sr-map-panel dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
 .sr-map-panel dt { color: var(--muted); } .sr-map-panel dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .sr-map-panel .nbrs { margin-top: 8px; color: var(--muted); font-size: 0.72rem; }
@@ -243,6 +254,24 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 @media (max-width: 600px) { .sr-dash { padding: 16px 14px; } .sr-grid { grid-template-columns: 1fr; }
   .sr-signals { grid-template-columns: 1fr; }
   .sr-map-panel { position: static; width: auto; margin: 10px; } .sr-map-svg { height: 420px; } }
+/* Quick-launch nav: one button per Speedrun feature, styled with the shared
+   palette so it matches the rest of the dashboard. */
+.sr-launcher { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; margin-bottom: 24px; }
+.sr-launch-group { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+.sr-launch-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+.sr-launch-btns { display: flex; flex-direction: column; gap: 8px; }
+.sr-launch-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  text-align: left; cursor: pointer; font-family: inherit; width: 100%;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  border-radius: 10px; padding: 9px 12px;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.sr-launch-btn:hover { transform: translateY(-1px); border-color: var(--accent); box-shadow: var(--shadow); }
+.sr-launch-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-launch-label { font-weight: 700; font-size: 0.9rem; }
+.sr-launch-desc { font-size: 0.72rem; color: var(--muted); }
 """
 
 _DASHBOARD_JS = """
@@ -270,10 +299,40 @@ document.querySelectorAll('table.sr-table th[data-col]').forEach(th => {
   });
 });
 
+// ---- Quick-launch buttons: each posts a namespaced command back to Python over
+// the pycmd bridge. When rendered outside the app (no bridge) the buttons are
+// inert, so the dashboard still renders fine in a plain browser / export. ----
+document.querySelectorAll('.sr-launch-btn[data-cmd]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    if (typeof pycmd === 'function') pycmd(b.dataset.cmd);
+  });
+});
+
+// ---- Click-to-interact gate: a graph only zooms/pans/drags after the user
+// clicks it. The lock overlay sits on top and absorbs wheel/click while
+// inactive, so page scrolling never zooms the map unintentionally. Moving the
+// pointer off the map, clicking elsewhere, or Escape re-locks it. ----
+function srMapGate(holder) {
+  if (!holder) return function () { return false; };
+  const lock = holder.querySelector('.sr-map-lock');
+  function activate() { holder.classList.add('active'); }
+  function deactivate() { holder.classList.remove('active'); }
+  if (lock) lock.addEventListener('click', activate);
+  holder.addEventListener('mouseleave', deactivate);
+  document.addEventListener('mousedown', function (ev) {
+    if (!holder.contains(ev.target)) deactivate();
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') deactivate();
+  });
+  return function () { return holder.classList.contains('active'); };
+}
+
 // ---- Concept map: self-contained force-directed graph (no external libs) ----
 function srConceptMap() {
   const holder = document.getElementById('sr-concept');
   if (!holder) return;
+  const isActive = srMapGate(holder);
   const data = JSON.parse(document.getElementById('sr-concept-data').textContent);
   const svg = holder.querySelector('svg');
   const gEdges = svg.querySelector('.edges');
@@ -396,6 +455,7 @@ function srConceptMap() {
   function applyVB() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
   applyVB();
   svg.addEventListener('wheel', ev => {
+    if (!isActive()) return;  // let the page scroll until the map is activated
     ev.preventDefault();
     const scale = ev.deltaY > 0 ? 1.1 : 0.9;
     const pt = svgPoint(ev);
@@ -446,10 +506,10 @@ function srConceptMap() {
   function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
   nodeEls.forEach(n => {
-    n.el.addEventListener('mousedown', ev => { ev.stopPropagation(); dragged = n; last = svgPoint(ev); });
+    n.el.addEventListener('mousedown', ev => { if (!isActive()) return; ev.stopPropagation(); dragged = n; last = svgPoint(ev); });
     n.el.addEventListener('click', ev => { ev.stopPropagation(); selectNode(n); });
   });
-  svg.addEventListener('mousedown', ev => { panning = true; last = svgPoint(ev); });
+  svg.addEventListener('mousedown', ev => { if (!isActive()) return; panning = true; last = svgPoint(ev); });
   svg.addEventListener('click', () => { if (!dragged) clearSel(); });
   window.addEventListener('mousemove', ev => {
     if (dragged) { const p = svgPoint(ev); dragged.x = p.x; dragged.y = p.y; dragged.vx = 0; dragged.vy = 0; paint(); }
@@ -466,6 +526,7 @@ srConceptMap();
 function srMistakeGraph() {
   const holder = document.getElementById('sr-mistake');
   if (!holder) return;
+  const isActive = srMapGate(holder);
   const data = JSON.parse(document.getElementById('sr-mistake-data').textContent);
   const svg = holder.querySelector('svg');
   const gEdges = svg.querySelector('.edges');
@@ -586,6 +647,7 @@ function srMistakeGraph() {
   function applyVB() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
   applyVB();
   svg.addEventListener('wheel', ev => {
+    if (!isActive()) return;  // let the page scroll until the map is activated
     ev.preventDefault();
     const scale = ev.deltaY > 0 ? 1.1 : 0.9;
     const pt = svgPoint(ev);
@@ -637,10 +699,10 @@ function srMistakeGraph() {
   function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
   nodeEls.forEach(n => {
-    n.el.addEventListener('mousedown', ev => { ev.stopPropagation(); dragged = n; last = svgPoint(ev); });
+    n.el.addEventListener('mousedown', ev => { if (!isActive()) return; ev.stopPropagation(); dragged = n; last = svgPoint(ev); });
     n.el.addEventListener('click', ev => { ev.stopPropagation(); selectNode(n); });
   });
-  svg.addEventListener('mousedown', ev => { panning = true; last = svgPoint(ev); });
+  svg.addEventListener('mousedown', ev => { if (!isActive()) return; panning = true; last = svgPoint(ev); });
   svg.addEventListener('click', () => { if (!dragged) clearSel(); });
   window.addEventListener('mousemove', ev => {
     if (dragged) { const p = svgPoint(ev); dragged.x = p.x; dragged.y = p.y; dragged.vx = 0; dragged.vy = 0; paint(); }
@@ -917,9 +979,9 @@ def _trajectory_table(col) -> str:
     )
 
 
-def _queue_html(col, *, limit: int = 8) -> str:
+def _queue_html(col, *, limit: int = 8, search: str | None = None) -> str:
     try:
-        cards = ordered_cards(col, limit=limit)
+        cards = ordered_cards(col, limit=limit, search=search)
     except Exception as exc:  # pragma: no cover
         return f'<div class="sr-empty">Could not build queue: {_esc(exc)}</div>'
     if not cards:
@@ -1144,8 +1206,8 @@ def _concept_map_section(col, *, heading: bool = True) -> str:
         f'<b style="color:var(--low)">{s["weak"]} weak</b>'
     )
     hint = (
-        '<span class="sr-map-hint">Click a node to inspect · drag to rearrange · '
-        "scroll to zoom</span>"
+        '<span class="sr-map-hint">Click the map to interact · then drag / scroll to '
+        "zoom · move away to lock</span>"
     )
     return (
         f'<div class="sr-section">{head}'
@@ -1154,6 +1216,7 @@ def _concept_map_section(col, *, heading: bool = True) -> str:
         f'<svg class="sr-map-svg" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">'
         f'<g class="edges"></g><g class="glabels"></g><g class="nodes"></g></svg>'
         f'<div class="sr-map-panel"></div>'
+        f'<div class="sr-map-lock"><span>Click to interact</span></div>'
         f'<script type="application/json" id="sr-concept-data">{data_json}</script>'
         f"</div></div>"
     )
@@ -1199,8 +1262,8 @@ def _mistake_graph_section(col, *, heading: bool = True) -> str:
         f"{s['n_edges']} correlations (by {corr})"
     )
     hint = (
-        '<span class="sr-map-hint">Click a node to see correlated mistakes · '
-        "drag to rearrange · scroll to zoom</span>"
+        '<span class="sr-map-hint">Click the map to interact · then drag / scroll to '
+        "zoom · move away to lock</span>"
     )
     return (
         f'<div class="sr-section">{head}'
@@ -1209,6 +1272,7 @@ def _mistake_graph_section(col, *, heading: bool = True) -> str:
         f'<svg class="sr-map-svg" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">'
         f'<g class="edges"></g><g class="glabels"></g><g class="nodes"></g></svg>'
         f'<div class="sr-map-panel"></div>'
+        f'<div class="sr-map-lock"><span>Click to interact</span></div>'
         f'<script type="application/json" id="sr-mistake-data">{data_json}</script>'
         f"</div></div>"
     )
@@ -1225,7 +1289,98 @@ def render_mistake_graph_html(col) -> str:
     return _shell(body, title="Mistake graph")
 
 
-def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
+# Ordered spec for the dashboard quick-launch nav. This is the single source of
+# truth for the button keys; the aqt bridge (`qt/aqt/speedrun/__init__.py`) maps
+# the same keys to the existing menu handlers, so features are never duplicated.
+# Each entry is (key, label, description). Keys are namespaced on the wire as
+# ``speedrun:open:<key>``.
+LAUNCHER_GROUPS: list[tuple[str, list[tuple[str, str, str]]]] = [
+    (
+        "Drills",
+        [
+            ("study_now", "Study now", "enter the reviewer"),
+            ("study_all", "Study all", "uncapped — grind everything"),
+            ("study_queue", "Study queue", "schema-weighted order"),
+            ("focus", "Focus / by subject", "drill one question-type or schema"),
+            ("schema_drill", "Schema drill", "weakest schemas first"),
+            ("contrasting_pairs", "Contrasting pairs", "compare & contrast"),
+            ("cold_open", "Cold-open", "predict the schema"),
+            ("two_answer_fork", "Two-answer fork", "split the final two"),
+        ],
+    ),
+    (
+        "AI",
+        [
+            ("study_next", "Study next", "AI: what to study next"),
+            ("ai_tutor", "AI Tutor", "ask about a problem"),
+            ("ai_settings", "AI Settings", "enable & configure"),
+        ],
+    ),
+    (
+        "Insights",
+        [
+            ("dashboard", "Refresh", "reload this dashboard"),
+            ("scores", "Scores", "readiness report"),
+        ],
+    ),
+    (
+        "Deck",
+        [
+            ("import_seed", "Import seed deck", "load the problems"),
+            ("export", "Export report", "offline HTML"),
+        ],
+    ),
+]
+
+# Flat, ordered list of every launcher key (used by the bridge + tests).
+LAUNCHER_KEYS: list[str] = [
+    key for _group, buttons in LAUNCHER_GROUPS for (key, _label, _desc) in buttons
+]
+
+
+def _launcher_section() -> str:
+    """A grid of accessible <button>s, one per Speedrun feature. Each button
+    carries a ``data-cmd`` of ``speedrun:open:<key>`` that the dashboard JS relays
+    over the pycmd bridge to the same handlers the Tools menu uses."""
+    groups_html = ""
+    for group_label, buttons in LAUNCHER_GROUPS:
+        btns = ""
+        for key, label, desc in buttons:
+            cmd = f"speedrun:open:{key}"
+            btns += (
+                f'<button type="button" class="sr-launch-btn" data-cmd="{_esc(cmd)}" '
+                f'aria-label="{_esc(label)} — {_esc(desc)}">'
+                f'<span class="sr-launch-label">{_esc(label)}</span>'
+                f'<span class="sr-launch-desc">{_esc(desc)}</span></button>'
+            )
+        groups_html += (
+            f'<div class="sr-launch-group" role="group" '
+            f'aria-label="{_esc(group_label)}">'
+            f'<div class="sr-launch-group-title">{_esc(group_label)}</div>'
+            f'<div class="sr-launch-btns">{btns}</div></div>'
+        )
+    return (
+        '<nav class="sr-launcher" aria-label="Speedrun feature launcher">'
+        f"{groups_html}</nav>"
+    )
+
+
+def _recommender_panel(col) -> str:
+    """The AI "what to study next" section, grounded in the student's scores.
+
+    Delegates to :mod:`speedrun.ai.recommender` (lazy import to keep the module
+    graph acyclic and the AI package importable without Qt). Degrades to empty."""
+    try:
+        from speedrun.ai.recommender import render_recommender_panel
+
+        return render_recommender_panel(col)
+    except Exception:  # pragma: no cover - defensive
+        return ""
+
+
+def render_dashboard_html(
+    col, *, timeline_days: int = 14, embed: bool = False
+) -> str:
     gate = evidence_gate(col)
     mem = memory_score(col, gate=gate)
     perf = performance_score(col, gate=gate)
@@ -1236,8 +1391,11 @@ def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
     body = (
         f'<div class="sr-header"><h1>LSAT Speedrun</h1>'
         f"<p>Three separate scores with ranges. Queue: {mode}{' · ' + filt if filt else ''}. "
-        f"Use <b>Tools → LSAT Speedrun → Study Now</b> or Ctrl+Shift+L for dashboard.</p></div>"
+        f"Launch any exercise from the buttons below, or use the "
+        f"<b>Tools → LSAT Speedrun</b> menu / Ctrl+Shift+L.</p></div>"
+        f"{_launcher_section()}"
         f"{_gate_panel(gate)}"
+        f"{_recommender_panel(col)}"
         f'<div class="sr-grid">{_goal_card(col)}{_memory_card(mem)}{_performance_card(perf)}{_readiness_card(ready)}</div>'
         f"{_trap_banner(col)}"
         f"{_signals_grid()}"
@@ -1250,6 +1408,14 @@ def render_dashboard_html(col, *, timeline_days: int = 14) -> str:
         f"{_latency_table(col)}{_trajectory_table(col)}"
         f'<div class="sr-section"><h3>Next up — schema-weighted queue</h3>{_queue_html(col)}</div>'
     )
+    if embed:
+        # Body-only markup for the AnkiWebView/pycmd bridge path (mirrors the
+        # tutor's embed shape): inline the stylesheet + script around the body.
+        return (
+            f"<style>{_DASHBOARD_CSS}</style>"
+            f'<div class="sr-dash">{body}</div>'
+            f"<script>{_DASHBOARD_JS}</script>"
+        )
     return _shell(body)
 
 

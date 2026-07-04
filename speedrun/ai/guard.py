@@ -43,8 +43,13 @@ def sanitize_source_text(text: str, *, max_chars: int = MAX_SOURCE_CHARS) -> str
 
 
 def has_named_source(resp: LLMResponse) -> bool:
-    """True when the response is usable AND carries a real, named source."""
-    return resp.ok
+    """True when the response is usable AND carries a real, named source.
+
+    This is the single traceability predicate: it requires ``resp.ok`` (non-empty
+    text, not a stub/error marker) AND an explicitly non-blank ``source``. The
+    blank-source check is defense-in-depth so the rule reads correctly at the call
+    site even if ``ok`` is ever loosened."""
+    return resp.ok and bool(resp.source.strip())
 
 
 def require_source(resp: LLMResponse) -> LLMResponse:

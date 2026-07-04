@@ -36,6 +36,34 @@ def test_generate_reworded_variants():
     )
 
 
+def test_authored_paraphrases_are_recognized(tmp_path):
+    """Items carrying `paraphrases` feed the transfer test as authored variants."""
+    seed = {
+        "deck": "t",
+        "items": [
+            {
+                "id": "lr-9001",
+                "section": "LR",
+                "stem_type": "qt.weaken",
+                "schemas": ["flaw.causal.correlation_causation", "qt.weaken"],
+                "stimulus": "Original stimulus about coffee and productivity.",
+                "question": "Which weakens?",
+                "paraphrases": [
+                    {"stimulus": "Restated: tea and focus.", "question": "Which weakens?"},
+                    {"stimulus": "Restated again: water and energy.", "question": "?"},
+                ],
+            }
+        ],
+    }
+    path = tmp_path / "seed.json"
+    path.write_text(json.dumps(seed), encoding="utf-8")
+    variants = generate_reworded_variants(path)
+    assert len(variants) == 2
+    assert all(v.authored for v in variants)
+    assert variants[0].stimulus == "Restated: tea and focus."
+    assert variants[0].schema == "flaw.causal.correlation_causation"
+
+
 def test_transfer_gap_synthetic():
     col = getEmptyCol()
     col.set_config("fsrs", True)

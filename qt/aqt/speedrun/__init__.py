@@ -11,6 +11,7 @@ failure here degrades gracefully and never blocks Anki startup.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -27,6 +28,38 @@ from aqt.utils import (
 
 DECK_NAME = "LSAT Speedrun"
 _score_action: QAction | None = None
+_ai_status_action: QAction | None = None
+
+
+def _point_ai_settings_at_profile(mw) -> None:
+    """Store AI settings inside the active profile's (device-local, git-ignored)
+    base dir, so the app and any headless code in this process agree on the file.
+
+    Respects an existing ``SPEEDRUN_AI_SETTINGS_PATH`` (tests/power users) and
+    never overwrites it. The API key is written here, never to the collection.
+    """
+    if os.environ.get("SPEEDRUN_AI_SETTINGS_PATH"):
+        return
+    try:
+        base = getattr(mw.pm, "base", None)
+        if base:
+            os.environ["SPEEDRUN_AI_SETTINGS_PATH"] = str(
+                Path(base) / "speedrun_ai_settings.json"
+            )
+    except Exception:
+        pass
+
+
+def _refresh_ai_status(mw=None) -> None:
+    global _ai_status_action
+    if _ai_status_action is None:
+        return
+    try:
+        from speedrun.ai.config import ai_enabled
+
+        _ai_status_action.setText(f"AI: {'ON' if ai_enabled() else 'OFF (default)'}")
+    except Exception:
+        _ai_status_action.setText("AI: OFF (default)")
 
 
 def _ensure_speedrun_on_path() -> bool:
@@ -66,24 +99,81 @@ def _ensure_speedrun_on_path() -> bool:
 # The engine keys off machine tags (sr:schema:, sr:trap:, ...). They must stay in
 # the collection, but users shouldn't see raw ids in the editor. Each tag chip
 # carries its full name in data-addon-tag, so we hide the internal ones with CSS
-# and leave the friendly LSAT:: tags visible. Covers the reviewer Edit dialog and
-# the Browse editor (both use aqt.editor.Editor).
-_HIDE_INTERNAL_TAGS_JS = """
+# and leave the friendly LSAT:: tags visible. We also correct the editor's
+# "Tags (N)" count so it matches the *visible* (friendly) chips rather than the
+# raw total. Covers the reviewer Edit dialog and the Browse editor.
+_HIDE_INTERNAL_TAGS_JS = r"""
 (function () {
   var id = 'speedrun-hide-internal-tags';
-  if (document.getElementById(id)) return;
-  var s = document.createElement('style');
-  s.id = id;
-  s.textContent = '.tag[data-addon-tag^="sr:"]{display:none !important;}';
-  (document.head || document.documentElement).appendChild(s);
+  if (!document.getElementById(id)) {
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = '.tag[data-addon-tag^="sr:"]{display:none !important;}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+  function friendlyCount() {
+    var n = 0;
+    document.querySelectorAll('.tag[data-addon-tag]').forEach(function (c) {
+      var t = c.getAttribute('data-addon-tag') || '';
+      if (t && t.indexOf('sr:') !== 0) n++;
+    });
+    return n;
+  }
+  function fixCountLabel() {
+    var labels = document.querySelectorAll('.collapse-label');
+    if (!labels.length) return;
+    var label = labels[labels.length - 1];  // the tags header is the last one
+    var n = friendlyCount();
+    var txt = n === 0 ? 'Tags' : (n === 1 ? '1 tag' : n + ' tags');
+    var badge = label.firstElementChild;  // keep the collapse chevron
+    var cur = '';
+    label.childNodes.forEach(function (node) {
+      if (node !== badge) cur += node.textContent || '';
+    });
+    if (cur.trim() === txt) return;  // already correct -> avoid observer loops
+    Array.prototype.slice.call(label.childNodes).forEach(function (node) {
+      if (node !== badge) label.removeChild(node);
+    });
+    label.appendChild(document.createTextNode(' ' + txt));
+  }
+  fixCountLabel();
+  try {
+    if (!window.__srTagObserver) {
+      var host = document.querySelector('.tag-editor') || document.body;
+      window.__srTagObserver = new MutationObserver(function () {
+        if (window.__srTagT) return;
+        window.__srTagT = setTimeout(function () {
+          window.__srTagT = null;
+          fixCountLabel();
+        }, 60);
+      });
+      window.__srTagObserver.observe(host, { childList: true, subtree: true });
+    }
+  } catch (e) {}
 })();
 """
 
 
 def _hide_internal_editor_tags(editor) -> None:
-    """Hide machine (sr:*) tag chips in the note editor; keep friendly tags."""
+    """Hide machine (sr:*) tag chips in the note editor and fix the tag count."""
     try:
         editor.web.eval(_HIDE_INTERNAL_TAGS_JS)
+    except Exception:
+        pass
+
+
+def _backfill_friendly_tags(col) -> None:
+    """Ensure existing notes have friendly LSAT:: tags so the editor shows chips.
+
+    Older collections carry only machine sr:* tags (hidden in the editor), which
+    made notes look like they had tags that never appeared. Runs once per load;
+    the query skips already-migrated notes so it is a no-op afterwards."""
+    if not _ensure_speedrun_on_path():
+        return
+    try:
+        from speedrun.tools.import_seed_deck import ensure_friendly_tags
+
+        ensure_friendly_tags(col)
     except Exception:
         pass
 
@@ -106,6 +196,7 @@ def _refresh_score_badge(mw) -> None:
 def setup_menu(mw) -> None:
     global _score_action
     _ensure_speedrun_on_path()
+    _point_ai_settings_at_profile(mw)
     menu = QMenu("LSAT Speedrun", mw)
     mw.form.menuTools.addMenu(menu)
 
@@ -118,6 +209,10 @@ def setup_menu(mw) -> None:
     qconnect(study.triggered, lambda: _start_study(mw))
     menu.addAction(study)
 
+    study_all = QAction("Study all (uncapped)", mw)
+    qconnect(study_all.triggered, lambda: _start_study_all(mw))
+    menu.addAction(study_all)
+
     queue = QAction("Schema-weighted queue", mw)
     qconnect(queue.triggered, lambda: _show_queue(mw))
     menu.addAction(queue)
@@ -125,6 +220,10 @@ def setup_menu(mw) -> None:
     drill = QAction("Schema drill (weakest)", mw)
     qconnect(drill.triggered, lambda: _show_drill(mw))
     menu.addAction(drill)
+
+    focus = QAction("Focus / study by subject", mw)
+    qconnect(focus.triggered, lambda: _show_focus(mw))
+    menu.addAction(focus)
 
     contrast = QAction("Contrasting-pairs drill", mw)
     qconnect(contrast.triggered, lambda: _show_contrasting_drill(mw))
@@ -137,6 +236,18 @@ def setup_menu(mw) -> None:
     fork = QAction("Two-answer fork trainer", mw)
     qconnect(fork.triggered, lambda: _show_fork_trainer(mw))
     menu.addAction(fork)
+
+    study_next = QAction("What to study next (AI)", mw)
+    qconnect(study_next.triggered, lambda: _show_recommender(mw))
+    menu.addAction(study_next)
+
+    tutor = QAction("AI Tutor (ask about a problem)", mw)
+    qconnect(tutor.triggered, lambda: _show_tutor(mw))
+    menu.addAction(tutor)
+
+    ai_settings = QAction("AI Settings…", mw)
+    qconnect(ai_settings.triggered, lambda: _show_ai_settings(mw))
+    menu.addAction(ai_settings)
 
     export = QAction("Export offline report", mw)
     qconnect(export.triggered, lambda: _export_report(mw))
@@ -200,15 +311,11 @@ def setup_menu(mw) -> None:
 
     menu.addSeparator()
 
-    ai_action = QAction("AI: OFF (default)", mw)
-    ai_action.setEnabled(False)
-    try:
-        from speedrun.ai.config import ai_enabled
-
-        ai_action.setText(f"AI: {'ON' if ai_enabled() else 'OFF (default)'}")
-    except Exception:
-        pass
-    menu.addAction(ai_action)
+    global _ai_status_action
+    _ai_status_action = QAction("AI: OFF (default)", mw)
+    _ai_status_action.setEnabled(False)
+    menu.addAction(_ai_status_action)
+    _refresh_ai_status(mw)
 
     _score_action = QAction("Scores: —", mw)
     _score_action.setEnabled(False)
@@ -236,11 +343,14 @@ def setup_menu(mw) -> None:
     sc = QShortcut(QKeySequence("Ctrl+Shift+L"), mw)
     qconnect(sc.activated, lambda: _show_dashboard(mw))
 
+    gui_hooks.collection_did_load.append(lambda col: _backfill_friendly_tags(col))
     gui_hooks.collection_did_load.append(lambda _col: _refresh_score_badge(mw))
     gui_hooks.state_did_change.append(
         lambda state, _old: _refresh_score_badge(mw) if state == "overview" else None
     )
     gui_hooks.editor_did_load_note.append(_hide_internal_editor_tags)
+    if mw.col is not None:
+        _backfill_friendly_tags(mw.col)
     _refresh_score_badge(mw)
 
 
@@ -438,24 +548,294 @@ def _start_study(mw) -> None:
         tooltip(f"Study error: {exc}")
 
 
+def _launcher_dispatch(mw) -> dict:
+    """Map each dashboard launcher key to the SAME handler the Tools menu uses.
+
+    The keys mirror ``speedrun.dashboard.LAUNCHER_KEYS`` exactly (validated
+    below); no feature logic is duplicated here — every value just re-invokes an
+    existing ``_show_*`` / action handler.
+    """
+    from speedrun.dashboard import LAUNCHER_KEYS, render_readiness_report_html
+
+    dispatch = {
+        "study_now": lambda: _start_study(mw),
+        "study_all": lambda: _start_study_all(mw),
+        "study_queue": lambda: _show_queue(mw),
+        "focus": lambda: _show_focus(mw),
+        "schema_drill": lambda: _show_drill(mw),
+        "contrasting_pairs": lambda: _show_contrasting_drill(mw),
+        "cold_open": lambda: _show_cold_open(mw),
+        "two_answer_fork": lambda: _show_fork_trainer(mw),
+        "study_next": lambda: _show_recommender(mw),
+        "ai_tutor": lambda: _show_tutor(mw),
+        "ai_settings": lambda: _show_ai_settings(mw),
+        "dashboard": lambda: _show_dashboard(mw),
+        "scores": lambda: _show_report(
+            mw, render_readiness_report_html, "Readiness report"
+        ),
+        "import_seed": lambda: _import_seed(mw),
+        "export": lambda: _export_report(mw),
+    }
+    # Fail loudly during development if the launcher markup and the dispatch drift
+    # apart, so a new button can never silently do nothing.
+    assert set(dispatch) == set(LAUNCHER_KEYS), (
+        "dashboard launcher keys out of sync with dispatch: "
+        f"{sorted(set(LAUNCHER_KEYS) ^ set(dispatch))}"
+    )
+    return dispatch
+
+
+def _launch_bridge(mw):
+    """A shared pycmd bridge for the interactive HTML surfaces (dashboard,
+    recommender, focus picker).
+
+    Handles three wire commands, all routed to the SAME menu handlers so no
+    feature logic is duplicated:
+
+    * ``close`` — close the current dialog.
+    * ``speedrun:open:<key>`` — a launcher key (see ``LAUNCHER_KEYS``).
+    * ``speedrun:focus:<token>`` — focused study for a subject (a schema id, or
+      ``__weakest__`` for the auto-selected weakest areas).
+    """
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return True
+        open_prefix = "speedrun:open:"
+        if cmd.startswith(open_prefix):
+            key = cmd[len(open_prefix) :]
+            handler = _launcher_dispatch(mw).get(key)
+            if handler is not None:
+                handler()
+                return True
+            tooltip(f"Unknown launcher action: {key}")
+            return True
+        focus_prefix = "speedrun:focus:"
+        if cmd.startswith(focus_prefix):
+            _start_focused_study(mw, cmd[len(focus_prefix) :])
+            return True
+        # Let anything else fall through to AnkiWebView's default handling.
+        return
+
+    return bridge
+
+
 def _show_dashboard(mw) -> None:
     if not _require_col(mw):
         return
     try:
         from speedrun.dashboard import render_dashboard_html
 
-        html = render_dashboard_html(mw.col)
+        html = render_dashboard_html(mw.col, embed=True)
     except Exception as exc:  # pragma: no cover - defensive
         tooltip(f"Dashboard error: {exc}")
         return
+
     _show_html(
         mw,
         html,
         title="LSAT Speedrun — Dashboard",
         minWidth=820,
         minHeight=720,
+        bridge=_launch_bridge(mw),
     )
     _refresh_score_badge(mw)
+
+
+def _show_recommender(mw) -> None:
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.ai.recommender import render_recommender_html
+
+        html = render_recommender_html(mw.col, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Recommender error: {exc}")
+        return
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — What to study next",
+        minWidth=760,
+        minHeight=680,
+        bridge=_launch_bridge(mw),
+    )
+
+
+def _show_focus(mw) -> None:
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.focus import render_focus_html
+
+        html = render_focus_html(mw.col, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Focus error: {exc}")
+        return
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — Focus / study by subject",
+        minWidth=760,
+        minHeight=680,
+        bridge=_launch_bridge(mw),
+    )
+
+
+def _build_filtered_deck(
+    mw, *, name: str, search: str, limit: int, order: int = 0, reschedule: bool = True
+) -> int:
+    """Create or rebuild a native filtered ("cram") deck and return its id (0 on
+    failure / unsupported build).
+
+    Reuses Anki's scheduler verbatim — no new scheduling logic. An existing deck
+    of the same name is rebuilt in place (so re-launching is safe); cards return
+    to their home deck normally when studied or when the filtered deck is
+    emptied, so the home deck is never mutated."""
+    col = mw.col
+    get = getattr(col.sched, "get_or_create_filtered_deck", None)
+    add = getattr(col.sched, "add_or_update_filtered_deck", None)
+    if get is None or add is None:
+        return 0
+    name = name[:90]
+    did = 0
+    try:
+        existing = col.decks.id_for_name(name)
+        if existing:
+            did = int(existing)
+    except Exception:
+        did = 0
+    deck = get(deck_id=did)
+    deck.name = name
+    cfg = deck.config
+    if len(cfg.search_terms):
+        cfg.search_terms[0].search = search
+        cfg.search_terms[0].limit = limit
+        cfg.search_terms[0].order = order
+    else:
+        from anki.decks_pb2 import FilteredDeckConfig
+
+        cfg.search_terms.append(
+            FilteredDeckConfig.SearchTerm(search=search, limit=limit, order=order)
+        )
+    cfg.reschedule = reschedule
+    out = add(deck)
+    return int(getattr(out, "id", 0)) or did
+
+
+def _launch_filtered_study(mw, schemas: list, label: str) -> bool:
+    """Best-effort: build a native filtered deck scoped to the subject so the
+    student studies ONLY those items in the real reviewer, reusing Anki's
+    scheduler. Returns True if study was launched. Never raises out."""
+    from speedrun.focus import subject_search
+
+    new_did = _build_filtered_deck(
+        mw,
+        name=f"LSAT Focus: {label}",
+        search=subject_search(schemas),
+        limit=200,
+        order=0,
+    )
+    if not new_did:
+        return False
+    mw.col.decks.select(new_did)
+    mw.col.startTimebox()
+    mw.moveToState("review")
+    tooltip(f"Focused study: {label}")
+    return True
+
+
+def _start_study_all(mw) -> None:
+    """Uncapped "Study all": build/rebuild a filtered ("cram") deck holding the
+    WHOLE Speedrun deck so students can grind past the per-deck daily new-card
+    cap in one sitting.
+
+    Uses the shared filtered-deck builder (Anki's scheduler, no new logic).
+    Handles the empty-deck case (seed deck not imported) and rebuild-if-exists
+    gracefully. Cards return to the home deck normally when done."""
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.focus import study_all_spec
+
+        name, search, limit, order = study_all_spec()
+        new_did = _build_filtered_deck(
+            mw, name=name, search=search, limit=limit, order=order
+        )
+        if not new_did:
+            tooltip("Study all isn't supported on this Anki build.")
+            return
+        gathered = len(mw.col.find_cards(f'deck:"{name}"'))
+        if gathered == 0:
+            mw.col.decks.select(new_did)
+            mw.moveToState("overview")
+            tooltip("Nothing to study yet — import the seed deck first.")
+            return
+        mw.col.decks.select(new_did)
+        mw.col.startTimebox()
+        mw.moveToState("review")
+        tooltip(f"Study all: {gathered} card(s), uncapped.")
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Study all error: {exc}")
+
+
+def _start_focused_study(mw, token: str) -> None:
+    """Launch focused study for a subject token from the pycmd bridge.
+
+    ``token`` is a schema id, or ``__weakest__`` for the auto-selected weakest
+    areas. Tries a real filtered-deck reviewer session; on any failure falls back
+    to the filtered schema-weighted queue view (always works, headless-safe)."""
+    if not _require_col(mw):
+        return
+    from speedrun.focus import WEAKEST_TOKEN, weakest_subjects
+
+    token = (token or "").strip()
+    if token == WEAKEST_TOKEN:
+        try:
+            schemas = weakest_subjects(mw.col)
+        except Exception:
+            schemas = []
+        label = "your weakest areas"
+    elif token:
+        schemas = [token]
+        try:
+            from speedrun.taxonomy.labels import schema_label
+
+            label = schema_label(token)
+        except Exception:
+            label = token
+    else:
+        tooltip("No subject selected.")
+        return
+    if not schemas:
+        tooltip("No subject to focus on yet — practice a little first.")
+        return
+
+    try:
+        if _launch_filtered_study(mw, schemas, label):
+            return
+    except Exception:
+        pass  # fall through to the queue view
+
+    try:
+        from speedrun.focus import render_focus_queue_html
+
+        html = render_focus_queue_html(
+            mw.col, schemas, title=f"LSAT Speedrun — Focus: {label}"
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Focus error: {exc}")
+        return
+    _show_html(
+        mw,
+        html,
+        title=f"LSAT Speedrun — Focus: {label}",
+        minWidth=620,
+        minHeight=520,
+    )
 
 
 def _show_queue(mw) -> None:
@@ -533,6 +913,23 @@ def _show_contrasting_drill(mw) -> None:
             if dialog is not None:
                 dialog.close()
             return
+        compare_prefix = "speedrun:compare:"
+        if cmd.startswith(compare_prefix):
+            from speedrun.ai.pair_compare import compare_for_bridge
+
+            try:
+                # Wire form: speedrun:compare:<item_id>:<chosen_id>. Item ids carry
+                # no colon, so split the choice id off the right.
+                rest = cmd[len(compare_prefix) :]
+                item_id, chosen_id = rest.rsplit(":", 1)
+                return compare_for_bridge(item_id, chosen_id)
+            except Exception:  # pragma: no cover - never break the drill
+                return {
+                    "comparison": "Sorry — I could not compare that.",
+                    "source": "offline",
+                    "ai_used": False,
+                    "citations": [],
+                }
         prefix = "speedrun:contrast:"
         if cmd.startswith(prefix):
             import json
@@ -647,6 +1044,175 @@ def _show_fork_trainer(mw) -> None:
         minHeight=680,
         bridge=bridge,
     )
+
+
+def _show_tutor(mw) -> None:
+    _ensure_speedrun_on_path()
+    try:
+        from speedrun.ai.tutor import render_tutor_html
+
+        html = render_tutor_html(embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Tutor error: {exc}")
+        return
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return
+        prefix = "speedrun:tutor:"
+        if cmd.startswith(prefix):
+            import json
+
+            from speedrun.ai.tutor import answer_for_bridge
+
+            try:
+                payload = json.loads(cmd[len(prefix) :])
+                # Returned dict is JSON-encoded once by the webview bridge and
+                # decoded once by pycmd, so the JS callback receives an object.
+                return answer_for_bridge(
+                    payload.get("item_id", ""),
+                    payload.get("question", ""),
+                    history=payload.get("history"),
+                )
+            except Exception:  # pragma: no cover - never break the chat
+                return {
+                    "answer": "Sorry — I could not answer that.",
+                    "source": "offline",
+                    "ai_used": False,
+                    "citations": [],
+                }
+        return
+
+    _show_html(
+        mw,
+        html,
+        title="LSAT Speedrun — AI Tutor",
+        minWidth=780,
+        minHeight=720,
+        bridge=bridge,
+    )
+
+
+def _show_ai_settings(mw) -> None:
+    """Modal dialog to enable/configure the AI Tutor without editing env vars.
+
+    Writes to the device-local settings store (never the synced collection).
+    Applies immediately: ``default_client()`` reads the store fresh each call,
+    so no relaunch is needed. The ``SPEEDRUN_AI_OFF`` env var still overrides
+    everything for tests / CI / power users.
+    """
+    _ensure_speedrun_on_path()
+    _point_ai_settings_at_profile(mw)
+    try:
+        from speedrun.ai.settings import (
+            DEFAULT_BASE_URL,
+            DEFAULT_MODEL,
+            load_settings,
+            masked_key_hint,
+            save_settings,
+            settings_path,
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"AI Settings unavailable: {exc}")
+        return
+
+    from aqt.qt import (
+        QCheckBox,
+        QDialog,
+        QDialogButtonBox,
+        QLabel,
+        QLineEdit,
+        QVBoxLayout,
+        Qt,
+    )
+
+    env_forced = os.environ.get("SPEEDRUN_AI_OFF") is not None
+    cur = load_settings()
+
+    diag = QDialog(mw)
+    diag.setWindowTitle("LSAT Speedrun — AI Settings")
+    disable_help_button(diag)
+    layout = QVBoxLayout(diag)
+
+    enable = QCheckBox("Enable AI Tutor (opt-in)")
+    enable.setChecked(bool(cur.get("ai_enabled", False)))
+    layout.addWidget(enable)
+
+    layout.addWidget(QLabel("OpenAI API key"))
+    key_edit = QLineEdit()
+    key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+    key_edit.setText(str(cur.get("openai_api_key", "")))
+    hint = masked_key_hint()
+    key_edit.setPlaceholderText(
+        f"Stored: {hint}" if hint else "sk-… (stored locally on this device)"
+    )
+    layout.addWidget(key_edit)
+
+    layout.addWidget(QLabel("Model"))
+    model_edit = QLineEdit()
+    model_edit.setText(str(cur.get("openai_model", DEFAULT_MODEL)))
+    model_edit.setPlaceholderText(DEFAULT_MODEL)
+    layout.addWidget(model_edit)
+
+    layout.addWidget(QLabel("Base URL (optional — for a proxy/local server)"))
+    url_edit = QLineEdit()
+    url_edit.setText(str(cur.get("openai_base_url", DEFAULT_BASE_URL)))
+    url_edit.setPlaceholderText(DEFAULT_BASE_URL)
+    layout.addWidget(url_edit)
+
+    note = QLabel(
+        "The API key is stored locally on this device only — it is never synced "
+        "to AnkiWeb or written into your collection. Setting the SPEEDRUN_AI_OFF "
+        "environment variable still overrides this."
+    )
+    note.setWordWrap(True)
+    note.setStyleSheet("color: palette(mid); font-size: 11px;")
+    layout.addWidget(note)
+
+    if env_forced:
+        warn = QLabel(
+            "Note: SPEEDRUN_AI_OFF is currently set in the environment, so it "
+            "overrides the checkbox above until you unset it."
+        )
+        warn.setWordWrap(True)
+        warn.setStyleSheet("color: palette(mid); font-size: 11px;")
+        layout.addWidget(warn)
+
+    box = QDialogButtonBox(
+        QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+    )
+    layout.addWidget(box)
+    qconnect(box.accepted, diag.accept)
+    qconnect(box.rejected, diag.reject)
+
+    diag.setMinimumWidth(420)
+    if diag.exec() != QDialog.DialogCode.Accepted:
+        return
+
+    try:
+        path = save_settings(
+            {
+                "ai_enabled": enable.isChecked(),
+                "openai_api_key": key_edit.text().strip(),
+                "openai_model": model_edit.text().strip() or DEFAULT_MODEL,
+                "openai_base_url": url_edit.text().strip() or DEFAULT_BASE_URL,
+            }
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Could not save AI settings: {exc}")
+        return
+
+    _refresh_ai_status(mw)
+    from speedrun.ai.config import ai_enabled
+
+    if enable.isChecked() and not ai_enabled() and env_forced:
+        tooltip("Saved. AI stays OFF because SPEEDRUN_AI_OFF is set in the environment.")
+    else:
+        tooltip(f"AI settings saved ({'ON' if ai_enabled() else 'OFF'}).")
+    _ = path  # path intentionally not shown/logged (may sit beside the key file)
 
 
 def _export_report(mw) -> None:

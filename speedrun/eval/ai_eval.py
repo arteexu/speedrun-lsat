@@ -158,4 +158,7 @@ def format_report(report: EvalReport) -> str:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    print(format_report(run_ai_eval()))
+    _report = run_ai_eval()
+    print(format_report(_report))
+    # Non-zero exit blocks a release when the AI fails the cutoff / baselines.
+    raise SystemExit(0 if _report.passed else 1)

@@ -19,7 +19,13 @@ from speedrun.scoring.queue import (  # noqa: E402
 )
 from speedrun.tools.health_check import run_checks  # noqa: E402
 from speedrun.tools.import_seed_deck import (  # noqa: E402
+    DECK_CONFIG_NAME,
+    DEFAULT_DECK_CONF_ID,
+    HIGH_NEW_PER_DAY,
+    HIGH_REV_PER_DAY,
     build_tags,
+    ensure_deck_daily_limits,
+    ensure_friendly_tags,
     import_seed_deck,
 )
 from speedrun.tools.schema_drill import (
@@ -60,6 +66,25 @@ def test_build_tags_keeps_machine_and_adds_friendly():
     assert all(" " not in t for t in tags)
 
 
+def test_ensure_friendly_tags_backfills_legacy_notes():
+    col = getEmptyCol()
+    import_seed_deck(col, backup=False)
+    # Simulate a legacy note that only has machine sr: tags (pre-friendly-tags).
+    nid = col.find_notes('note:"LSAT Speedrun"')[0]
+    note = col.get_note(nid)
+    note.tags = [t for t in note.tags if t.startswith("sr:")]
+    col.update_note(note)
+    assert not any(t.startswith("LSAT::") for t in col.get_note(nid).tags)
+    # Backfill adds friendly companions; second run is a no-op (idempotent).
+    changed = ensure_friendly_tags(col)
+    assert changed >= 1
+    assert ensure_friendly_tags(col) == 0
+    healed = col.get_note(nid).tags
+    assert any(t.startswith("LSAT::") for t in healed)
+    assert any(t.startswith("sr:") for t in healed)  # machine tags preserved
+    col.close()
+
+
 def test_weakest_schemas_returns_list():
     col = getEmptyCol()
     import_seed_deck(col, backup=False)
@@ -97,4 +122,59 @@ def test_schema_drill_queue():
     import_seed_deck(col, backup=False)
     schemas, cards = schema_drill_queue(col, count=2, limit=10)
     assert schemas
+    col.close()
+
+
+# --------------------------------------------------------------------------- #
+# Deck daily-limit config (uncapped study)
+# --------------------------------------------------------------------------- #
+
+
+def test_import_sets_high_daily_limits_scoped_to_speedrun_deck():
+    col = getEmptyCol()
+    # Snapshot the global Default options group before import.
+    default_before = col.decks.get_config(DEFAULT_DECK_CONF_ID)
+    new_before = default_before["new"]["perDay"]
+    rev_before = default_before["rev"]["perDay"]
+
+    result = import_seed_deck(col, backup=False)
+    assert result.limits_applied is True
+
+    deck = col.decks.get(result.deck_id, default=False)
+    conf = col.decks.config_dict_for_deck_id(result.deck_id)
+    # The Speedrun deck has its OWN dedicated options group, not the global one.
+    assert int(deck["conf"]) != DEFAULT_DECK_CONF_ID
+    assert conf["name"] == DECK_CONFIG_NAME
+    assert conf["new"]["perDay"] == HIGH_NEW_PER_DAY
+    assert conf["rev"]["perDay"] == HIGH_REV_PER_DAY
+
+    # The global Default config is untouched (no global side effects).
+    default_after = col.decks.get_config(DEFAULT_DECK_CONF_ID)
+    assert default_after["new"]["perDay"] == new_before
+    assert default_after["rev"]["perDay"] == rev_before
+    col.close()
+
+
+def test_ensure_deck_daily_limits_is_idempotent():
+    col = getEmptyCol()
+    result = import_seed_deck(col, backup=False)
+    # Import already applied the limits; a re-run changes nothing.
+    assert ensure_deck_daily_limits(col, result.deck_id) is False
+    conf = col.decks.config_dict_for_deck_id(result.deck_id)
+    assert conf["new"]["perDay"] == HIGH_NEW_PER_DAY
+    assert conf["rev"]["perDay"] == HIGH_REV_PER_DAY
+    col.close()
+
+
+def test_ensure_deck_daily_limits_respects_deliberate_user_change():
+    col = getEmptyCol()
+    result = import_seed_deck(col, backup=False)
+    # Student deliberately lowers New cards/day on the Speedrun group.
+    conf = col.decks.config_dict_for_deck_id(result.deck_id)
+    conf["new"]["perDay"] = 42
+    col.decks.update_config(conf)
+    # A subsequent import must NOT clobber that deliberate change.
+    ensure_deck_daily_limits(col, result.deck_id)
+    conf2 = col.decks.config_dict_for_deck_id(result.deck_id)
+    assert conf2["new"]["perDay"] == 42
     col.close()

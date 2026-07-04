@@ -13,6 +13,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from speedrun.dashboard import (  # noqa: E402
+    LAUNCHER_GROUPS,
+    LAUNCHER_KEYS,
     render_dashboard_html,
     render_study_list_html,
 )
@@ -108,3 +110,79 @@ def test_dashboard_html_hides_raw_schema_ids():
     assert 'class="sr-schema-id"' not in html
     assert " · " in html
     col.close()
+
+
+def test_launcher_keys_match_spec():
+    # LAUNCHER_KEYS is the flat, ordered view of LAUNCHER_GROUPS and must stay in
+    # sync. Keys must be unique and namespace-safe (no colons/spaces).
+    spec_keys = [key for _g, btns in LAUNCHER_GROUPS for (key, _l, _d) in btns]
+    assert LAUNCHER_KEYS == spec_keys
+    assert len(LAUNCHER_KEYS) == len(set(LAUNCHER_KEYS)), "duplicate launcher keys"
+    for key in LAUNCHER_KEYS:
+        assert key and ":" not in key and " " not in key
+    # The stable, documented keys must all be present.
+    required = {
+        "study_now",
+        "study_all",
+        "study_queue",
+        "cold_open",
+        "two_answer_fork",
+        "contrasting_pairs",
+        "ai_tutor",
+        "ai_settings",
+        "export",
+        "import_seed",
+        "dashboard",
+        "scores",
+    }
+    assert required <= set(LAUNCHER_KEYS)
+
+
+def test_dashboard_renders_launcher_buttons():
+    col = getEmptyCol()
+    import_seed_deck(col, backup=False)
+    html = render_dashboard_html(col)
+    # The launcher nav and a real <button> per feature are present, keyboard
+    # focusable and labelled for accessibility.
+    assert 'class="sr-launcher"' in html
+    assert 'aria-label="Speedrun feature launcher"' in html
+    assert html.count('class="sr-launch-btn"') == len(LAUNCHER_KEYS)
+    for key in LAUNCHER_KEYS:
+        assert f'data-cmd="speedrun:open:{key}"' in html
+    col.close()
+
+
+def test_dashboard_embed_is_body_only_with_bridge_wiring():
+    col = getEmptyCol()
+    import_seed_deck(col, backup=False)
+    embed = render_dashboard_html(col, embed=True)
+    # Body-only markup for the AnkiWebView/pycmd path: no <html>/<head> wrapper,
+    # but the shared stylesheet, launcher, and the pycmd relay script are inlined.
+    assert "<!DOCTYPE html>" not in embed
+    assert "<html>" not in embed
+    assert "<style>" in embed and ".sr-dash" in embed
+    assert 'class="sr-launcher"' in embed
+    assert "pycmd(b.dataset.cmd)" in embed
+    for key in LAUNCHER_KEYS:
+        assert f'data-cmd="speedrun:open:{key}"' in embed
+    col.close()
+
+
+def test_launcher_dispatch_covers_every_key():
+    # The aqt bridge maps every launcher key to a real, callable handler. Skip
+    # cleanly when the Qt layer isn't importable (e.g. the pylib-only test run).
+    import importlib
+
+    try:
+        speedrun_qt = importlib.import_module("aqt.speedrun")
+    except Exception:
+        import pytest
+
+        pytest.skip("aqt not importable in this environment")
+
+    class _FakeMw:
+        col = None
+
+    dispatch = speedrun_qt._launcher_dispatch(_FakeMw())
+    assert set(dispatch) == set(LAUNCHER_KEYS)
+    assert all(callable(fn) for fn in dispatch.values())

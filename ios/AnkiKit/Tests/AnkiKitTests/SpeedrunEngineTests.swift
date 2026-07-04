@@ -64,6 +64,56 @@ final class SpeedrunEngineTests: XCTestCase {
         XCTAssertFalse(scores.memory.reason.isEmpty)
     }
 
+    func testAnswerCardRecordsReviewAndTransitionsState() throws {
+        // Grading a card must go through the shared Rust scheduler: it advances
+        // the card's scheduling state (new -> learning) and writes a revlog entry,
+        // proving reviews are really recorded on-device (Phase 1).
+        let engine = try SpeedrunEngine()
+        let cards = engine.reviewQueue(limit: 10)
+        let card = try XCTUnwrap(cards.first, "exam deck should yield a card to grade")
+
+        let before = try XCTUnwrap(
+            engine.schedulingStates(cardId: card.cardId),
+            "engine should expose scheduling states for a new card"
+        )
+        let ok = engine.answerCard(cardId: card.cardId, rating: .good, millisecondsTaken: 1000)
+        XCTAssertTrue(ok, "the shared scheduler should accept the review")
+
+        let after = try XCTUnwrap(engine.schedulingStates(cardId: card.cardId))
+        XCTAssertNotEqual(
+            before.current, after.current,
+            "answering must transition the card's state (new -> learning)"
+        )
+    }
+
+    func testAnsweringEnoughCardsProducesAPerformanceScore() throws {
+        // The three scores are derived from the revlog, so once enough graded
+        // attempts exist the "No score yet" give-up must flip to a real score.
+        let engine = try SpeedrunEngine()
+
+        // Fresh deck: performance abstains (no attempts yet).
+        let fresh = try XCTUnwrap(engine.computeScores())
+        XCTAssertTrue(fresh.performance.gaveUp, "fresh deck has no graded attempts")
+
+        // Grade 12 distinct cards Good (> the default min of 10 attempts).
+        let cards = engine.reviewQueue(limit: 20)
+        XCTAssertGreaterThanOrEqual(cards.count, 12)
+        var recorded = 0
+        for card in cards.prefix(12) {
+            if engine.answerCard(cardId: card.cardId, rating: .good, millisecondsTaken: 1000) {
+                recorded += 1
+            }
+        }
+        XCTAssertEqual(recorded, 12, "every grade should be recorded")
+
+        let after = try XCTUnwrap(engine.computeScores())
+        XCTAssertFalse(
+            after.performance.gaveUp,
+            "performance should have a real score after >= 10 recorded reviews"
+        )
+        XCTAssertGreaterThanOrEqual(after.performance.n, 12, "n reflects recorded attempts")
+    }
+
     func testSyncAgainstLocalServerIfAvailable() throws {
         // Verifies the iOS sync client end-to-end when a dev server is running at
         // 127.0.0.1:8080 (see docs/speedrun/SYNC-SERVER.md). Skips in CI where no

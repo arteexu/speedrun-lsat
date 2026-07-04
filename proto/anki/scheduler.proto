@@ -74,6 +74,11 @@ service SchedulerService {
   // implementation. Read-only.
   rpc ComputeSpeedrunScores(SpeedrunScoresRequest)
       returns (SpeedrunScoresResponse);
+  // Speedrun LSAT: raw graded-review facts (revlog ease + timestamp + the card's
+  // tags) so the phone can build the mistake graph, concept map, and per-schema
+  // accuracy on-device using the same definitions as the desktop Python. The
+  // aggregation lives client-side; this only exposes the rows. Read-only.
+  rpc SpeedrunReviewFacts(generic.Empty) returns (SpeedrunReviewFactsResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
@@ -562,4 +567,19 @@ message SpeedrunScoresResponse {
   ScoreValue memory = 1;       // point/low/high are recall probabilities [0,1]
   ScoreValue performance = 2;  // point/low/high are on-budget accuracy [0,1]
   ScoreValue readiness = 3;    // point/low/high are on the 120-180 scale
+}
+
+// One graded review from the revlog, joined to its card's note tags. Mirrors the
+// Python query `SELECT r.cid, r.ease, r.id, n.tags FROM revlog ... WHERE r.ease > 0`
+// used by concept_graph.py / mistake_graph.py. `ease` is 1-based (1=Again =
+// wrong, 2=Hard, 3=Good, 4=Easy); `id_millis` is the review time in ms.
+message SpeedrunReviewFact {
+  int64 card_id = 1;
+  uint32 ease = 2;
+  int64 id_millis = 3;
+  string tags = 4;
+}
+
+message SpeedrunReviewFactsResponse {
+  repeated SpeedrunReviewFact facts = 1;
 }

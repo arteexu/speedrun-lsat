@@ -255,6 +255,36 @@ impl crate::services::SchedulerService for Collection {
         })
     }
 
+    fn speedrun_review_facts(&mut self) -> Result<scheduler::SpeedrunReviewFactsResponse> {
+        // Same rows the desktop concept/mistake graphs read; the phone does the
+        // per-schema aggregation client-side so the definitions stay in one place.
+        let mut facts = Vec::new();
+        {
+            let mut stmt = self.storage.db.prepare(
+                "SELECT r.cid, r.ease, r.id, n.tags FROM revlog r \
+                 JOIN cards c ON r.cid = c.id JOIN notes n ON c.nid = n.id WHERE r.ease > 0",
+            )?;
+            let rows = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })?;
+            for row in rows {
+                let (cid, ease, id, tags) = row?;
+                facts.push(scheduler::SpeedrunReviewFact {
+                    card_id: cid,
+                    ease: ease as u32,
+                    id_millis: id,
+                    tags,
+                });
+            }
+        }
+        Ok(scheduler::SpeedrunReviewFactsResponse { facts })
+    }
+
     fn update_stats(&mut self, input: scheduler::UpdateStatsRequest) -> Result<()> {
         self.transact_no_undo(|col| {
             let today = col.current_due_day(0)?;

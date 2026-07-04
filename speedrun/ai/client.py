@@ -37,9 +37,16 @@ class LLMResponse:
 
     @property
     def ok(self) -> bool:
-        """A usable response: non-empty text from a real, named source."""
-        return bool(self.text.strip()) and not self.source.startswith(
-            ("stub", "openai-error")
+        """A usable response: non-empty text from a real, *named* source.
+
+        Requires (1) non-empty text, (2) a non-empty source string, and (3) that
+        the source is not a stub/error marker. Point (2) is the traceability
+        guarantee: an AI response with a blank source is never shown, so no
+        surface can display AI text that cannot be traced to a named model."""
+        return (
+            bool(self.text.strip())
+            and bool(self.source.strip())
+            and not self.source.startswith(("stub", "openai-error"))
         )
 
 
@@ -73,13 +80,28 @@ class ScriptedLLMClient(LLMClient):
         return LLMResponse(text=self._responses[idx], source=self._source)
 
 
+def _stored_ai_overrides() -> dict[str, str]:
+    """Device-local key/model/base_url the user set in the AI Settings dialog.
+
+    Safe/headless: returns ``{}`` if the store module or file is unavailable so
+    the client transparently falls back to env vars (and existing tests pass)."""
+    try:
+        from speedrun.ai.settings import stored_overrides
+
+        return stored_overrides()
+    except Exception:
+        return {}
+
+
 class OpenAILLMClient(LLMClient):
     """Real client for an OpenAI-compatible chat completions endpoint.
 
-    Reads the key from ``OPENAI_API_KEY``; model from ``OPENAI_MODEL`` (default
-    ``gpt-4o-mini``); base URL from ``OPENAI_BASE_URL`` (so a local/proxy server
-    also works). Never raises on network/API failure - returns an empty response
-    with an ``openai-error:`` source so callers fall back to the offline path.
+    Configuration precedence for key / model / base URL: an explicit stored
+    value from the in-app AI Settings dialog, else the matching env var
+    (``OPENAI_API_KEY`` / ``OPENAI_MODEL`` / ``OPENAI_BASE_URL``), else the
+    built-in default. Never raises on network/API failure - returns an empty
+    response with an ``openai-error:`` source so callers fall back to the
+    offline path. With no key anywhere it returns ``stub-no-key``.
     """
 
     def __init__(
@@ -89,11 +111,18 @@ class OpenAILLMClient(LLMClient):
         temperature: float = 0.2,
         timeout: float = 30.0,
     ) -> None:
-        self.model = model or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL)
-        self.base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+        stored = _stored_ai_overrides()
+        self.model = (
+            model or stored.get("openai_model") or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL)
+        )
+        base_url = (
+            stored.get("openai_base_url")
+            or os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
+        )
+        self.base_url = base_url.rstrip("/")
         self.temperature = temperature
         self.timeout = timeout
-        self._api_key = os.environ.get("OPENAI_API_KEY", "")
+        self._api_key = stored.get("openai_api_key") or os.environ.get("OPENAI_API_KEY", "")
 
     @property
     def source(self) -> str:

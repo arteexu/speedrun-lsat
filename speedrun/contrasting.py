@@ -28,12 +28,22 @@ from pathlib import Path
 from typing import Any
 
 from speedrun.taxonomy.labels import category_label, schema_label
+from speedrun.textfmt import INLINE_MD_JS
 
 PKG_ROOT = Path(__file__).resolve().parent
 DEFAULT_SEED = PKG_ROOT / "data" / "seed_deck.json"
 DEFAULT_TAXONOMY = PKG_ROOT / "taxonomy" / "lsat_taxonomy.json"
 
 FLAW_PREFIX = "flaw."
+
+
+def _ai_on() -> bool:
+    try:
+        from speedrun.ai.config import ai_enabled
+
+        return bool(ai_enabled())
+    except Exception:
+        return False
 
 
 @dataclass
@@ -48,6 +58,9 @@ class ContrastItem:
     flaw_id: str
     flaw_label: str
     why_runner_up_wrong: str
+    # Answer choices (id + text only) so the drill can let the student mark which
+    # answer they picked and then compare their reasoning to the credited one.
+    choices: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -113,6 +126,11 @@ def _to_item(raw: dict[str, Any]) -> ContrastItem:
         (c.get("text", "") for c in raw.get("choices", []) if c.get("correct")), ""
     )
     fork = raw.get("two_answer_fork", {}) or {}
+    choices = [
+        {"id": c.get("id", ""), "text": c.get("text", "")}
+        for c in raw.get("choices", [])
+        if c.get("id")
+    ]
     return ContrastItem(
         id=raw.get("id", ""),
         section=raw.get("section", ""),
@@ -122,6 +140,7 @@ def _to_item(raw: dict[str, Any]) -> ContrastItem:
         flaw_id=flaw,
         flaw_label=schema_label(flaw),
         why_runner_up_wrong=fork.get("why_runner_up_wrong", ""),
+        choices=choices,
     )
 
 
@@ -304,6 +323,22 @@ _DRILL_CSS = """
 .sr-cd-rev-side .ans { color: var(--high); margin: 4px 0; }
 .sr-cd-rev-side .why { color: var(--muted); }
 .sr-cd-selfrate { font-size: 0.85rem; color: var(--muted); margin: 8px 0 4px; }
+.sr-cd-compare { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px; }
+.sr-cd-compare-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem;
+  padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); margin-bottom: 8px; }
+.sr-cd-compare-status.on { background: rgba(22,163,74,0.10); border-color: var(--high); color: var(--high); }
+.sr-cd-compare-status.off { background: rgba(148,163,184,0.12); color: var(--muted); }
+.sr-cd-compare-status .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.sr-cd-compare-q { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+.sr-cd-pick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.sr-cd-pick button { cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  border-radius: 8px; padding: 5px 11px; font-size: 0.82rem; font-weight: 700; }
+.sr-cd-pick button.sel { border-color: var(--accent); background: var(--accent); color: #fff; }
+.sr-cd-cmp-result { font-size: 0.85rem; line-height: 1.55; white-space: pre-wrap;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 6px; }
+.sr-cd-cmp-result .src { display: block; margin-top: 8px; font-size: 0.72rem; color: var(--muted); }
+.sr-cd-cmp-result .src .ai { color: var(--high); font-weight: 700; }
+.sr-cd-cmp-result strong { font-weight: 700; }
 .sr-cd-done { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 22px;
   text-align: center; }
 .sr-cd-done h2 { margin: 0 0 8px; }
@@ -312,7 +347,7 @@ _DRILL_CSS = """
 @media (max-width: 640px) { .sr-cd-pair, .sr-cd-rev-grid { grid-template-columns: 1fr; } }
 """
 
-_DRILL_JS = """
+_DRILL_JS = r"""
 (function () {
   const holder = document.getElementById('sr-drill');
   if (!holder) return;
@@ -322,7 +357,51 @@ _DRILL_JS = """
   const tally = { got_it: 0, partial: 0, missed: 0 };
   const stage = document.getElementById('sr-cd-stage');
 
-  function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+  const esc = srEsc;   // shared with speedrun.textfmt.INLINE_MD_JS
+  const fmt = srFmt;   // esc()+**bold**+newlines, escaped-first (injection-safe)
+  function srcLine(reply) {
+    if (reply.ai_used) {
+      return '<span class="src"><span class="ai">AI</span> &middot; source: ' + esc(reply.source) +
+        ' &middot; grounded in this problem</span>';
+    }
+    var extra = (reply.citations && reply.citations.length) ? ' &middot; ' + esc(reply.citations.join(' &middot; ')) : '';
+    return '<span class="src">Grounded comparison (no AI) — from this problem\u2019s trap tags &amp; fork' + extra + '</span>';
+  }
+
+  function compareBlock(it, label) {
+    if (!it.choices || !it.choices.length) return '';
+    var picks = it.choices.map(function (c) {
+      return '<button type="button" data-item="' + esc(it.id) + '" data-choice="' + esc(c.id) + '">(' + esc(c.id) + ')</button>';
+    }).join('');
+    return '<div class="sr-cd-compare">' +
+      '<div class="sr-cd-compare-q">' + esc(label) + ': which answer did you pick? Compare your reasoning to the credited one.</div>' +
+      '<div class="sr-cd-pick">' + picks + '</div>' +
+      '<div class="sr-cd-cmp-result" style="display:none"></div></div>';
+  }
+
+  function wireCompare() {
+    stage.querySelectorAll('.sr-cd-pick button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var wrap = b.closest('.sr-cd-compare');
+        wrap.querySelectorAll('.sr-cd-pick button').forEach(function (x) { x.classList.remove('sel'); });
+        b.classList.add('sel');
+        var res = wrap.querySelector('.sr-cd-cmp-result');
+        res.style.display = 'block';
+        res.innerHTML = 'Comparing\u2026';
+        var item = b.dataset.item, choice = b.dataset.choice;
+        if (typeof pycmd === 'function') {
+          pycmd('speedrun:compare:' + item + ':' + choice, function (resp) {
+            var reply = (typeof resp === 'string') ? JSON.parse(resp) : (resp || {});
+            if (!reply.comparison) reply = { comparison: String(resp), source: 'offline', ai_used: false, citations: [] };
+            res.innerHTML = fmt(reply.comparison) + srcLine(reply);
+          });
+        } else {
+          res.innerHTML = 'Open this drill inside the app (LSAT Speedrun menu) to compare your reasoning.' +
+            srcLine({ ai_used: false, citations: [] });
+        }
+      });
+    });
+  }
 
   function sideHtml(it, label) {
     return '<div class="sr-cd-side"><h4>' + label + ' &middot; ' + esc(it.section) + '</h4>' +
@@ -372,6 +451,12 @@ _DRILL_JS = """
       '<div class="sr-cd-reveal" id="sr-cd-reveal"><h4>' + esc(p.category_label) + ' &mdash; what they share</h4>' +
       '<div class="sr-cd-note">' + esc(p.reveal_note) + '</div>' +
       '<div class="sr-cd-rev-grid">' + revSide(p.item_a) + revSide(p.item_b) + '</div>' +
+      '<div class="sr-cd-compare-status ' + (data.ai_enabled ? 'on' : 'off') + '"><span class="dot"></span>' +
+      (data.ai_enabled
+        ? 'AI is enabled — your reasoning comparison is generated and grounded in this problem.'
+        : 'AI is off (opt-in) — comparisons are built from this problem\u2019s trap tags and fork rationale.') +
+      '</div>' +
+      compareBlock(p.item_a, 'Argument A') + compareBlock(p.item_b, 'Argument B') +
       '<div class="sr-cd-selfrate">How did your articulation compare?</div>' +
       '<div class="sr-cd-actions">' +
       '<button class="sr-btn good" data-r="got_it">Got it</button>' +
@@ -382,6 +467,7 @@ _DRILL_JS = """
       document.getElementById('sr-cd-reveal').classList.add('show');
       this.disabled = true;
     });
+    wireCompare();
     stage.querySelectorAll('[data-r]').forEach(function (b) {
       b.addEventListener('click', function () { report(b.dataset.r); });
     });
@@ -400,7 +486,9 @@ def _drill_body(cset: ContrastSet) -> str:
             "deck (Tools &rarr; LSAT Speedrun &rarr; Import seed deck); pairs form from "
             "items that share a flaw family.</div>"
         )
-    data_json = json.dumps(cset.to_dict()).replace("<", "\\u003c")
+    payload = cset.to_dict()
+    payload["ai_enabled"] = _ai_on()
+    data_json = json.dumps(payload).replace("<", "\\u003c")
     intro = (
         f"{cset.stats['n_pairs']} pairs &middot; compare two same-structure arguments, "
         "say what they share, then reveal. Comparison is what makes a schema transfer."
@@ -411,7 +499,7 @@ def _drill_body(cset: ContrastSet) -> str:
         f"<p>{intro}</p></div>"
         '<div class="sr-drill" id="sr-drill"><div id="sr-cd-stage"></div>'
         f'<script type="application/json" id="sr-drill-data">{data_json}</script></div>'
-        f"<script>{_DRILL_JS}</script>"
+        f"<script>{INLINE_MD_JS}{_DRILL_JS}</script>"
     )
 
 

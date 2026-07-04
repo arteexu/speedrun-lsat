@@ -10,7 +10,10 @@ import SwiftUI
 struct SyncView: View {
     @AppStorage("sync.url") private var url = "http://127.0.0.1:8080/"
     @AppStorage("sync.user") private var username = "dev"
-    @State private var password = "pass"
+    // Persisted so post-review auto-sync (SpeedrunSession) has credentials. This
+    // is a self-hosted dev tool; UserDefaults is not a secure secret store, so a
+    // production build should move this to the Keychain.
+    @AppStorage("sync.pass") private var password = "pass"
     @State private var status = "Not synced yet"
     @State private var busy = false
 
