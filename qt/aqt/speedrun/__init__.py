@@ -537,8 +537,19 @@ def _show_report(mw, renderer, title: str) -> None:
 
 
 def _start_study(mw) -> None:
+    """Review session launcher: show the grounded pre-set briefing first, then
+    enter the reviewer on "Start set"."""
     if not _require_col(mw):
         return
+    _show_preset_briefing(
+        mw,
+        set_kind="review",
+        proceed=lambda: _launch_review(mw),
+        title="LSAT Speedrun — Before you start: Review",
+    )
+
+
+def _launch_review(mw) -> None:
     try:
         deck_id = mw.col.decks.id(DECK_NAME)
         mw.col.decks.select(deck_id)
@@ -546,6 +557,57 @@ def _start_study(mw) -> None:
         mw.moveToState("review")
     except Exception as exc:  # pragma: no cover
         tooltip(f"Study error: {exc}")
+
+
+def _show_preset_briefing(mw, *, set_kind: str, proceed, title: str, **params) -> None:
+    """Show the grounded pre-set AI readiness briefing for a set, then run
+    ``proceed`` (the real set launch) when the student clicks "Start set".
+
+    Mirrors the recommender/tutor pattern: the pure-data logic + HTML live in
+    ``speedrun.preset_eval``; this thin shim drops the body-only HTML into an
+    AnkiWebView dialog and relays the "Start set" command back over the pycmd
+    bridge to the SAME launch handler the set already used — so no launch logic is
+    duplicated. On any briefing failure we proceed directly, so a briefing error
+    can never block studying."""
+    if not _require_col(mw):
+        return
+    try:
+        from speedrun.preset_eval import (
+            build_preset_briefing,
+            render_preset_briefing_html,
+        )
+
+        briefing = build_preset_briefing(mw.col, set_kind=set_kind, **params)
+        html = render_preset_briefing_html(briefing, embed=True)
+    except Exception:  # pragma: no cover - never block the set on a briefing error
+        proceed()
+        return
+
+    def bridge(cmd: str):
+        from speedrun.preset_eval import START_SET_CMD
+
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return True
+        if cmd == START_SET_CMD:
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            proceed()
+            return True
+        # Let launcher/focus commands fall through to the shared bridge.
+        return _launch_bridge(mw)(cmd)
+
+    _show_html(
+        mw,
+        html,
+        title=title,
+        minWidth=760,
+        minHeight=680,
+        bridge=bridge,
+    )
 
 
 def _launcher_dispatch(mw) -> dict:
@@ -783,7 +845,28 @@ def _start_study_all(mw) -> None:
 
 
 def _start_focused_study(mw, token: str) -> None:
-    """Launch focused study for a subject token from the pycmd bridge.
+    """Focus launcher (from the pycmd bridge): show the grounded pre-set briefing
+    for the chosen subject first, then launch focused study on "Start set".
+
+    ``token`` is a schema id, or ``__weakest__`` for the auto-selected weakest
+    areas."""
+    if not _require_col(mw):
+        return
+    token = (token or "").strip()
+    if not token:
+        tooltip("No subject selected.")
+        return
+    _show_preset_briefing(
+        mw,
+        set_kind="focus",
+        schema=token,
+        proceed=lambda: _launch_focused_study(mw, token),
+        title="LSAT Speedrun — Before you start: Focus",
+    )
+
+
+def _launch_focused_study(mw, token: str) -> None:
+    """Launch focused study for a subject token.
 
     ``token`` is a schema id, or ``__weakest__`` for the auto-selected weakest
     areas. Tries a real filtered-deck reviewer session; on any failure falls back
@@ -893,6 +976,19 @@ def _contrast_logger(mw):
 
 
 def _show_contrasting_drill(mw) -> None:
+    """Contrasting-pairs launcher: show the grounded pre-set briefing first, then
+    open the drill on "Start set"."""
+    if not _require_col(mw):
+        return
+    _show_preset_briefing(
+        mw,
+        set_kind="contrasting",
+        proceed=lambda: _launch_contrasting_drill(mw),
+        title="LSAT Speedrun — Before you start: Contrasting pairs",
+    )
+
+
+def _launch_contrasting_drill(mw) -> None:
     if not _require_col(mw):
         return
     try:
@@ -965,6 +1061,19 @@ def _drill_logger(mw):
 
 
 def _show_cold_open(mw) -> None:
+    """Cold-open launcher: show the grounded pre-set briefing first, then open the
+    cold-open on "Start set"."""
+    if not _require_col(mw):
+        return
+    _show_preset_briefing(
+        mw,
+        set_kind="cold_open",
+        proceed=lambda: _launch_cold_open(mw),
+        title="LSAT Speedrun — Before you start: Cold-open",
+    )
+
+
+def _launch_cold_open(mw) -> None:
     if not _require_col(mw):
         return
     try:
