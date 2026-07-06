@@ -289,6 +289,7 @@ _FORK_JS = """
   let pickedAt = 0;
   let startedAt = 0;
   let timerId = null;
+  let lastWhy = '';
   const tally = { fork: 0, trap: 0, n: 0, latSum: 0, inBudget: 0 };
   const stage = document.getElementById('sr-fk-stage');
 
@@ -366,6 +367,9 @@ _FORK_JS = """
       '<button class="sr-btn conf" data-c="0.5">Guess</button>' +
       '<button class="sr-btn conf" data-c="0.75">Fairly sure</button>' +
       '<button class="sr-btn conf" data-c="0.95">Certain</button></div>' +
+      '<div class="sr-fk-explain"><label class="sr-fk-ask" for="sr-fk-why">In one sentence, why is the runner-up wrong?</label>' +
+      '<div class="sr-fk-hint">Optional — putting the reasoning into words is the scaffold that never fades (SPOV3 / Insight 5). It is graded against the fork rationale.</div>' +
+      '<textarea class="sr-fk-select" id="sr-fk-why" rows="2" placeholder="e.g. it is out of scope — it never addresses the conclusion"></textarea></div>' +
       '<div class="sr-fk-actions"><button class="sr-btn primary" id="sr-fk-lock" disabled>Lock in &amp; reveal</button></div>';
     const timerEl = document.getElementById('sr-fk-timer');
     if (timerEl) { timerEl.textContent = fmtSec(pickedAt); if (pickedAt > it.budget_ms) timerEl.classList.add('over'); }
@@ -382,11 +386,15 @@ _FORK_JS = """
         refresh();
       });
     });
-    lock.addEventListener('click', function () { grade(sel.value, loserId, conf); });
+    lock.addEventListener('click', function () {
+      const whyEl = document.getElementById('sr-fk-why');
+      grade(sel.value, loserId, conf, whyEl ? whyEl.value : '');
+    });
   }
 
-  function grade(trapPick, loserId, confidence) {
+  function grade(trapPick, loserId, confidence, why) {
     const it = items[idx];
+    lastWhy = (why || '').trim();
     const forkOk = picked === it.winner_id;
     const trapOk = trapPick === it.runner_trap;
     const overBudget = pickedAt > it.budget_ms;
@@ -439,11 +447,33 @@ _FORK_JS = """
       '<div class="sr-fk-lat">Decision time ' + fmtSec(pickedAt) +
       (overBudget ? ' <span class="over">over the ' + fmtSec(it.budget_ms) + ' budget — a right answer that costs points elsewhere (SPOV4)</span>'
                   : ' — within the ' + fmtSec(it.budget_ms) + ' budget') + '</div>' +
+      (lastWhy ? '<div class="sr-fk-scaffold" id="sr-fk-reasoning">Grading your explanation\u2026</div>' : '') +
       '<div class="sr-fk-actions"><button class="sr-btn primary" id="sr-fk-next">' +
       (idx + 1 >= items.length ? 'See results' : 'Next fork') + '</button></div></div>';
     const timerEl = document.getElementById('sr-fk-timer');
     if (timerEl) { timerEl.textContent = fmtSec(pickedAt); if (overBudget) timerEl.classList.add('over'); }
+    gradeExplanation(it);
     document.getElementById('sr-fk-next').addEventListener('click', function () { idx += 1; render(); });
+  }
+
+  function gradeExplanation(it) {
+    const box = document.getElementById('sr-fk-reasoning');
+    if (!box || !lastWhy) return;
+    if (typeof pycmd !== 'function') {
+      box.textContent = 'Explanation captured. Reopen inside the app to grade it against the fork rationale.';
+      return;
+    }
+    // §14.2: grade the student's runner-up-vs-winner explanation against the
+    // item's fork rationale; recurring weakness patterns are surfaced app-side.
+    pycmd('speedrun:reasoning:' + JSON.stringify({
+      item_id: it.id, student_text: lastWhy,
+      expected_schema: it.runner_trap, fork_rationale: it.why_runner_up_wrong
+    }), function (resp) {
+      let r = (typeof resp === 'string') ? JSON.parse(resp) : (resp || {});
+      const pct = (typeof r.score === 'number') ? Math.round(r.score * 100) + '% match · ' : '';
+      const src = r.source ? (' (' + esc(r.source) + ')') : '';
+      box.innerHTML = '<b>Your explanation:</b> ' + pct + esc(r.feedback || 'Explanation recorded.') + src;
+    });
   }
 
   function pct(n, d) { return d ? Math.round((n / d) * 100) : 0; }
@@ -466,6 +496,7 @@ _FORK_JS = """
       return;
     }
     picked = null;
+    lastWhy = '';
     renderDuel();
   }
   render();
@@ -523,6 +554,13 @@ def record_fork_result(logger, payload: dict[str, Any]) -> None:
 
     from speedrun.session_logger import SessionEvent
 
+    # §8.2 / SPOV2: the trap the student actually *fell for* is the runner-up's
+    # trap type, and only when they picked the runner-up (fork wrong). This is the
+    # first-class ``chosen_trap_type`` of the attempt — the habitual-trap signal,
+    # distinct from ``trap_pick`` (the student's *diagnosis* of the loser's trap).
+    fork_correct = bool(payload.get("fork_correct"))
+    chosen_trap_type = None if fork_correct else payload.get("actual_trap")
+
     ev = SessionEvent(
         ts=int(time.time()),
         event="fork",
@@ -531,10 +569,11 @@ def record_fork_result(logger, payload: dict[str, Any]) -> None:
         extra={
             "item_id": payload.get("item_id"),
             "picked": payload.get("picked"),
-            "fork_correct": bool(payload.get("fork_correct")),
+            "fork_correct": fork_correct,
             "trap_pick": payload.get("trap_pick"),
             "actual_trap": payload.get("actual_trap"),
             "trap_correct": bool(payload.get("trap_correct")),
+            "chosen_trap_type": chosen_trap_type,
             "confidence": payload.get("confidence"),
             "budget_ms": payload.get("budget_ms"),
             "over_budget": bool(payload.get("over_budget")),
@@ -565,6 +604,7 @@ def fork_summary(log_path: Path | None = None) -> dict[str, Any]:
             "avg_latency_ms": None,
             "in_budget_rate": None,
             "missed_traps": [],
+            "chosen_traps": [],
         }
     extras = [e.get("extra", {}) for e in events]
     fork_hits = sum(1 for e in extras if e.get("fork_correct"))
@@ -583,6 +623,15 @@ def fork_summary(log_path: Path | None = None) -> dict[str, Any]:
         {"trap": t, "label": schema_label(t), "misses": c}
         for t, c in missed.most_common(3)
     ]
+    # SPOV2 / Insight 8: the traps the student actually *fell for* (chose the
+    # runner-up), ranked. Distinct from ``missed_traps`` (mis-*named* traps).
+    chosen = Counter(
+        e.get("chosen_trap_type") for e in extras if e.get("chosen_trap_type")
+    )
+    chosen_traps = [
+        {"trap": t, "label": schema_label(t), "count": c}
+        for t, c in chosen.most_common(3)
+    ]
     return {
         "n": n,
         "fork_accuracy": round(fork_hits / n, 4),
@@ -590,4 +639,5 @@ def fork_summary(log_path: Path | None = None) -> dict[str, Any]:
         "avg_latency_ms": round(sum(lats) / len(lats)) if lats else None,
         "in_budget_rate": round(in_budget / n, 4),
         "missed_traps": missed_traps,
+        "chosen_traps": chosen_traps,
     }

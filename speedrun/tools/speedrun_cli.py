@@ -9,6 +9,7 @@ Usage:
     python speedrun/tools/speedrun_cli.py calibrate
     python speedrun/tools/speedrun_cli.py transfer-gap
     python speedrun/tools/speedrun_cli.py health
+    python speedrun/tools/speedrun_cli.py leakage-check
 """
 from __future__ import annotations
 
@@ -144,6 +145,51 @@ def cmd_ai_eval(args) -> int:
     return 0 if report.passed else 1
 
 
+def cmd_leakage_check(args) -> int:
+    """Leakage check (spec 7e / §14.3): scan the training/seed data for held-out
+    gold items (or near-copies). Exits non-zero when NOT clean — leaked test data
+    zeroes the AI score, so this blocks a release."""
+    from speedrun.eval.leakage_check import leakage_check
+
+    report = leakage_check(threshold=args.threshold)
+    print(
+        f"Leakage check (threshold {report.threshold}): "
+        f"{'CLEAN' if report.clean else 'LEAK'} — {report.reason}"
+    )
+    print(
+        f"  scanned {report.n_gold} gold x {report.n_train} train "
+        f"= {report.n_comparisons} comparisons; matches found: {report.n_hits}"
+    )
+    for hit in report.hits[: args.show]:
+        print(
+            f"  test {hit.test_id} ~ train {hit.train_id} "
+            f"(jaccard {hit.jaccard:.2f}): {hit.shared_sample}"
+        )
+    return 0 if report.clean else 1
+
+
+def cmd_card_check(args) -> int:
+    """AI card check (spec 7f): generate N cards from ONE source, run the checker
+    against the 50-item gold set with a pre-set cutoff, block failing cards, and
+    report the three counts."""
+    from pathlib import Path as _Path
+
+    from speedrun.eval.card_check_run import format_run, run_card_check
+
+    run = run_card_check(
+        n=args.n,
+        verify_with_llm=not args.no_verify,
+        items_in=_Path(args.items_in) if args.items_in else None,
+        save_items=_Path(args.save_items) if args.save_items else None,
+    )
+    print(format_run(run))
+    if args.json:
+        import json as _json
+
+        print(_json.dumps(run.to_dict(), indent=2))
+    return 0
+
+
 def cmd_grounding_eval(args) -> int:
     """Offline, deterministic pre-ship gate: grounded retrieval vs keyword/vector.
     Exits non-zero when the grounded method fails its cutoff (blocks a release)."""
@@ -192,6 +238,26 @@ def main(argv: list[str] | None = None) -> int:
         "grounding-eval",
         help="offline grounded-vs-baseline pre-ship gate (deterministic)",
     ).set_defaults(func=cmd_grounding_eval)
+    leak = sub.add_parser(
+        "leakage-check",
+        help="scan training/seed data for held-out gold leakage; non-zero if not clean",
+    )
+    leak.add_argument("--threshold", type=float, default=0.6,
+                      help="gold/seed jaccard at/above this is flagged as a leak")
+    leak.add_argument("--show", type=int, default=10, help="max leak rows to print")
+    leak.set_defaults(func=cmd_leakage_check)
+
+    cc = sub.add_parser(
+        "card-check",
+        help="generate N cards from one source, check vs gold set, block failures (7f)",
+    )
+    cc.add_argument("--n", type=int, default=50, help="number of cards to generate")
+    cc.add_argument("--no-verify", action="store_true",
+                    help="skip the LLM correctness veto (keyword cutoff only)")
+    cc.add_argument("--save-items", help="persist the generated drafts to this JSON path")
+    cc.add_argument("--items-in", help="load drafts from this JSON instead of generating")
+    cc.add_argument("--json", action="store_true", help="also print JSON")
+    cc.set_defaults(func=cmd_card_check)
 
     gaps = sub.add_parser("gaps", help="coverage gap report from collection")
     gaps.add_argument("--top", type=int, default=20)
@@ -207,6 +273,8 @@ def main(argv: list[str] | None = None) -> int:
         "calibrate",
         "ai-eval",
         "grounding-eval",
+        "leakage-check",
+        "card-check",
     ):
         ap.error("Pass --col or --base for this subcommand")
     return args.func(args)

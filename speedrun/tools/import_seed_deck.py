@@ -392,6 +392,38 @@ def ensure_deck_daily_limits(
     return changed
 
 
+def populate_note(note, item: dict[str, Any]):
+    """Fill a fresh note's display fields from a seed item.
+
+    Shared by the seed importer and the big-deck generator so the field-mapping
+    logic (friendly labels, the two-answer fork, paraphrases) lives in one place.
+    Tags are handled separately via :func:`build_tags`.
+    """
+    note["ItemId"] = item["id"]
+    note["Section"] = _section_label(item.get("section", ""))
+    note["QuestionType"] = _qtype_label(item.get("stem_type", ""))
+    note["Schema"] = _schema_display(item)
+    note["Difficulty"] = str(item.get("difficulty", ""))
+    note["Stimulus"] = item.get("stimulus") or item.get("passage", "")
+    note["Question"] = item.get("question", "")
+    note["Choices"] = _render_choices(item)
+    fork = item.get("two_answer_fork", {})
+    correct = next((c["id"] for c in item.get("choices", []) if c.get("correct")), "")
+    note["Correct"] = correct
+    note["RunnerUp"] = fork.get("runner_up", "")
+    note["WhyRunnerUpWrong"] = fork.get("why_runner_up_wrong", "")
+    note["Source"] = item.get("source", "")
+    paraphrases = item.get("paraphrases") or []
+    if paraphrases:
+        note["ParaphraseStimulus"] = paraphrases[0].get("stimulus", "")
+        note["ParaphraseQuestion"] = paraphrases[0].get("question", "")
+    else:
+        note["ParaphraseStimulus"] = ""
+        note["ParaphraseQuestion"] = ""
+    note.tags = build_tags(item)
+    return note
+
+
 def import_seed_deck(
     col, deck_json: Path = DEFAULT_DECK_JSON, *, backup: bool = True
 ) -> ImportResult:
@@ -415,30 +447,7 @@ def import_seed_deck(
                 relabeled += 1
             continue
         note = col.new_note(nt)
-        note["ItemId"] = item_id
-        note["Section"] = _section_label(item.get("section", ""))
-        note["QuestionType"] = _qtype_label(item.get("stem_type", ""))
-        note["Schema"] = _schema_display(item)
-        note["Difficulty"] = str(item.get("difficulty", ""))
-        note["Stimulus"] = item.get("stimulus") or item.get("passage", "")
-        note["Question"] = item.get("question", "")
-        note["Choices"] = _render_choices(item)
-        fork = item.get("two_answer_fork", {})
-        correct = next(
-            (c["id"] for c in item.get("choices", []) if c.get("correct")), ""
-        )
-        note["Correct"] = correct
-        note["RunnerUp"] = fork.get("runner_up", "")
-        note["WhyRunnerUpWrong"] = fork.get("why_runner_up_wrong", "")
-        note["Source"] = item.get("source", "")
-        paraphrases = item.get("paraphrases") or []
-        if paraphrases:
-            note["ParaphraseStimulus"] = paraphrases[0].get("stimulus", "")
-            note["ParaphraseQuestion"] = paraphrases[0].get("question", "")
-        else:
-            note["ParaphraseStimulus"] = ""
-            note["ParaphraseQuestion"] = ""
-        note.tags = build_tags(item)
+        populate_note(note, item)
         col.add_note(note, deck_id)
         added += 1
 

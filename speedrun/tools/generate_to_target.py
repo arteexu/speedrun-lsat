@@ -17,11 +17,15 @@ and a replacement is generated:
   4. dedup        - token-similarity below threshold vs the existing deck AND the
                     items accepted so far this run -- runs single-threaded in the
                     collector so all items stay unique
+  5. card-checker - the pre-set keyword cutoff ship gate (spec 7f,
+                    speedrun.ai.card_checker.CardCheckGate). ON by default; an item
+                    below the cutoff is blocked before it is written, and the run
+                    reports the three counts (correct_useful / wrong /
+                    correct_bad_teaching). Disable with ``--no-card-checker``.
 
 Generation + solving are network-bound, so drafts are produced concurrently with
-a thread pool (``--workers``); the collector thread does dedup, id assignment and
-incremental saves. The keyword card-checker is intentionally NOT a gate (it
-scores topicality vs a fixed gold set and would reject genuinely novel content).
+a thread pool (``--workers``); the collector thread does dedup, the card-checker
+gate, id assignment and incremental saves.
 
 Composition is rebalanced toward a realistic LSAT mix using the taxonomy's
 exam_weights rather than copying the deck's current flaw-heavy distribution.
@@ -48,6 +52,7 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from speedrun.ai.card_checker import PASSING_CUTOFF, CardCheckGate
 from speedrun.ai.client import LLMClient, OpenAILLMClient
 from speedrun.ai.solver_verify import solve_item, _extract_json_obj
 from speedrun.tools.assign_units import assign_all, build_manifest, validate_manifest
@@ -436,6 +441,11 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--threshold", type=float, default=DEDUP_THRESHOLD)
     ap.add_argument("--smoke", type=int, default=0, help="if >0, only add this many items")
     ap.add_argument("--no-solver", action="store_true")
+    ap.add_argument("--no-card-checker", action="store_true",
+                    help="disable the pre-set keyword card-checker ship gate (spec 7f); "
+                         "the gate is ON by default")
+    ap.add_argument("--checker-cutoff", type=float, default=PASSING_CUTOFF,
+                    help="passing cutoff for the card-checker gate")
     ap.add_argument("--seed", type=int, default=1234)
     ap.add_argument("--save-every", type=int, default=15)
     ap.add_argument("--max-attempts", type=int, default=0, help="0 = auto (6x needed + 40)")
@@ -468,6 +478,9 @@ def main(argv: list[str]) -> int:
     gen = OpenAILLMClient(temperature=0.9)
     solver = OpenAILLMClient(temperature=0.0)
     use_solver = not args.no_solver
+    # Card-checker ship gate (spec 7f): ON by default. Keyword-only (deterministic,
+    # offline) so it never adds network cost or nondeterminism to the run.
+    card_gate = None if args.no_card_checker else CardCheckGate(cutoff=args.checker_cutoff)
     lr_num = _max_suffix(items, "lr")
     rc_num = _max_suffix(items, "rc")
     max_attempts = args.max_attempts or (need * 6 + 40)
@@ -501,6 +514,8 @@ def main(argv: list[str]) -> int:
                     if reason == "ok" and item is not None:
                         if is_duplicate(item, seen_tokens, args.threshold):
                             tally.rejects["duplicate"] += 1
+                        elif card_gate is not None and not card_gate.check(item).passed:
+                            tally.rejects["card_checker"] += 1
                         else:
                             lr_num += 1
                             item["id"] = f"lr-{lr_num:04d}"
@@ -540,6 +555,9 @@ def main(argv: list[str]) -> int:
                     if is_duplicate(it, seen_tokens, args.threshold):
                         tally.rejects["duplicate"] += 1
                         continue
+                    if card_gate is not None and not card_gate.check(it).passed:
+                        tally.rejects["card_checker"] += 1
+                        continue
                     qn += 1
                     it["passage_id"] = pid
                     it["id"] = f"{pid}-q{qn}"
@@ -560,6 +578,8 @@ def main(argv: list[str]) -> int:
         "section_distribution": dict(sect),
         "stem_type_distribution": dict(sorted(dist.items(), key=lambda kv: -kv[1])),
         "dedup_threshold": args.threshold, "solver_gate": use_solver,
+        "card_checker_gate": card_gate is not None,
+        "card_checker": card_gate.tally.to_dict() if card_gate is not None else None,
     }
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -567,6 +587,12 @@ def main(argv: list[str]) -> int:
           f"(+{len(items)-start_count}). Report: {args.report}", flush=True)
     print(f"Accepted {tally.accepted} of {tally.generated} drafts; "
           f"rejects: {dict(tally.rejects)}", flush=True)
+    if card_gate is not None:
+        t = card_gate.tally
+        print(f"Card-checker gate (cutoff {t.cutoff}): checked={t.n_checked} "
+              f"passed={t.n_passed} blocked={t.n_blocked} | "
+              f"correct_useful={t.correct_useful} wrong={t.wrong} "
+              f"correct_bad_teaching={t.correct_bad_teaching}", flush=True)
     return 0
 
 

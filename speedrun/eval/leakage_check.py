@@ -33,6 +33,9 @@ class LeakageReport:
     threshold: float
     hits: list[LeakageHit]
     reason: str
+    n_gold: int = 0
+    n_train: int = 0
+    n_comparisons: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -84,4 +87,7 @@ def leakage_check(
         threshold=threshold,
         hits=hits,
         reason="No overlap above threshold." if clean else f"{len(hits)} potential leak(s) found.",
+        n_gold=len(gold),
+        n_train=len(train),
+        n_comparisons=len(gold) * len(train),
     )

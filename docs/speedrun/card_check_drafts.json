@@ -1,0 +1,2505 @@
+{
+  "n_items": 50,
+  "items": [
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that buying ice cream causes people to go outside more often.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that ice cream sales cause people to go outside.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It relies on an unrepresentative sample of ice cream buyers.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It suggests that all people enjoy ice cream equally.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks other factors that could influence outdoor activity.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it does overlook other factors, the main flaw is the assumption of causation."
+      },
+      "section": "LR",
+      "id": "gen-0001",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, therefore it must have rained.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that wet ground can only result from rain.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding weather conditions.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that all wet ground is equally wet.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider other possible causes for wet ground.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without adding new information.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it does fail to consider other causes, the main flaw is the mistaken reversal."
+      },
+      "section": "LR",
+      "id": "gen-0002",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "A survey of 10 people in a small town shows that 80% prefer coffee over tea. Therefore, 80% of all people prefer coffee over tea.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that all towns have the same preferences.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that preference for coffee is universal.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility of varying preferences in larger populations.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the survey results without further analysis.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it does overlook variations, the core issue is the unrepresentative sample."
+      },
+      "section": "LR",
+      "id": "gen-0003",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part-to-whole",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Each player on the team is highly skilled, so the team must be the best in the league.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that the team's overall skill is equal to the skill of its individual players.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding team rankings.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that all teams are equally skilled.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the importance of teamwork and strategy.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While teamwork is important, the main flaw is the part-to-whole assumption."
+      },
+      "section": "LR",
+      "id": "gen-0004",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "You can either support the new policy or you are against progress altogether.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It presents a false dilemma by limiting options to only two.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that all progress is beneficial.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that those against the policy are against all progress.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility of moderate positions.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the argument without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While moderate positions exist, the main flaw is the false dilemma presented."
+      },
+      "section": "LR",
+      "id": "gen-0005",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "The number of ice cream sales increases during the summer months. Therefore, ice cream sales cause the temperature to rise.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument confuses correlation with causation.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise as the conclusion.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misinterprets the relationship between ice cream sales and temperature."
+      },
+      "section": "LR",
+      "id": "gen-0006",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, so it must have rained.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument incorrectly assumes that wet ground only results from rain.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument is based on a biased sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument relies on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise as the conclusion.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misinterprets the conditional relationship."
+      },
+      "section": "LR",
+      "id": "gen-0007",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "A survey of ten people in a small town shows that 90% prefer coffee over tea. Therefore, 90% of all people prefer coffee over tea.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument generalizes from a biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to ignorance.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument relies on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise as the conclusion.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misuses the sample size."
+      },
+      "section": "LR",
+      "id": "gen-0008",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part-to-whole",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "All the players on the basketball team are excellent shooters. Therefore, the team will win the championship.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument assumes what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to emotion.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument relies on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise as the conclusion.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it incorrectly generalizes from individual abilities."
+      },
+      "section": "LR",
+      "id": "gen-0009",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "You can either support the new policy or you are against progress. There is no middle ground.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument presents a false dilemma.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument relies on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise as the conclusion.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it limits options unfairly."
+      },
+      "section": "LR",
+      "id": "gen-0010",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "The increase in ice cream sales coincides with a rise in drowning incidents. Therefore, ice cream consumption causes drowning.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument confuses correlation with causation.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is too weak to support its conclusion.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates its premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misinterprets correlation."
+      },
+      "section": "LR",
+      "id": "gen-0011",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If a person is a doctor, then they have a medical degree. John has a medical degree, so he must be a doctor.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument mistakenly reverses the conditional relationship.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument generalizes from a single case.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme assumption about medical degrees.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is too weak to draw a conclusion about John.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without supporting evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme assumption; it misapplies the conditional."
+      },
+      "section": "LR",
+      "id": "gen-0012",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "A survey of ten people in a small town shows that 80% prefer coffee over tea. Therefore, 80% of all people prefer coffee over tea.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument generalizes from an unrepresentative sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to ignorance.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim about preferences.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is too weak to support its conclusion.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates its premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misuses the sample size."
+      },
+      "section": "LR",
+      "id": "gen-0013",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part-to-whole",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "All the students in the art class are talented. Therefore, the entire school must be filled with talented students.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument assumes what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to emotion.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim about the school.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is too weak to support its conclusion.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates its premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misapplies the part-to-whole reasoning."
+      },
+      "section": "LR",
+      "id": "gen-0014",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "You can either support the new policy or you are against progress. There is no other option.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument presents a false dilemma by limiting options.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim about progress.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is too weak to support its conclusion.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates its premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misrepresents the options available."
+      },
+      "section": "LR",
+      "id": "gen-0015",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "The increase in ice cream sales coincides with a rise in drowning incidents. Therefore, ice cream sales cause drowning.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument assumes a causal relationship based solely on correlation.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample of incidents.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument fails to consider other possible explanations for the increase in drownings.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While the argument does not consider other explanations, the primary flaw is the assumption of causation from correlation."
+      },
+      "section": "LR",
+      "id": "gen-0016",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, therefore it must have rained.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument incorrectly assumes that wet ground can only result from rain.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument generalizes from a single instance of wet ground.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument fails to consider other possible causes for the wet ground.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While the argument does not consider other causes, the main flaw is the mistaken reversal of the conditional."
+      },
+      "section": "LR",
+      "id": "gen-0017",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "A survey of 10 people in a small town shows that 80% prefer tea over coffee. Therefore, 80% of all people prefer tea over coffee.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to ignorance regarding coffee preferences.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument fails to consider the total number of people surveyed.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "While the conclusion may seem extreme, the primary issue is the unrepresentative sample."
+      },
+      "section": "LR",
+      "id": "gen-0018",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part_to_whole",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "All the students in my class passed the exam, so all students at the school must have passed the exam.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument assumes what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample of students.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument fails to consider the total number of students at the school.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While the argument does not consider the total number of students, the main flaw is the part-to-whole assumption."
+      },
+      "section": "LR",
+      "id": "gen-0019",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "You can either support the new policy or you are against progress. Therefore, anyone who opposes the policy is against progress.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument presents a false dilemma by limiting options to only two.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample of opinions.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument fails to consider other valid perspectives on the policy.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While the argument does not consider other perspectives, the main flaw is the false dilemma presented."
+      },
+      "section": "LR",
+      "id": "gen-0020",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "The increase in ice cream sales coincides with a rise in drowning incidents. Therefore, ice cream sales cause drowning.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes a causal relationship based solely on correlation.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It overlooks the possibility of a common cause for both events.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It presents an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider other factors that could influence drowning rates.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "While a common cause may exist, the primary flaw is the assumption of causation from correlation."
+      },
+      "section": "LR",
+      "id": "gen-0021",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, therefore it must have rained.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It incorrectly assumes that a sufficient condition is necessary.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It fails to consider alternative explanations for the wet ground.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It draws an extreme conclusion based on limited evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It does not provide enough context for the argument.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It merely restates the premise without adding new information.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "While alternative explanations are relevant, the main flaw is the mistaken reversal of the conditional."
+      },
+      "section": "LR",
+      "id": "gen-0022",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "A survey of ten people in a small town shows that 80% prefer coffee over tea. Therefore, 80% of all people prefer coffee over tea.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It generalizes from a sample that is too small and biased.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that preference for coffee is universal without evidence.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It presents an extreme conclusion based on limited evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider the opinions of people outside the sample.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the survey results without further analysis.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "While the assumption of universality is a concern, the primary flaw is the unrepresentative sample."
+      },
+      "section": "LR",
+      "id": "gen-0023",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part-to-whole",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "Each player on the basketball team is skilled. Therefore, the team will win the championship.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It overlooks the importance of teamwork in achieving success.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It draws an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider the competition's skill level.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the team's skills without providing new insights.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "While teamwork is relevant, the main flaw is the assumption about the whole based on the parts."
+      },
+      "section": "LR",
+      "id": "gen-0024",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "You can either support the new policy or you are against progress. Therefore, everyone must support the new policy.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It presents a false dilemma by limiting options to only two.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It fails to consider the potential benefits of the policy.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It draws an extreme conclusion without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It does not provide enough context for the argument.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without adding new information.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "While the benefits of the policy are relevant, the primary flaw is the false dilemma presented."
+      },
+      "section": "LR",
+      "id": "gen-0025",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that buying ice cream causes people to go outside more often.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that ice cream sales are the only factor influencing outdoor activity.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding outdoor activities.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It incorrectly claims that outdoor activity is the cause of ice cream sales.",
+          "correct": false,
+          "trap": "trap.reversed_causation"
+        },
+        {
+          "id": "D",
+          "text": "It generalizes from a small sample of ice cream sales.",
+          "correct": false,
+          "trap": "trap.unrepresentative_sample"
+        },
+        {
+          "id": "E",
+          "text": "It uses circular reasoning to justify the conclusion.",
+          "correct": false,
+          "trap": "trap.circular_reasoning"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "C misinterprets the direction of causation, while A correctly identifies the flaw."
+      },
+      "section": "LR",
+      "id": "gen-0026",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.necessary_vs_sufficient_confusion",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, so it must have rained.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It confuses a necessary condition with a sufficient one.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding weather conditions.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It assumes that wet ground can only result from rain.",
+          "correct": false,
+          "trap": "trap.common_cause_overlooked"
+        },
+        {
+          "id": "D",
+          "text": "It relies on an unrepresentative sample of weather events.",
+          "correct": false,
+          "trap": "trap.unrepresentative_sample"
+        },
+        {
+          "id": "E",
+          "text": "It uses circular reasoning to justify the conclusion.",
+          "correct": false,
+          "trap": "trap.circular_reasoning"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "C identifies a potential alternative cause but does not address the necessary vs sufficient confusion."
+      },
+      "section": "LR",
+      "id": "gen-0027",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.appeal_to_ignorance",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "No one has proven that aliens do not exist, so they must exist.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It treats the absence of evidence as proof of existence.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that all claims must be proven true.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It uses a biased sample of opinions on aliens.",
+          "correct": false,
+          "trap": "trap.unrepresentative_sample"
+        },
+        {
+          "id": "D",
+          "text": "It presents a false dilemma regarding the existence of aliens.",
+          "correct": false,
+          "trap": "trap.false_dilemma"
+        },
+        {
+          "id": "E",
+          "text": "It relies on circular reasoning to justify the conclusion.",
+          "correct": false,
+          "trap": "trap.circular_reasoning"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "C misidentifies the flaw, as the argument does not rely on sampling."
+      },
+      "section": "LR",
+      "id": "gen-0028",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part_to_whole",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "All the students in the art class are creative, so the entire school must be filled with creative students.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding student creativity.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It generalizes from a small sample of students.",
+          "correct": false,
+          "trap": "trap.unrepresentative_sample"
+        },
+        {
+          "id": "D",
+          "text": "It confuses the number of creative students with their proportion.",
+          "correct": false,
+          "trap": "trap.percent_vs_number"
+        },
+        {
+          "id": "E",
+          "text": "It uses circular reasoning to justify the conclusion.",
+          "correct": false,
+          "trap": "trap.circular_reasoning"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "C misidentifies the flaw, as the argument does not rely on sampling."
+      },
+      "section": "LR",
+      "id": "gen-0029",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "You can either support the new policy or you are against progress altogether.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It presents only two options when others exist.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It attacks the character of those who oppose the policy.",
+          "correct": false,
+          "trap": "trap.ad_hominem"
+        },
+        {
+          "id": "C",
+          "text": "It assumes that all policies are either good or bad.",
+          "correct": false,
+          "trap": "trap.false_dilemma"
+        },
+        {
+          "id": "D",
+          "text": "It relies on emotional appeal rather than logical reasoning.",
+          "correct": false,
+          "trap": "trap.appeal_to_inappropriate_emotion"
+        },
+        {
+          "id": "E",
+          "text": "It uses circular reasoning to justify the conclusion.",
+          "correct": false,
+          "trap": "trap.circular_reasoning"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "C is a restatement of the false dilemma rather than identifying the flaw."
+      },
+      "section": "LR",
+      "id": "gen-0030",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that buying ice cream causes people to go outside more often.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that ice cream sales cause increased outdoor activity.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It relies on anecdotal evidence from a small group.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It suggests that all outdoor activities are caused by ice cream sales.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility that summer weather causes both.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing support.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not address the specific flaw of assuming causation from correlation."
+      },
+      "section": "LR",
+      "id": "gen-0031",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If a student studies hard, they will pass the exam. John passed the exam, so he must have studied hard.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It incorrectly assumes that passing the exam guarantees hard studying.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It uses an unrepresentative sample of students.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that all students who study hard will pass the exam.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider other factors that could lead to passing.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without further justification.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not specifically address the mistaken reversal of the conditional."
+      },
+      "section": "LR",
+      "id": "gen-0032",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "A recent survey of 10 people in a small town found that 90% prefer coffee over tea. Therefore, 90% of all people prefer coffee over tea.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that all towns have the same preferences.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It suggests that coffee is superior to tea without evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility that preferences vary by region.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing support.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not specifically identify the flaw of the sample size."
+      },
+      "section": "LR",
+      "id": "gen-0033",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part_to_whole",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "The team won every game this season, so they are the best team in the league.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that winning all games means they are the best overall.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It relies on a single season's performance as evidence.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that all teams are equally matched.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the quality of the opponents faced.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing support.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not specifically address the flaw of assuming part-to-whole."
+      },
+      "section": "LR",
+      "id": "gen-0034",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "You can either support the new policy or you are against progress. There is no middle ground.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It presents a false dilemma by limiting options to two.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that all progress is beneficial without evidence.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that those against the policy are against all progress.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility of alternative viewpoints.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing support.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not specifically identify the false dilemma in the argument."
+      },
+      "section": "LR",
+      "id": "gen-0035",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that eating ice cream causes people to feel hot.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument confuses correlation with causation.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an unrepresentative sample.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misinterprets the relationship between ice cream sales and temperature."
+      },
+      "section": "LR",
+      "id": "gen-0036",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, therefore it must have rained.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument incorrectly assumes that rain is the only cause of wet ground.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument generalizes from a specific instance.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misinterprets the conditional relationship."
+      },
+      "section": "LR",
+      "id": "gen-0037",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "A survey of 10 people in a small town shows that 80% prefer tea over coffee. Therefore, 80% of all people prefer tea over coffee.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to authority.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it misuses a small sample."
+      },
+      "section": "LR",
+      "id": "gen-0038",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part_to_whole",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "All the students in my class are excellent at math. Therefore, all students at the school are excellent at math.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument assumes what is true of the parts is true of the whole.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to authority.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it incorrectly generalizes from a specific group."
+      },
+      "section": "LR",
+      "id": "gen-0039",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 4,
+      "stimulus": "You either support the new policy or you are against progress. There is no other option.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The argument presents a false dilemma by limiting options.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "The argument relies on an appeal to emotion.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "The argument makes an extreme claim without sufficient evidence.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "The argument is based on a weak premise.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "The argument restates the premise without providing new evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "The argument does not make an extreme claim; it incorrectly restricts the options available."
+      },
+      "section": "LR",
+      "id": "gen-0040",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that buying ice cream causes hot weather.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that ice cream sales are the only factor affecting weather.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It relies on anecdotal evidence from one summer.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It suggests that hot weather is the only reason for increased sales.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider other factors that might influence sales.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "It does not address the specific flaw of assuming causation from correlation."
+      },
+      "section": "LR",
+      "id": "gen-0041",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If a student studies hard, they will pass the exam. John passed the exam, so he must have studied hard.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that passing the exam is the only way to succeed.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "B",
+          "text": "It incorrectly assumes that studying hard is the only reason for passing.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "C",
+          "text": "It confuses necessary and sufficient conditions.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "D",
+          "text": "It relies on a false premise about studying.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "It does not specifically address the flaw of mistaken reversal."
+      },
+      "section": "LR",
+      "id": "gen-0042",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "A survey of ten people in a small town shows that 90% prefer coffee over tea, so 90% of all people must prefer coffee over tea.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that preferences are the same across all demographics.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "C",
+          "text": "It fails to consider the opinions of tea drinkers.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "D",
+          "text": "It presents a false dilemma between coffee and tea.",
+          "correct": false,
+          "trap": "trap.false_dilemma"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "It does not specifically address the flaw of unrepresentative sampling."
+      },
+      "section": "LR",
+      "id": "gen-0043",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.part-to-whole",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "All the players on the team are excellent, so the team must be excellent as well.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes that individual excellence guarantees team success.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It overlooks the importance of teamwork in sports.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "C",
+          "text": "It fails to consider the team's overall performance record.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "D",
+          "text": "It presents a false dilemma regarding team composition.",
+          "correct": false,
+          "trap": "trap.false_dilemma"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "It does not specifically address the flaw of part-to-whole reasoning."
+      },
+      "section": "LR",
+      "id": "gen-0044",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.circular_reasoning",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "The law is just because it is the law, and we should follow it because it is just.",
+      "question": "What flaw is present in the argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It assumes the conclusion is true without providing evidence.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It presents a false dilemma regarding legal systems.",
+          "correct": false,
+          "trap": "trap.false_dilemma"
+        },
+        {
+          "id": "C",
+          "text": "It relies on emotional appeals to justify the law.",
+          "correct": false,
+          "trap": "trap.appeal_to_emotion"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility of unjust laws existing.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "B",
+        "why_runner_up_wrong": "It does not specifically address the flaw of circular reasoning."
+      },
+      "section": "LR",
+      "id": "gen-0045",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.causal.correlation_treated_as_causation",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "Since the number of ice cream sales increases during the summer, it must be that buying ice cream causes the weather to become warmer.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It incorrectly assumes that ice cream sales cause warmer weather.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It relies on a biased sample of weather data.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It assumes that warmer weather is the only factor affecting ice cream sales.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It fails to consider that ice cream sales could be influenced by other factors.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it suggests other factors, it does not address the specific flaw of causation."
+      },
+      "section": "LR",
+      "id": "gen-0046",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.conditional.mistaken_reversal",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "If it rains, the ground will be wet. The ground is wet, therefore it must have rained.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It incorrectly assumes that wet ground can only result from rain.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It generalizes from a specific instance of wet ground.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It suggests that rain is the only cause of wet ground.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks other possible causes for the wet ground.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It simply restates the conditional premise.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it mentions other causes, it does not address the specific flaw of mistaken reversal."
+      },
+      "section": "LR",
+      "id": "gen-0047",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.sampling_and_evidence.unrepresentative_sample",
+        "qt.flaw"
+      ],
+      "difficulty": 2,
+      "stimulus": "A survey of ten people in a small town shows that 90% prefer coffee over tea, so 90% of all people must prefer coffee over tea.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It generalizes from a small and biased sample.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that preference for coffee is universal.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It overlooks the possibility that tea could be preferred by a larger group.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It suggests that the sample size is sufficient to draw conclusions.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the survey's findings without analysis.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it questions the sample size, it does not identify the flaw of unrepresentative sampling."
+      },
+      "section": "LR",
+      "id": "gen-0048",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.scope_and_quantity.percent_vs_number",
+        "qt.flaw"
+      ],
+      "difficulty": 3,
+      "stimulus": "The new policy reduced crime by 50%, so it must have eliminated all crime in the city.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It confuses a percentage reduction with the absolute number of crimes.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that crime rates are the only measure of safety.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that crime was completely eradicated.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It suggests that the policy's effect is minimal.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the conclusion without providing evidence.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "C",
+        "why_runner_up_wrong": "While it implies eradication, it does not address the confusion between percentage and absolute numbers."
+      },
+      "section": "LR",
+      "id": "gen-0049",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    },
+    {
+      "stem_type": "qt.flaw",
+      "schemas": [
+        "flaw.structural.false_dilemma",
+        "qt.flaw"
+      ],
+      "difficulty": 1,
+      "stimulus": "You can either support the new law or you are against progress. There is no other option.",
+      "question": "What flaw is present in this argument?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It presents a false dilemma by limiting options to two.",
+          "correct": true,
+          "trap": null
+        },
+        {
+          "id": "B",
+          "text": "It assumes that progress is solely defined by this law.",
+          "correct": false,
+          "trap": "trap.out_of_scope"
+        },
+        {
+          "id": "C",
+          "text": "It implies that supporting the law is the only way to achieve progress.",
+          "correct": false,
+          "trap": "trap.too_strong_extreme"
+        },
+        {
+          "id": "D",
+          "text": "It overlooks the possibility of alternative viewpoints.",
+          "correct": false,
+          "trap": "trap.too_weak"
+        },
+        {
+          "id": "E",
+          "text": "It restates the premise without providing new information.",
+          "correct": false,
+          "trap": "trap.premise_restatement"
+        }
+      ],
+      "two_answer_fork": {
+        "runner_up": "D",
+        "why_runner_up_wrong": "While it mentions alternatives, it does not identify the flaw of presenting a false dilemma."
+      },
+      "section": "LR",
+      "id": "gen-0050",
+      "source": "generated:lr_flaws_primer",
+      "source_model": "openai:gpt-4o-mini"
+    }
+  ]
+}

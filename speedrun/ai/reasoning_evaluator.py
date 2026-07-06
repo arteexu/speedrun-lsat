@@ -127,3 +127,99 @@ def evaluate_explanation(
         feedback=feedback,
         source=source,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Wiring into a real surface (§14.2): the two-answer fork explanation step.
+# --------------------------------------------------------------------------- #
+
+
+def grade_fork_explanation(payload: dict[str, Any], *, client=None) -> dict[str, Any]:
+    """Grade a runner-up-vs-winner explanation submitted from the fork trainer.
+
+    Thin adapter over :func:`evaluate_explanation`: it pulls the student's text,
+    the expected trap schema and the item's fork rationale straight from the wire
+    payload and returns a JSON-able grade for the UI. AI-off safe — the grader
+    degrades to the offline keyword heuristic when no model is available."""
+    graded = evaluate_explanation(
+        str(payload.get("student_text") or ""),
+        expected_schema=(payload.get("expected_schema") or None),
+        fork_rationale=str(payload.get("fork_rationale") or ""),
+        client=client,
+    )
+    out = graded.to_dict()
+    out["item_id"] = payload.get("item_id")
+    out["ai_used"] = not graded.source.startswith(("offline", "stub"))
+    return out
+
+
+def record_reasoning_result(
+    logger,
+    payload: dict[str, Any],
+    *,
+    evaluation: dict[str, Any] | None = None,
+    client=None,
+) -> dict[str, Any]:
+    """Grade (unless ``evaluation`` is supplied) and persist one reasoning-eval
+    result via a SessionLogger, returning the grade for the UI.
+
+    Training/diagnostic signal only — like the fork grades it must never feed the
+    memory/performance/readiness scores (honesty rule)."""
+    graded = evaluation if evaluation is not None else grade_fork_explanation(payload, client=client)
+
+    import time
+
+    from speedrun.session_logger import SessionEvent
+
+    if logger._current is None or logger._current.mode != "reasoning":
+        logger.start(mode="reasoning")
+    ev = SessionEvent(
+        ts=int(time.time()),
+        event="reasoning",
+        schema=payload.get("expected_schema"),
+        extra={
+            "item_id": payload.get("item_id"),
+            "score": graded.get("score"),
+            "matched_rationale": graded.get("matched_rationale"),
+            "source": graded.get("source"),
+            "weakness_patterns": [
+                w.get("schema") for w in graded.get("weakness_patterns", []) if w.get("schema")
+            ],
+        },
+    )
+    logger._current.events.append(ev)
+    logger._append(
+        {"type": "reasoning", "session_id": logger._current.session_id, **ev.to_dict()}
+    )
+    return graded
+
+
+def reasoning_weakness_summary(log_path=None, *, top_n: int = 5) -> dict[str, Any]:
+    """Aggregate logged reasoning-eval results into the recurring flaw/trap the
+    student keeps missing (§14.2 — the high-value signal AI adds beyond per-item
+    feedback) plus the mean explanation score. Empty-safe when no log exists."""
+    from collections import Counter
+
+    from speedrun.session_logger import DEFAULT_LOG, load_sessions
+
+    records = load_sessions(log_path or DEFAULT_LOG, limit=4000)
+    evs = [r for r in records if r.get("type") == "reasoning"]
+    n = len(evs)
+    if n == 0:
+        return {"n": 0, "mean_score": None, "recurring_weaknesses": []}
+    scores = [
+        e.get("extra", {}).get("score")
+        for e in evs
+        if isinstance(e.get("extra", {}).get("score"), (int, float))
+    ]
+    counter: Counter[str] = Counter()
+    for e in evs:
+        for schema in e.get("extra", {}).get("weakness_patterns", []) or []:
+            if schema:
+                counter[schema] += 1
+    recurring = [{"schema": s, "count": c} for s, c in counter.most_common(top_n)]
+    return {
+        "n": n,
+        "mean_score": round(sum(scores) / len(scores), 4) if scores else None,
+        "recurring_weaknesses": recurring,
+    }

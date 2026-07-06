@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from speedrun.ai.client import LLMClient, default_client
-from speedrun.ai.guard import sanitize_source_text
+from speedrun.ai.guard import require_source, sanitize_source_text
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE = REPO_ROOT / "speedrun" / "data" / "sources" / "lr_flaws_primer.md"
@@ -93,7 +93,12 @@ def generate_items(
     client = client or default_client()
     source_text = Path(source_path).read_text(encoding="utf-8")
     resp = client.complete(build_prompt(source_text, n), max_tokens=4096)
-    if not resp.ok:
+    # Traceability rule (§19): never emit generated items from AI output without a
+    # real, named source. Offline / no-key / errored responses fail this guard and
+    # yield an empty list (graceful degradation — never fabricates offline).
+    try:
+        require_source(resp)
+    except ValueError:
         return []
     source_tag = f"generated:{Path(source_path).stem}"
     out: list[dict[str, Any]] = []

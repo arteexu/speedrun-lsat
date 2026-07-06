@@ -15,6 +15,11 @@ See the product spec and roadmap in
 
 ## Speedrun LSAT — build and run
 
+> ⚠️ **Clone to a path with NO SPACES.** Anki's build **fails on paths that
+> contain spaces**, so this fork must live in a space-free directory (e.g.
+> `~/dev/speedrun-lsat`), not somewhere like `~/Desktop/Alpha AI/Speedrun`.
+> Keep the PRD/PDFs wherever you like; build the code from the no-space path.
+
 ### Desktop
 
 ```bash
@@ -39,11 +44,44 @@ bash ios/run-tests.sh              # verify FFI + host tests
 
 See [`ios/README.md`](ios/README.md) for Xcode simulator setup.
 
-### Results and demo
+### The Rust engine change (brownfield)
 
-- [`docs/speedrun/RESULTS.md`](docs/speedrun/RESULTS.md) — honest test numbers
+The required change inside Anki's Rust core is a **schema-weighted
+"points-at-stake" study queue** that orders due cards by exam value at stake.
+It lives in [`rslib/src/scheduler/schema_weighted.rs`](rslib/src/scheduler/schema_weighted.rs),
+is exposed as a protobuf RPC, and is called identically from desktop (via
+`pylib/rsbridge`) and iOS (via `rslib-ffi`).
+
+- [`docs/speedrun/rust-change.md`](docs/speedrun/rust-change.md) — the engine-change
+  note: what it does, why it belongs in Rust, its tests, and the
+  **upstream files touched** table with a rebase merge-difficulty assessment.
+
+### Files touched
+
+- [`docs/speedrun/FILES-TOUCHED.md`](docs/speedrun/FILES-TOUCHED.md) — every file this fork changed vs upstream Anki (grouped by area, reproducible from the merge-base).
+
+### Model descriptions
+
+One short page each for the three scores, including the model, its honest range, and the **give-up rule** enforced in code:
+
+- [`docs/models/memory-model.md`](docs/models/memory-model.md) — memory (FSRS recall); give-up: ≥ 5 reviewed cards overall, ≥ 2 per schema.
+- [`docs/models/performance-model.md`](docs/models/performance-model.md) — performance (memory → transfer); give-up: ≥ 2 graded attempts per schema, ≥ 10 overall.
+- [`docs/models/readiness-model.md`](docs/models/readiness-model.md) — readiness (projected 120–180); give-up: ≥ 200 graded attempts **and** ≥ 50% coverage in each of LR and RC.
+
+### Results, evaluation, and demo
+
+- [`docs/speedrun/RESULTS.md`](docs/speedrun/RESULTS.md) — honest test numbers from the re-runnable harnesses
 - [`docs/speedrun/DEMO.md`](docs/speedrun/DEMO.md) — walkthrough script
+- [`docs/speedrun/DEMO-VIDEO-SCRIPT.md`](docs/speedrun/DEMO-VIDEO-SCRIPT.md) — 3–5 min demo video script
+- [`docs/speedrun/ai.md`](docs/speedrun/ai.md) — AI note: sourced, evaluated, and switch-off-able
 - [`docs/speedrun/SYNC.md`](docs/speedrun/SYNC.md) — sync conflict rule (documented)
+- [`docs/speedrun/CHECKLIST.md`](docs/speedrun/CHECKLIST.md) — grading-checklist status
+- [`docs/speedrun/docs/roadmap.md`](docs/speedrun/docs/roadmap.md) — deadline-by-deadline roadmap with proof artifacts
+
+### Learning-science foundation
+
+- [`docs/speedrun/BRAINLIFT.md`](docs/speedrun/BRAINLIFT.md) — the LSAT BrainLift (SPOVs + Insights), tracked alongside its [source PDF](docs/speedrun/LSAT-BrainLift-Arthur.pdf)
+- [`docs/speedrun/TRACEABILITY.md`](docs/speedrun/TRACEABILITY.md) — every feature → BrainLift SPOV/Insight / PRD section
 
 ## License and attribution
 

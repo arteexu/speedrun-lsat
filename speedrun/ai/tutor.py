@@ -293,18 +293,23 @@ def answer_question(
                 from speedrun.ai.client import default_client
 
                 client = default_client()
+            from speedrun.ai.guard import require_source
+
             context = build_context(item, items=items)
             prompt = build_tutor_prompt(context, question, history=history)
             resp = client.complete(prompt, max_tokens=400)
-            # Source enforcement: only show AI text with a real, named source.
-            if getattr(resp, "ok", False):
-                return TutorReply(
-                    item_id=item_id,
-                    answer=resp.text.strip(),
-                    source=resp.source,
-                    ai_used=True,
-                    citations=["Grounded in this problem's stimulus, choices, and fork rationale"],
-                )
+            # Traceability rule (§19): reject AI output that lacks a real, named
+            # source rather than silently showing it. ``require_source`` raises on a
+            # missing source; the ValueError is caught below and we degrade to the
+            # deterministic grounded answer (AI-off fallback stays graceful).
+            require_source(resp)
+            return TutorReply(
+                item_id=item_id,
+                answer=resp.text.strip(),
+                source=resp.source,
+                ai_used=True,
+                citations=["Grounded in this problem's stimulus, choices, and fork rationale"],
+            )
         except Exception:
             pass  # fall through to the offline answer
 

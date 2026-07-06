@@ -91,8 +91,15 @@ class EvidenceGate:
         return [r for r in self.requirements if not r.met]
 
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=8)
 def _taxonomy_totals(path: Path = DEFAULT_TAXONOMY) -> dict[str, int]:
-    """Count schemas per axis: flaws, traps, patterns (question types + RC), all."""
+    """Count schemas per axis: flaws, traps, patterns (question types + RC), all.
+
+    Cached by path: the taxonomy file is read/parsed by several panels per render
+    but never changes at runtime."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     schemas = data["schemas"]
     flaws = traps = patterns = 0
@@ -119,7 +126,18 @@ def collection_evidence(col, schema_tag_prefix: str = SCHEMA_TAG) -> dict[str, i
     * flaws   = distinct flaw-axis schemas (the primary axis, SPOV2)
     * patterns= distinct question-type + RC-structure schemas ("which pattern is this")
     * traps   = distinct wrong-answer trap tags (Insight 8)
-    * concepts= the union of all of the above (overall taxonomy touched)."""
+    * concepts= the union of all of the above (overall taxonomy touched).
+
+    Memoized per collection-state token so the evidence gate (consulted by every
+    score) is computed once per render."""
+    from speedrun.score_cache import cached
+
+    return cached(
+        col, f"evidence::{schema_tag_prefix}", lambda: _collection_evidence(col, schema_tag_prefix)
+    )
+
+
+def _collection_evidence(col, schema_tag_prefix: str = SCHEMA_TAG) -> dict[str, int]:
     rows = col.db.all(
         """
         SELECT DISTINCT r.cid, n.tags

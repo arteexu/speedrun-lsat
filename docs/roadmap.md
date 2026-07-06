@@ -1,8 +1,13 @@
 # Build Roadmap — Speedrun LSAT
 
-Execution checklist with the proof artifact required for each item. Build in order: **apps work → AI → prove it.** Do not skip ahead. See [../PRD.md](../PRD.md) for full specs.
+> **Canonical PRD-path copy.** This is the roadmap linked from the PRD
+> (`docs/roadmap.md`). It is kept in sync with the in-repo copy at
+> [`speedrun/docs/roadmap.md`](speedrun/docs/roadmap.md); both are the same
+> document.
 
-**Status is reconciled with [`../CHECKLIST.md`](../CHECKLIST.md) and [`../RESULTS.md`](../RESULTS.md).**
+Execution checklist with the proof artifact required for each item. Build in order: **apps work → AI → prove it.** Do not skip ahead. See [speedrun/PRD.md](speedrun/PRD.md) for full specs.
+
+**Status is reconciled with [`speedrun/CHECKLIST.md`](speedrun/CHECKLIST.md) and [`speedrun/RESULTS.md`](speedrun/RESULTS.md).**
 
 Legend:
 - `[x]` — done and verified (code + tests / measured result on record).
@@ -20,7 +25,7 @@ Legend:
 - [x] Make a Rust change in `rslib/` visible in the running app (proves Rust→Python→GUI path); the schema-weighted queue is the real change.
 - [x] `just check` runs Rust + Python tests green.
 - [x] iOS engine "hello world": `rslib-ffi` staticlib calls a real RPC from Swift on the simulator.
-- [x] Define the schema taxonomy, seed deck, and coverage map ([../PRD.md §8](../PRD.md#8-schema-taxonomy-data-model-and-coverage-map)).
+- [x] Define the schema taxonomy, seed deck, and coverage map ([speedrun/PRD.md §8](speedrun/PRD.md#8-schema-taxonomy-data-model-and-coverage-map)).
 
 **Proof:** merge-base `6770ad3ef`; `tools/verify-speedrun-checklist.sh`; clean-build recording (🎥) via `git clean -xdf && ./run`.
 
@@ -31,7 +36,7 @@ Legend:
 **Desktop**
 
 - [x] Fork builds from source.
-- [x] Schema-weighted queue Rust change end to end: the diff, **5 Rust unit tests + 1 Python test** (`rslib/src/scheduler/schema_weighted.rs`, `pylib/tests/test_schema_weighted_queue.py`; see [../rust-change.md](../rust-change.md)).
+- [x] Schema-weighted queue Rust change end to end: the diff, **5 Rust unit tests + 1 Python test** (`rslib/src/scheduler/schema_weighted.rs`, `pylib/tests/test_schema_weighted_queue.py`; see [speedrun/rust-change.md](speedrun/rust-change.md)).
 - [x] Undo works and the collection does not corrupt after using the new queue (RPC is read-only; Python test asserts `undo_status().last_step` unchanged).
 - [x] Review loop runs on the LSAT deck (records correctness + latency + chosen trap) — `pylib/tests/test_speedrun_review_session.py`.
 - [x] Memory model produces an honest score: range + give-up rule (`speedrun/scoring/memory.py`, `speedrun/scoring/guardrail.py`).
@@ -50,7 +55,7 @@ Legend:
 
 **Desktop (AI)**
 
-- [x] Short note: what AI was built, why, what was skipped ([../ai.md](../ai.md)).
+- [x] Short note: what AI was built, why, what was skipped ([speedrun/ai.md](speedrun/ai.md)).
 - [x] Every AI output traces to a named source (named-source enforcement in `speedrun/ai/guard.py`).
 - [x] Eval before students see anything: accuracy + wrong-answer rate on a held-out set with a stated cutoff (partial: harness `speedrun/eval/ai_eval.py` + baseline numbers recorded with AI off; live-key AI numbers pending — run `speedrun_cli.py ai-eval` with `OPENAI_API_KEY`).
 - [ ] Side-by-side showing the AI beats a keyword/vector baseline (harness ready and baselines score, but demonstrating AI > baseline needs a live-key run).
@@ -62,10 +67,10 @@ Legend:
 **iOS**
 
 - [x] Two-way sync with desktop: review on phone → see on desktop and the reverse; no lost/double-counted reviews (`speedrun/tools/sync_test.py` against a live self-hosted server; iOS sync client verified on the simulator).
-- [x] Offline review works, then syncs on reconnect (offline-first client; conflict semantics in [../SYNC.md](../SYNC.md)).
+- [x] Offline review works, then syncs on reconnect (offline-first client; conflict semantics in [speedrun/SYNC.md](speedrun/SYNC.md)).
 - [x] Phone shows the three scores with ranges and follows the give-up rule (`ComputeSpeedrunScores` RPC; AnkiKit renders the three scores).
 
-**Proof:** RESULTS "Two-way sync" + "Shared scores RPC"; phone→desktop sync recording (🎥) per [../SYNC-SERVER.md](../SYNC-SERVER.md).
+**Proof:** RESULTS "Two-way sync" + "Shared scores RPC"; phone→desktop sync recording (🎥) per [speedrun/SYNC-SERVER.md](speedrun/SYNC-SERVER.md).
 
 ---
 
@@ -78,13 +83,13 @@ Legend:
 - [x] Paraphrase/transfer-gap report (partial: run on the 11-card seed deck with a synthetic reworded penalty; the 30 cards × 2 reworded protocol at scale pending).
 - [x] Score mapping written down, with a range ([models/readiness-model.md](models/readiness-model.md)).
 - [x] Study-feature experiment: 3 builds (full / ablation / plain Anki), equal study time; pre-registered number; range; null results reported (partial: synthetic simulation n=200, +6.5% transfer effect; human-subject replication pending) — `speedrun/eval/interleaving_experiment.py`.
-- [x] Honest reporting incl. results that did not work ([../RESULTS.md](../RESULTS.md) states every caveat).
+- [x] Honest reporting incl. results that did not work ([speedrun/RESULTS.md](speedrun/RESULTS.md) states every caveat).
 
 **Desktop and mobile**
 
 - [x] Packaged desktop installer (partial: Path A wheel via `tools/build-speedrun-installer.sh`; native branded bundle pending).
 - [ ] Packaged iOS build (TestFlight or sideload) — XCFramework builds and runs on the simulator, but a signed TestFlight/sideload build is not yet produced.
-- [x] Sync conflict handling correct and documented (same card on both devices offline → later timestamp wins; documented in [../SYNC.md](../SYNC.md)).
+- [x] Sync conflict handling correct and documented (same card on both devices offline → later timestamp wins; documented in [speedrun/SYNC.md](speedrun/SYNC.md)).
 - [x] Both apps run with AI off and still give a score.
 
 **System tests**
@@ -93,4 +98,4 @@ Legend:
 - [x] Offline test: AI turns off cleanly; both apps keep working and scoring (`speedrun/tools/offline_test.py`).
 - [ ] `just bench` on the 50k deck prints p50/p95/worst for each action vs targets (benchmark harness runs on the seed deck; the 50k-card run is pending).
 
-**Proof / hand-in:** results report ([../RESULTS.md](../RESULTS.md)); model descriptions ([models/](models/)); BrainLift ([../BRAINLIFT.md](../BRAINLIFT.md)); recordings (🎥) of both builds installing/running on clean devices; 3–5 min demo video ([../DEMO-VIDEO-SCRIPT.md](../DEMO-VIDEO-SCRIPT.md)).
+**Proof / hand-in:** results report ([speedrun/RESULTS.md](speedrun/RESULTS.md)); model descriptions ([models/](models/)); BrainLift ([speedrun/BRAINLIFT.md](speedrun/BRAINLIFT.md)); recordings (🎥) of both builds installing/running on clean devices; 3–5 min demo video ([speedrun/DEMO-VIDEO-SCRIPT.md](speedrun/DEMO-VIDEO-SCRIPT.md)).

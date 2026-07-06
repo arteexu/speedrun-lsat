@@ -13,10 +13,12 @@ phone reaches the engine through the same protobuf RPCs as the desktop
 (`BackendSyncService`, service `1`): `SyncLogin` (m3), `SyncStatus` (m4),
 `SyncCollection` (m5), `FullUploadOrDownload` (m6).
 
-## Conflict rule (how Anki actually merges)
+## Conflict rule (how Anki merges)
 
-The earlier draft of this doc said "later timestamp wins"; that is not how the
-engine merges, so this is corrected to the real behavior we rely on:
+**The rule:** for the same card reviewed on two devices offline, the **later
+real-timestamp review wins** the card's scheduling state. This is implemented via
+Anki's **USN + modification-time** merge, so **both revlog rows are kept and none
+are double-counted**. The mechanism, precisely:
 
 - **Cards / notes:** merged by **USN + modification time**. A record is taken
   from the incoming side when it is newer (`existing.usn.is_pending_sync(...)` is

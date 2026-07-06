@@ -27,6 +27,8 @@ docs/autoapi/
 
 # Speedrun: local dev Anki profile (ANKI_BASE) and scratch data
 /.ankidata/
+# Throwaway demo/latency profiles (e.g. .ankidata-demo, .ankidata-50k)
+/.ankidata-*/
 .pytest_cache/
 
 # Speedrun iOS build artifacts (rebuild with ios/build-xcframework.sh)

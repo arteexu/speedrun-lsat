@@ -3,7 +3,15 @@
     "version": "0.1.0",
     "updated": "2026-06-30",
     "scale": { "min": 120, "max": 180 },
-    "notes": "Schema is the unit of mastery (BrainLift SPOV1). The flaw axis is PRIMARY (SPOV2). exam_weight values are RELATIVE frequency estimates within each axis (normalized to sum ~1.0 per axis) synthesized from prep-taxonomy sources; they are estimates to be refined with real form-frequency data, and are consumed as schema_weight by the schema-weighted queue. See methodology.md.",
+    "scored_sections": ["LR", "RC"],
+    "excluded_sections": {
+        "AR": {
+            "name": "Analytical Reasoning (Logic Games)",
+            "reason": "Removed from the scored LSAT as of the August 2024 administration; the modern test scores only Logical Reasoning and Reading Comprehension. Deliberately excluded so coverage/readiness are computed only over sections that actually count.",
+            "source": "LSAC test-format change (effective Aug 2024)."
+        }
+    },
+    "notes": "Schema is the unit of mastery (BrainLift SPOV1). The flaw axis is PRIMARY (SPOV2). exam_weight values are RELATIVE frequency estimates within each axis (normalized to sum ~1.0 per axis) synthesized from prep-taxonomy sources; they are estimates to be refined with real form-frequency data, and are consumed as schema_weight by the schema-weighted queue. Only LR and RC are scored on the modern LSAT; Analytical Reasoning / Logic Games was removed as of Aug 2024 and is intentionally excluded (see excluded_sections). See methodology.md.",
     "sections": {
         "LR": {
             "name": "Logical Reasoning",
