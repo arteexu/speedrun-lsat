@@ -303,23 +303,38 @@ public final class SpeedrunEngine {
     private static let mSyncCollection: UInt32 = 5
     private static let mFullUpload: UInt32 = 6
 
-    /// Two-way sync against a self-hosted server. Logs in, runs a collection
-    /// sync, and performs a full up/down when the server requires it. Returns a
-    /// short human-readable status. Reviews done offline upload on the next call.
-    public func sync(url: String, username: String, password: String) -> String {
+    /// Log in and return the reusable `SyncAuth { hkey, endpoint }` blob, or nil
+    /// on bad credentials. Shared by the normal sync and the explicit-direction
+    /// full-sync helpers below.
+    private func authenticate(url: String, username: String, password: String) -> Data? {
         var login = Proto.Writer()
         login.string(1, username)  // SyncLoginRequest.username
         login.string(2, password)  // password
         login.string(3, url)       // endpoint
         let lr = backend.runCommand(service: Self.svcSync, method: Self.mSyncLogin, input: login.data)
-        if lr.isError { return "Login failed" }
+        if lr.isError { return nil }
         let (hkey, endpoint) = Self.decodeAuth(lr.data)
-        if hkey.isEmpty { return "Login failed: bad credentials" }
-
+        if hkey.isEmpty { return nil }
         var auth = Proto.Writer()
         auth.string(1, hkey)
         auth.string(2, endpoint.isEmpty ? url : endpoint)
-        let authData = auth.data
+        return auth.data
+    }
+
+    /// Two-way sync against a self-hosted server. Logs in, runs a collection
+    /// sync, and performs a full up/down when the server requires it. Returns a
+    /// short human-readable status. Reviews done offline upload on the next call.
+    ///
+    /// Note the `required == 2` (FULL_SYNC, direction ambiguous) case: it means
+    /// the phone and server collections diverged and the protocol can't pick a
+    /// winner automatically. We default to upload here to preserve phone reviews,
+    /// but to seed the phone from a desktop that is the source of truth, use
+    /// `downloadFromServer(...)` instead (the desktop shows an Upload/Download
+    /// prompt in exactly this case).
+    public func sync(url: String, username: String, password: String) -> String {
+        guard let authData = authenticate(url: url, username: username, password: password) else {
+            return "Login failed: bad credentials"
+        }
 
         var colReq = Proto.Writer()
         colReq.message(1, authData)  // SyncCollectionRequest.auth
@@ -337,6 +352,26 @@ public final class SpeedrunEngine {
         case 3: return fullSync(auth: authData, upload: false)
         default: return "Synced"
         }
+    }
+
+    /// Force a full **download**: replace this phone's collection with the
+    /// server's. Use once to seed the phone from a desktop that has already
+    /// uploaded (server = source of truth). Discards local unsynced phone
+    /// reviews by design — mirrors choosing "Download" in the desktop's full-sync
+    /// prompt.
+    public func downloadFromServer(url: String, username: String, password: String) -> String {
+        guard let authData = authenticate(url: url, username: username, password: password) else {
+            return "Login failed: bad credentials"
+        }
+        return fullSync(auth: authData, upload: false)
+    }
+
+    /// Force a full **upload**: replace the server's collection with this phone's.
+    public func uploadToServer(url: String, username: String, password: String) -> String {
+        guard let authData = authenticate(url: url, username: username, password: password) else {
+            return "Login failed: bad credentials"
+        }
+        return fullSync(auth: authData, upload: true)
     }
 
     private func fullSync(auth: Data, upload: Bool) -> String {

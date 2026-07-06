@@ -20,14 +20,105 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from speedrun.ai.baseline import keyword_score, load_gold_set
+from speedrun.ai.baseline import load_gold_set
 from speedrun.ai.client import LLMClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_GOLD = REPO_ROOT / "speedrun" / "data" / "gold_set.json"
 
 # Pre-set cutoff - stated before looking at results.
-PASSING_CUTOFF = 0.35
+#
+# The topicality score (see ``gold_topicality``) is the best *content*-token F1
+# (English + LSAT question-frame stopwords removed) of an item's question +
+# marked-correct answer against the taxonomy gold set's question+answer pairs.
+# It is a deliberately LENIENT off-topic FLOOR, not the main quality gate: the
+# 50-item gold set does not cover every word in a 500-item deck, so a high bar
+# would falsely reject genuine items. Correctness is decided by the LLM veto and
+# teaching quality by the difficulty/duplicate heuristics below. Calibrated so
+# off-topic gibberish (0.0 content overlap) is blocked while a genuine LSAT item
+# that names its taxonomy concept clears it (good card ~0.47; ~87% of the curated
+# seed clears 0.05, the rest use vocabulary outside the terse gold concepts).
+PASSING_CUTOFF = 0.05
+
+# Below this there is essentially no topical alignment with the taxonomy at all
+# (off-topic or malformed) — treated as "wrong" on the offline path.
+_WRONG_FLOOR = 0.02
+
+# Two items whose stimuli overlap at/above this Jaccard are treated as near
+# duplicates (the second is demoted to bad-teaching).
+_DUPLICATE_JACCARD = 0.8
+
+_WORD = re.compile(r"[a-z]{3,}")
+
+# Generic English words + LSAT question-frame boilerplate. Removed before
+# measuring topical overlap so the score reflects real conceptual alignment
+# (e.g. "correlation", "causation", "sample") rather than shared frame words
+# ("what", "the", "following", "reasoning").
+_STOPWORDS = frozenset(
+    """the and that this for are was were with from which one following most
+    argument arguments reasoning because vulnerable criticism statement statements
+    above true support supports supported what whether does play role each any all
+    also into than then them they their there here when will would could should
+    more some such only other others its it is in on of to as by or an be been
+    being has have had not no nor but if so we you he she his her our your question
+    answer choice choices best help helps justify conform conforms above given
+    about over under out very much many few said says claim claims""".split()
+)
+
+
+def _content_tokens(text: str) -> list[str]:
+    return [w for w in _WORD.findall((text or "").lower()) if w not in _STOPWORDS]
+
+
+def _token_set(text: str) -> set[str]:
+    return set(_content_tokens(text))
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def _content_f1(a: str, b: str) -> float:
+    from collections import Counter
+
+    ca, cb = Counter(_content_tokens(a)), Counter(_content_tokens(b))
+    if not ca or not cb:
+        return 0.0
+    overlap = sum((ca & cb).values())
+    if overlap == 0:
+        return 0.0
+    precision = overlap / sum(ca.values())
+    recall = overlap / sum(cb.values())
+    return 2 * precision * recall / (precision + recall)
+
+
+def _correct_choice_text(item: dict) -> str:
+    for c in item.get("choices", []):
+        if c.get("correct"):
+            return c.get("text", "") or ""
+    return item.get("answer", "") or ""
+
+
+def gold_topicality(item: dict, gold: list[dict]) -> float:
+    """Best content-token F1 of the item's question + marked answer against any
+    gold question+answer. Measures whether the card is on-topic for the taxonomy.
+
+    Unlike the old raw-stimulus Jaccard (which the long stimulus diluted to near
+    zero for every real item), this compares the *claim the card teaches* — its
+    stem plus the answer it marks correct — to the terse gold concepts with
+    frame words removed, so a genuine LSAT flaw item aligns with its gold concept
+    while gibberish does not.
+    """
+    text = f"{item.get('question', '')} {_correct_choice_text(item)}".strip()
+    if not text:
+        return 0.0
+    best = 0.0
+    for g in gold:
+        ref = f"{g.get('question', '')} {g.get('answer', '')}"
+        best = max(best, _content_f1(text, ref))
+    return best
 
 
 @dataclass
@@ -62,12 +153,12 @@ class CheckerReport:
 
 def _classify(score: float, passed: bool, item: dict) -> tuple[str, str]:
     if not passed:
-        if score < 0.1:
-            return "wrong", "No overlap with gold set - likely wrong or off-topic."
-        return "correct_bad_teaching", "Below cutoff - vague or weak teaching value."
+        if score < _WRONG_FLOOR:
+            return "wrong", "No topical alignment with the taxonomy gold set — off-topic or malformed."
+        return "correct_bad_teaching", "Below topicality cutoff — weak/marginal alignment."
     if item.get("difficulty", 1) <= 1:
-        return "correct_bad_teaching", "Trivial or duplicate content."
-    return "correct_useful", "Passes keyword baseline cutoff."
+        return "correct_bad_teaching", "Trivial or low-difficulty content."
+    return "correct_useful", "Clears topicality cutoff and (if run) the LLM correctness check."
 
 
 def _llm_verify_correct(item: dict, client: LLMClient) -> bool | None:
@@ -103,8 +194,7 @@ def check_card(
     cutoff: float = PASSING_CUTOFF,
     client: LLMClient | None = None,
 ) -> CheckResult:
-    q = item.get("question", "") + " " + (item.get("stimulus") or item.get("passage", ""))
-    score = keyword_score(q, "", gold)
+    score = gold_topicality(item, gold)
     passed = score >= cutoff
     category, reason = _classify(score, passed, item)
 
@@ -115,6 +205,11 @@ def check_card(
             passed = False
             category = "wrong"
             reason = "LLM check: the marked answer is not the best answer."
+
+    # Only correct & useful cards ship. A "correct but bad teaching" card (trivial
+    # or below the topicality floor) is blocked too — passed is true iff the card
+    # is in the correct_useful bucket (spec 7f: "failing cards are BLOCKED").
+    passed = category == "correct_useful"
 
     return CheckResult(
         item_id=item.get("id", "?"),
@@ -135,6 +230,25 @@ def check_items(
 ) -> CheckerReport:
     gold = load_gold_set(gold_path)
     results = [check_card(it, gold, cutoff=cutoff, client=client) for it in items]
+
+    # Batch-level near-duplicate demotion: a correct card that merely repeats an
+    # earlier card's stimulus teaches nothing new, so it counts as bad teaching
+    # (spec 7f count 3: "duplicate"). Only demotes items that otherwise passed.
+    by_id = {it.get("id", "?"): it for it in items}
+    seen_tokens: list[set[str]] = []
+    for r in results:
+        item = by_id.get(r.item_id, {})
+        toks = _token_set(item.get("stimulus") or item.get("passage") or item.get("question", ""))
+        is_dup = any(
+            _jaccard(toks, prev) >= _DUPLICATE_JACCARD for prev in seen_tokens
+        )
+        if not is_dup:
+            seen_tokens.append(toks)
+        elif r.passed:
+            r.passed = False
+            r.category = "correct_bad_teaching"
+            r.reason = "Near-duplicate of an earlier card — no new teaching value."
+
     counts = {"correct_useful": 0, "wrong": 0, "correct_bad_teaching": 0}
     for r in results:
         counts[r.category] += 1

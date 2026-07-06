@@ -1,0 +1,482 @@
+[
+  {
+    "source_id": "lr-0090",
+    "schema": "qt.principle_identify",
+    "correct": true,
+    "latency_ms": 1053,
+    "variant_index": 0,
+    "timestamp": 1783313592
+  },
+  {
+    "source_id": "lr-0090",
+    "schema": "qt.principle_identify",
+    "correct": true,
+    "latency_ms": 2514,
+    "variant_index": 1,
+    "timestamp": 1783313595
+  },
+  {
+    "source_id": "lr-0091",
+    "schema": "qt.principle_identify",
+    "correct": true,
+    "latency_ms": 717,
+    "variant_index": 0,
+    "timestamp": 1783313596
+  },
+  {
+    "source_id": "lr-0091",
+    "schema": "qt.principle_identify",
+    "correct": true,
+    "latency_ms": 762,
+    "variant_index": 1,
+    "timestamp": 1783313598
+  },
+  {
+    "source_id": "lr-0092",
+    "schema": "qt.principle_apply",
+    "correct": false,
+    "latency_ms": 937,
+    "variant_index": 0,
+    "timestamp": 1783313599
+  },
+  {
+    "source_id": "lr-0092",
+    "schema": "qt.principle_apply",
+    "correct": true,
+    "latency_ms": 1639,
+    "variant_index": 1,
+    "timestamp": 1783313602
+  },
+  {
+    "source_id": "lr-0093",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": false,
+    "latency_ms": 663,
+    "variant_index": 0,
+    "timestamp": 1783313603
+  },
+  {
+    "source_id": "lr-0093",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": false,
+    "latency_ms": 616,
+    "variant_index": 1,
+    "timestamp": 1783313604
+  },
+  {
+    "source_id": "lr-0094",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": true,
+    "latency_ms": 622,
+    "variant_index": 0,
+    "timestamp": 1783313605
+  },
+  {
+    "source_id": "lr-0094",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": true,
+    "latency_ms": 596,
+    "variant_index": 1,
+    "timestamp": 1783313606
+  },
+  {
+    "source_id": "lr-0095",
+    "schema": "qt.paradox",
+    "correct": true,
+    "latency_ms": 805,
+    "variant_index": 0,
+    "timestamp": 1783313608
+  },
+  {
+    "source_id": "lr-0095",
+    "schema": "qt.paradox",
+    "correct": false,
+    "latency_ms": 608,
+    "variant_index": 1,
+    "timestamp": 1783313609
+  },
+  {
+    "source_id": "lr-0096",
+    "schema": "qt.paradox",
+    "correct": false,
+    "latency_ms": 662,
+    "variant_index": 0,
+    "timestamp": 1783313610
+  },
+  {
+    "source_id": "lr-0096",
+    "schema": "qt.paradox",
+    "correct": true,
+    "latency_ms": 1425,
+    "variant_index": 1,
+    "timestamp": 1783313612
+  },
+  {
+    "source_id": "lr-0097",
+    "schema": "qt.role_of_statement",
+    "correct": true,
+    "latency_ms": 1028,
+    "variant_index": 0,
+    "timestamp": 1783313613
+  },
+  {
+    "source_id": "lr-0097",
+    "schema": "qt.role_of_statement",
+    "correct": true,
+    "latency_ms": 863,
+    "variant_index": 1,
+    "timestamp": 1783313615
+  },
+  {
+    "source_id": "lr-0098",
+    "schema": "qt.point_at_issue",
+    "correct": false,
+    "latency_ms": 573,
+    "variant_index": 0,
+    "timestamp": 1783313616
+  },
+  {
+    "source_id": "lr-0098",
+    "schema": "qt.point_at_issue",
+    "correct": false,
+    "latency_ms": 541,
+    "variant_index": 1,
+    "timestamp": 1783313617
+  },
+  {
+    "source_id": "lr-0099",
+    "schema": "flaw.causal.correlation_causation",
+    "correct": false,
+    "latency_ms": 725,
+    "variant_index": 0,
+    "timestamp": 1783313618
+  },
+  {
+    "source_id": "lr-0099",
+    "schema": "flaw.causal.correlation_causation",
+    "correct": true,
+    "latency_ms": 822,
+    "variant_index": 1,
+    "timestamp": 1783313619
+  },
+  {
+    "source_id": "lr-0100",
+    "schema": "flaw.causal.correlation_causation",
+    "correct": true,
+    "latency_ms": 1106,
+    "variant_index": 0,
+    "timestamp": 1783313621
+  },
+  {
+    "source_id": "lr-0100",
+    "schema": "flaw.causal.correlation_causation",
+    "correct": true,
+    "latency_ms": 797,
+    "variant_index": 1,
+    "timestamp": 1783313622
+  },
+  {
+    "source_id": "lr-0101",
+    "schema": "flaw.causal.reversed",
+    "correct": true,
+    "latency_ms": 1024,
+    "variant_index": 0,
+    "timestamp": 1783313624
+  },
+  {
+    "source_id": "lr-0101",
+    "schema": "flaw.causal.reversed",
+    "correct": true,
+    "latency_ms": 784,
+    "variant_index": 1,
+    "timestamp": 1783313625
+  },
+  {
+    "source_id": "lr-0102",
+    "schema": "flaw.causal.common_cause",
+    "correct": false,
+    "latency_ms": 712,
+    "variant_index": 0,
+    "timestamp": 1783313626
+  },
+  {
+    "source_id": "lr-0102",
+    "schema": "flaw.causal.common_cause",
+    "correct": true,
+    "latency_ms": 679,
+    "variant_index": 1,
+    "timestamp": 1783313628
+  },
+  {
+    "source_id": "lr-0103",
+    "schema": "flaw.causal.post_hoc",
+    "correct": true,
+    "latency_ms": 5742,
+    "variant_index": 0,
+    "timestamp": 1783313634
+  },
+  {
+    "source_id": "lr-0103",
+    "schema": "flaw.causal.post_hoc",
+    "correct": true,
+    "latency_ms": 764,
+    "variant_index": 1,
+    "timestamp": 1783313635
+  },
+  {
+    "source_id": "lr-0104",
+    "schema": "flaw.conditional.nec_suff_confusion",
+    "correct": true,
+    "latency_ms": 1400,
+    "variant_index": 0,
+    "timestamp": 1783313637
+  },
+  {
+    "source_id": "lr-0104",
+    "schema": "flaw.conditional.nec_suff_confusion",
+    "correct": true,
+    "latency_ms": 614,
+    "variant_index": 1,
+    "timestamp": 1783313638
+  },
+  {
+    "source_id": "lr-0105",
+    "schema": "flaw.conditional.mistaken_reversal",
+    "correct": false,
+    "latency_ms": 536,
+    "variant_index": 0,
+    "timestamp": 1783313639
+  },
+  {
+    "source_id": "lr-0105",
+    "schema": "flaw.conditional.mistaken_reversal",
+    "correct": false,
+    "latency_ms": 720,
+    "variant_index": 1,
+    "timestamp": 1783313641
+  },
+  {
+    "source_id": "lr-0106",
+    "schema": "flaw.conditional.mistaken_negation",
+    "correct": false,
+    "latency_ms": 1023,
+    "variant_index": 0,
+    "timestamp": 1783313642
+  },
+  {
+    "source_id": "lr-0106",
+    "schema": "flaw.conditional.mistaken_negation",
+    "correct": false,
+    "latency_ms": 865,
+    "variant_index": 1,
+    "timestamp": 1783313643
+  },
+  {
+    "source_id": "lr-0107",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": false,
+    "latency_ms": 859,
+    "variant_index": 0,
+    "timestamp": 1783313645
+  },
+  {
+    "source_id": "lr-0107",
+    "schema": "flaw.gap.unwarranted_assumption",
+    "correct": true,
+    "latency_ms": 647,
+    "variant_index": 1,
+    "timestamp": 1783313646
+  },
+  {
+    "source_id": "lr-0108",
+    "schema": "flaw.sampling.unrepresentative",
+    "correct": true,
+    "latency_ms": 846,
+    "variant_index": 0,
+    "timestamp": 1783313647
+  },
+  {
+    "source_id": "lr-0108",
+    "schema": "flaw.sampling.unrepresentative",
+    "correct": true,
+    "latency_ms": 1019,
+    "variant_index": 1,
+    "timestamp": 1783313649
+  },
+  {
+    "source_id": "lr-0109",
+    "schema": "flaw.sampling.appeal_to_ignorance",
+    "correct": true,
+    "latency_ms": 701,
+    "variant_index": 0,
+    "timestamp": 1783313650
+  },
+  {
+    "source_id": "lr-0109",
+    "schema": "flaw.sampling.appeal_to_ignorance",
+    "correct": true,
+    "latency_ms": 545,
+    "variant_index": 1,
+    "timestamp": 1783313651
+  },
+  {
+    "source_id": "lr-0110",
+    "schema": "flaw.scope.part_whole",
+    "correct": true,
+    "latency_ms": 649,
+    "variant_index": 0,
+    "timestamp": 1783313652
+  },
+  {
+    "source_id": "lr-0110",
+    "schema": "flaw.scope.part_whole",
+    "correct": false,
+    "latency_ms": 651,
+    "variant_index": 1,
+    "timestamp": 1783313653
+  },
+  {
+    "source_id": "lr-0111",
+    "schema": "flaw.scope.percent_vs_number",
+    "correct": false,
+    "latency_ms": 908,
+    "variant_index": 0,
+    "timestamp": 1783313655
+  },
+  {
+    "source_id": "lr-0111",
+    "schema": "flaw.scope.percent_vs_number",
+    "correct": false,
+    "latency_ms": 796,
+    "variant_index": 1,
+    "timestamp": 1783313656
+  },
+  {
+    "source_id": "lr-0112",
+    "schema": "flaw.scope.equivocation",
+    "correct": false,
+    "latency_ms": 691,
+    "variant_index": 0,
+    "timestamp": 1783313657
+  },
+  {
+    "source_id": "lr-0112",
+    "schema": "flaw.scope.equivocation",
+    "correct": false,
+    "latency_ms": 879,
+    "variant_index": 1,
+    "timestamp": 1783313659
+  },
+  {
+    "source_id": "lr-0113",
+    "schema": "flaw.structure.ad_hominem",
+    "correct": true,
+    "latency_ms": 921,
+    "variant_index": 0,
+    "timestamp": 1783313660
+  },
+  {
+    "source_id": "lr-0113",
+    "schema": "flaw.structure.ad_hominem",
+    "correct": true,
+    "latency_ms": 734,
+    "variant_index": 1,
+    "timestamp": 1783313661
+  },
+  {
+    "source_id": "lr-0114",
+    "schema": "flaw.structure.straw_man",
+    "correct": false,
+    "latency_ms": 761,
+    "variant_index": 0,
+    "timestamp": 1783313662
+  },
+  {
+    "source_id": "lr-0114",
+    "schema": "flaw.structure.straw_man",
+    "correct": false,
+    "latency_ms": 1109,
+    "variant_index": 1,
+    "timestamp": 1783313664
+  },
+  {
+    "source_id": "lr-0115",
+    "schema": "flaw.structure.false_dilemma",
+    "correct": false,
+    "latency_ms": 649,
+    "variant_index": 0,
+    "timestamp": 1783313665
+  },
+  {
+    "source_id": "lr-0115",
+    "schema": "flaw.structure.false_dilemma",
+    "correct": false,
+    "latency_ms": 734,
+    "variant_index": 1,
+    "timestamp": 1783313666
+  },
+  {
+    "source_id": "lr-0116",
+    "schema": "flaw.structure.circular",
+    "correct": false,
+    "latency_ms": 645,
+    "variant_index": 0,
+    "timestamp": 1783313667
+  },
+  {
+    "source_id": "lr-0116",
+    "schema": "flaw.structure.circular",
+    "correct": false,
+    "latency_ms": 485,
+    "variant_index": 1,
+    "timestamp": 1783313668
+  },
+  {
+    "source_id": "lr-0117",
+    "schema": "flaw.structure.appeal_authority_emotion",
+    "correct": true,
+    "latency_ms": 779,
+    "variant_index": 0,
+    "timestamp": 1783313670
+  },
+  {
+    "source_id": "lr-0117",
+    "schema": "flaw.structure.appeal_authority_emotion",
+    "correct": true,
+    "latency_ms": 829,
+    "variant_index": 1,
+    "timestamp": 1783313671
+  },
+  {
+    "source_id": "rc-0102-q1",
+    "schema": "rc.main_point",
+    "correct": false,
+    "latency_ms": 872,
+    "variant_index": 0,
+    "timestamp": 1783313672
+  },
+  {
+    "source_id": "rc-0102-q1",
+    "schema": "rc.main_point",
+    "correct": true,
+    "latency_ms": 670,
+    "variant_index": 1,
+    "timestamp": 1783313673
+  },
+  {
+    "source_id": "rc-0103-q1",
+    "schema": "rc.inference",
+    "correct": true,
+    "latency_ms": 1201,
+    "variant_index": 0,
+    "timestamp": 1783313675
+  },
+  {
+    "source_id": "rc-0103-q1",
+    "schema": "rc.inference",
+    "correct": true,
+    "latency_ms": 960,
+    "variant_index": 1,
+    "timestamp": 1783313676
+  }
+]

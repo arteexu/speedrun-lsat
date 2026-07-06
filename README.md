@@ -56,6 +56,10 @@ is exposed as a protobuf RPC, and is called identically from desktop (via
   note: what it does, why it belongs in Rust, its tests, and the
   **upstream files touched** table with a rebase merge-difficulty assessment.
 
+### Files touched
+
+- [`docs/speedrun/FILES-TOUCHED.md`](docs/speedrun/FILES-TOUCHED.md) — every file this fork changed vs upstream Anki (grouped by area, reproducible from the merge-base).
+
 ### Results, evaluation, and demo
 
 - [`docs/speedrun/RESULTS.md`](docs/speedrun/RESULTS.md) — honest test numbers from the re-runnable harnesses

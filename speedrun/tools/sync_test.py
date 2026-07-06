@@ -18,7 +18,9 @@ collection of the exam deck. It proves the two guarantees the milestone requires
      resolves it to one consistent, non-corrupt state on both clients.
 
 The conflict rule and the merge mechanics it relies on are documented in
-docs/architecture.md ("Speedrun sync and the conflict rule").
+docs/speedrun/SYNC.md ("Conflict rule (how Anki merges)"): for the same card
+reviewed on two devices offline, the later real-timestamp review wins the card's
+scheduling state, and both revlog rows are kept (none double-counted).
 
 This script starts its own sync server, so it needs no external services. If the
 bundled sync server cannot be started it prints a clear SKIP and exits 0 rather

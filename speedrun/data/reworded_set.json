@@ -1,0 +1,609 @@
+{
+  "name": "LSAT Speedrun \u2014 reworded transfer set (spec 7d)",
+  "description": "30 real seed cards x 2 exam-style reworded questions = 60 items. Reworded stimuli/questions are the seed deck's hand-authored paraphrases (same schema, new surface); answer keys authored to the reworded surface. Used to measure transfer (reworded accuracy) vs memory recall.",
+  "n_source_cards": 30,
+  "variants_per_card": 2,
+  "n_items": 60,
+  "items": [
+    {
+      "id": "lr-0090-rw0",
+      "source_id": "lr-0090",
+      "schema": "qt.principle_identify",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "A teacher gave one student extra time on a quiz because his desk wobbled, though every desk wobbled equally, so she treated identical students differently.",
+      "question": "Which principle most helps to justify calling this unfair?",
+      "answer": "Students who face identical conditions should be treated the same way."
+    },
+    {
+      "id": "lr-0090-rw1",
+      "source_id": "lr-0090",
+      "schema": "qt.principle_identify",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "An airline let one passenger board early for arriving in bad weather, but all passengers faced the same weather, so it favored one unfairly.",
+      "question": "Which principle, if valid, most helps to justify the reasoning?",
+      "answer": "Passengers who face the same conditions should be treated the same way by the airline."
+    },
+    {
+      "id": "lr-0091-rw0",
+      "source_id": "lr-0091",
+      "schema": "qt.principle_identify",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "A coach benched a player who had attended every practice and followed every rule, only because of a personal grudge; penalizing someone who met all requirements is unfair, so benching him was unfair.",
+      "question": "Which principle most helps to justify the reasoning?",
+      "answer": "A person who has met every requirement should not be penalized."
+    },
+    {
+      "id": "lr-0091-rw1",
+      "source_id": "lr-0091",
+      "schema": "qt.principle_identify",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A manager denied a bonus to an employee who hit every target, merely because she found him annoying; withholding an earned reward from someone who meets all goals is wrong, so the denial was wrong.",
+      "question": "Which principle, if valid, justifies the conclusion?",
+      "answer": "Someone who meets all goals should not be denied an earned reward."
+    },
+    {
+      "id": "lr-0092-rw0",
+      "source_id": "lr-0092",
+      "schema": "qt.principle_apply",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Principle: A product rating may be deleted only when it reports a fact that is untrue, never simply because it is unfavorable.",
+      "question": "Which judgment conforms most closely to the principle?",
+      "answer": "A rating should be removed only when it states a false fact, not merely for being unfavorable."
+    },
+    {
+      "id": "lr-0092-rw1",
+      "source_id": "lr-0092",
+      "schema": "qt.principle_apply",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Principle: A comment should be taken down solely for containing a false factual claim, not for merely being critical.",
+      "question": "Which application best conforms to the principle?",
+      "answer": "A comment should be taken down only for a false factual claim, not for merely being critical."
+    },
+    {
+      "id": "lr-0093-rw0",
+      "source_id": "lr-0093",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Anyone who registers before noon gets a seat. Mara signed up this morning. So Mara gets a seat.",
+      "question": "The conclusion follows logically if which one of the following is assumed?",
+      "answer": "Signing up this morning counts as registering before noon."
+    },
+    {
+      "id": "lr-0093-rw1",
+      "source_id": "lr-0093",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Every applicant who pays the fee is entered in the draw. Tom paid at the front desk. So Tom is entered.",
+      "question": "Which assumption, if made, allows the conclusion to follow?",
+      "answer": "Paying at the front desk counts as paying the fee."
+    },
+    {
+      "id": "lr-0094-rw0",
+      "source_id": "lr-0094",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "If a bridge is both well-designed and well-maintained, it is safe. This bridge is well-maintained. So it is safe.",
+      "question": "The conclusion follows logically if which one of the following is assumed?",
+      "answer": "The bridge is well-designed."
+    },
+    {
+      "id": "lr-0094-rw1",
+      "source_id": "lr-0094",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A dish is a success if it is both tasty and beautifully plated. This dish is tasty. So it is a success.",
+      "question": "Which assumption makes the conclusion follow logically?",
+      "answer": "The dish is beautifully plated."
+    },
+    {
+      "id": "lr-0095-rw0",
+      "source_id": "lr-0095",
+      "schema": "qt.paradox",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "The theater cut its ticket prices in June but sold fewer tickets than it had in May.",
+      "question": "Which one, if true, most helps to resolve the discrepancy?",
+      "answer": "Some other factor depressed June demand \u2014 for example, May featured a popular show that June lacked."
+    },
+    {
+      "id": "lr-0095-rw1",
+      "source_id": "lr-0095",
+      "schema": "qt.paradox",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A bakery reduced the price of its pies, yet it sold fewer pies than the week before.",
+      "question": "Which one of the following, if true, most helps to resolve the apparent discrepancy?",
+      "answer": "Some other factor cut demand the later week \u2014 for example, the earlier week included a holiday that boosted pie sales."
+    },
+    {
+      "id": "lr-0096-rw0",
+      "source_id": "lr-0096",
+      "schema": "qt.paradox",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "A tutoring method raised scores during supervised sessions, but the same students showed no gain when they used it alone at home.",
+      "question": "Which one, if true, most helps to resolve the discrepancy?",
+      "answer": "At home the students did not use the method correctly or consistently."
+    },
+    {
+      "id": "lr-0096-rw1",
+      "source_id": "lr-0096",
+      "schema": "qt.paradox",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A diet lowered volunteers' weight while they ate at the clinic, yet the same volunteers lost no weight following it at home.",
+      "question": "Which one of the following, if true, most helps to resolve the apparent discrepancy?",
+      "answer": "At home the volunteers did not follow the diet as prescribed."
+    },
+    {
+      "id": "lr-0097-rw0",
+      "source_id": "lr-0097",
+      "schema": "qt.role_of_statement",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "The new ferry is worth building. Granted, it needs a costly dock. But the fares it will earn exceed that cost, so the city should build it.",
+      "question": "The claim that the ferry needs a costly dock plays which role in the argument?",
+      "answer": "It is a cost the argument concedes before contending that the benefits outweigh it."
+    },
+    {
+      "id": "lr-0097-rw1",
+      "source_id": "lr-0097",
+      "schema": "qt.role_of_statement",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Adopting the software is a good idea. Yes, staff must be trained to use it. But the hours it will save outweigh the training time, so we should adopt it.",
+      "question": "What role does the claim that staff must be trained play in the argument?",
+      "answer": "It is a drawback the argument grants before concluding that the benefits outweigh it."
+    },
+    {
+      "id": "lr-0098-rw0",
+      "source_id": "lr-0098",
+      "schema": "qt.point_at_issue",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Lee: Let's paint the mural on the outside wall; sunny days are common in spring. Mia: One rainstorm could wreck an outdoor mural, so we should paint it inside.",
+      "question": "Lee and Mia disagree over whether",
+      "answer": "whether the mural should be painted outdoors."
+    },
+    {
+      "id": "lr-0098-rw1",
+      "source_id": "lr-0098",
+      "schema": "qt.point_at_issue",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Sam: We should camp by the river this weekend; it rarely floods. Jo: A sudden rise in the water could ruin the campsite, so we should camp up on the ridge.",
+      "question": "Sam and Jo disagree over whether",
+      "answer": "whether they should camp by the river."
+    },
+    {
+      "id": "lr-0099-rw0",
+      "source_id": "lr-0099",
+      "schema": "flaw.causal.correlation_causation",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Since we switched to standing meetings, the team finishes projects faster. The standing meetings must be the cause.",
+      "question": "Which one would be most useful to know in evaluating the argument?",
+      "answer": "Whether comparable teams that kept sitting for meetings also began finishing projects faster."
+    },
+    {
+      "id": "lr-0099-rw1",
+      "source_id": "lr-0099",
+      "schema": "flaw.causal.correlation_causation",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "After the store added background music, its sales rose. The music must be boosting sales.",
+      "question": "Which one of the following would be most useful to know in evaluating the argument?",
+      "answer": "Whether comparable stores that added no music saw a similar rise in sales."
+    },
+    {
+      "id": "lr-0100-rw0",
+      "source_id": "lr-0100",
+      "schema": "flaw.causal.correlation_causation",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Cities with more parks have healthier residents, so building parks must make people healthier.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It treats a mere correlation between two things as though one caused the other."
+    },
+    {
+      "id": "lr-0100-rw1",
+      "source_id": "lr-0100",
+      "schema": "flaw.causal.correlation_causation",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Students who drink more water get better grades, so drinking water must improve grades.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It treats a mere correlation between two things as though one caused the other."
+    },
+    {
+      "id": "lr-0101-rw0",
+      "source_id": "lr-0101",
+      "schema": "flaw.causal.reversed",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Hospitals that treat more patients record more deaths, so treating more patients must cause more deaths.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It overlooks that the supposed effect may actually be the cause."
+    },
+    {
+      "id": "lr-0101-rw1",
+      "source_id": "lr-0101",
+      "schema": "flaw.causal.reversed",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Firefighters are present at the biggest fires, so sending more firefighters must make fires bigger.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It overlooks that the supposed effect may actually be the cause."
+    },
+    {
+      "id": "lr-0102-rw0",
+      "source_id": "lr-0102",
+      "schema": "flaw.causal.common_cause",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Children who attend summer camp are healthier, so summer camp must improve children's health.",
+      "question": "Which one, if true, most weakens the argument?",
+      "answer": "Children from healthier, better-off families are both more likely to attend camp and to be healthy."
+    },
+    {
+      "id": "lr-0102-rw1",
+      "source_id": "lr-0102",
+      "schema": "flaw.causal.common_cause",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Workers who take the stairs earn more, so taking the stairs must raise earnings.",
+      "question": "Which one of the following, if true, most weakens the argument?",
+      "answer": "Fitter people are both more likely to take the stairs and to earn more."
+    },
+    {
+      "id": "lr-0103-rw0",
+      "source_id": "lr-0103",
+      "schema": "flaw.causal.post_hoc",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Right after I washed my car, it rained. Washing my car must have caused the rain.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It infers a causal connection from the mere fact that one event followed another."
+    },
+    {
+      "id": "lr-0103-rw1",
+      "source_id": "lr-0103",
+      "schema": "flaw.causal.post_hoc",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "The new logo launched and sales rose that week, so the logo must have caused the increase in sales.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It infers a causal connection from the mere fact that one event followed another."
+    },
+    {
+      "id": "lr-0104-rw0",
+      "source_id": "lr-0104",
+      "schema": "flaw.conditional.nec_suff_confusion",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "To board the flight you must have a ticket. Omar has a ticket, so he will board the flight.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It treats a merely necessary condition as though it were sufficient."
+    },
+    {
+      "id": "lr-0104-rw1",
+      "source_id": "lr-0104",
+      "schema": "flaw.conditional.nec_suff_confusion",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A plant must be watered in order to grow. This plant was watered, so it will grow.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It treats a merely necessary condition as though it were sufficient."
+    },
+    {
+      "id": "lr-0105-rw0",
+      "source_id": "lr-0105",
+      "schema": "flaw.conditional.mistaken_reversal",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "If a number is divisible by four, it is even. This number is even, so it is divisible by four.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It concludes that the condition holds simply because its usual result does."
+    },
+    {
+      "id": "lr-0105-rw1",
+      "source_id": "lr-0105",
+      "schema": "flaw.conditional.mistaken_reversal",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "If a car is a hybrid, it uses less fuel. This car uses less fuel, so it is a hybrid.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It concludes that the condition holds simply because its usual result does."
+    },
+    {
+      "id": "lr-0106-rw0",
+      "source_id": "lr-0106",
+      "schema": "flaw.conditional.mistaken_negation",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "If the alarm is set, the lights turn on. The alarm is not set, so the lights are off.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It assumes that without the stated condition the result cannot occur."
+    },
+    {
+      "id": "lr-0106-rw1",
+      "source_id": "lr-0106",
+      "schema": "flaw.conditional.mistaken_negation",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "If a movie is animated, children enjoy it. This movie is not animated, so children will not enjoy it.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It assumes that without the stated condition the result cannot occur."
+    },
+    {
+      "id": "lr-0107-rw0",
+      "source_id": "lr-0107",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "The gym should add a juice bar. Many members linger after workouts and would surely want a drink.",
+      "question": "The argument depends on assuming which one of the following?",
+      "answer": "At least some lingering members would buy a drink if one were offered."
+    },
+    {
+      "id": "lr-0107-rw1",
+      "source_id": "lr-0107",
+      "schema": "flaw.gap.unwarranted_assumption",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "The bookstore should host author readings. Plenty of visitors browse for a long time and would surely enjoy an event.",
+      "question": "The argument depends on assuming which one of the following?",
+      "answer": "At least some long-browsing visitors would attend an event if one were held."
+    },
+    {
+      "id": "lr-0108-rw0",
+      "source_id": "lr-0108",
+      "schema": "flaw.sampling.unrepresentative",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Everyone I surveyed at the vegan festival avoids meat, so most people in the country avoid meat.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It draws a conclusion about a whole population from a group unlikely to represent it."
+    },
+    {
+      "id": "lr-0108-rw1",
+      "source_id": "lr-0108",
+      "schema": "flaw.sampling.unrepresentative",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Every gamer I met at the arcade prefers action games, so action games are the country's favorite.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It draws a conclusion about a whole population from a group unlikely to represent it."
+    },
+    {
+      "id": "lr-0109-rw0",
+      "source_id": "lr-0109",
+      "schema": "flaw.sampling.appeal_to_ignorance",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "No one has shown that the new additive is harmful, so it must be completely harmless.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It treats the lack of evidence for a claim as showing the claim is false."
+    },
+    {
+      "id": "lr-0109-rw1",
+      "source_id": "lr-0109",
+      "schema": "flaw.sampling.appeal_to_ignorance",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "There is no evidence that life exists on that distant moon, so there is definitely no life there.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It treats the lack of evidence for a claim as showing the claim is false."
+    },
+    {
+      "id": "lr-0110-rw0",
+      "source_id": "lr-0110",
+      "schema": "flaw.scope.part_whole",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Each musician in the band is world-class, so the band's overall sound must be world-class.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It assumes that what is true of each part is true of the whole."
+    },
+    {
+      "id": "lr-0110-rw1",
+      "source_id": "lr-0110",
+      "schema": "flaw.scope.part_whole",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Every word in the sentence is common, so the sentence as a whole must be easy to understand.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It assumes that what is true of each part is true of the whole."
+    },
+    {
+      "id": "lr-0111-rw0",
+      "source_id": "lr-0111",
+      "schema": "flaw.scope.percent_vs_number",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "A larger share of the small clinic's patients recover than of the big hospital's, so the clinic cures more patients than the hospital.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It confuses a higher proportion with a larger total number."
+    },
+    {
+      "id": "lr-0111-rw1",
+      "source_id": "lr-0111",
+      "schema": "flaw.scope.percent_vs_number",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "A higher percentage of the village's residents volunteer than of the city's, so the village has more volunteers than the city.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It confuses a higher proportion with a larger total number."
+    },
+    {
+      "id": "lr-0112-rw0",
+      "source_id": "lr-0112",
+      "schema": "flaw.scope.equivocation",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "This argument has a sound structure. Whatever is sound can be heard. So this argument can be heard.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It relies on a word used in two different senses across the argument."
+    },
+    {
+      "id": "lr-0112-rw1",
+      "source_id": "lr-0112",
+      "schema": "flaw.scope.equivocation",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "Only man is rational, and no woman is a man, so no woman is rational.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It relies on a word used in two different senses across the argument."
+    },
+    {
+      "id": "lr-0113-rw0",
+      "source_id": "lr-0113",
+      "schema": "flaw.structure.ad_hominem",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Mr. Cole says the budget is balanced, but he dresses sloppily, so his claim should be dismissed.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It rejects a claim by criticizing the person who made it rather than her reasoning."
+    },
+    {
+      "id": "lr-0113-rw1",
+      "source_id": "lr-0113",
+      "schema": "flaw.structure.ad_hominem",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "The author claims the bridge is well built, but she keeps a messy desk, so we should ignore her conclusion.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It rejects a claim by criticizing the person who made it rather than her reasoning."
+    },
+    {
+      "id": "lr-0114-rw0",
+      "source_id": "lr-0114",
+      "schema": "flaw.structure.straw_man",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "She suggests trimming the science budget slightly, but shutting down all research would be reckless, so her plan is bad.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It misrepresents a modest proposal as a far more extreme one and attacks that."
+    },
+    {
+      "id": "lr-0114-rw1",
+      "source_id": "lr-0114",
+      "schema": "flaw.structure.straw_man",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "They propose reducing screen time a bit, but banning all technology would harm learning, so their idea should be rejected.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It misrepresents a modest proposal as a far more extreme one and attacks that."
+    },
+    {
+      "id": "lr-0115-rw0",
+      "source_id": "lr-0115",
+      "schema": "flaw.structure.false_dilemma",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "Either you back the new stadium or you're against the city's future. Dana is against the stadium, so she's against the city's future.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It assumes there are only two options when other positions are available."
+    },
+    {
+      "id": "lr-0115-rw1",
+      "source_id": "lr-0115",
+      "schema": "flaw.structure.false_dilemma",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "You're either with the new curriculum or you don't value education. Sam rejects it, so Sam doesn't value education.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It assumes there are only two options when other positions are available."
+    },
+    {
+      "id": "lr-0116-rw0",
+      "source_id": "lr-0116",
+      "schema": "flaw.structure.circular",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "This is the fastest route because no other route gets you there sooner.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It supports its conclusion with a premise that merely restates that conclusion."
+    },
+    {
+      "id": "lr-0116-rw1",
+      "source_id": "lr-0116",
+      "schema": "flaw.structure.circular",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "The policy is the fairest one available because none of the alternatives treats people more fairly.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It supports its conclusion with a premise that merely restates that conclusion."
+    },
+    {
+      "id": "lr-0117-rw0",
+      "source_id": "lr-0117",
+      "schema": "flaw.structure.appeal_authority_emotion",
+      "section": "LR",
+      "variant_index": 0,
+      "stimulus": "A famous chef says this paint color is best for a hospital, so it must be the best hospital paint.",
+      "question": "The reasoning is flawed because it",
+      "answer": "It relies on an authority whose expertise is unrelated to the topic."
+    },
+    {
+      "id": "lr-0117-rw1",
+      "source_id": "lr-0117",
+      "schema": "flaw.structure.appeal_authority_emotion",
+      "section": "LR",
+      "variant_index": 1,
+      "stimulus": "An Olympic swimmer recommends this tax software, so it must be the best software for filing taxes.",
+      "question": "The argument is most vulnerable to criticism because it",
+      "answer": "It relies on an authority whose expertise is unrelated to the topic."
+    },
+    {
+      "id": "rc-0102-q1-rw0",
+      "source_id": "rc-0102-q1",
+      "schema": "rc.main_point",
+      "section": "RC",
+      "variant_index": 0,
+      "stimulus": "Educators long believed that assigning more homework raised achievement. Recent research suggests the reverse: excess homework causes burnout and scores stall. Some teachers point to classes where heavy homework coincided with high scores, but the author notes those classes were also unusually small, which did the real work, so the overall pattern stands.",
+      "question": "Which one most accurately expresses the main point of the passage?",
+      "answer": "Assigning more homework generally fails to raise achievement, and the apparent exceptions have special explanations."
+    },
+    {
+      "id": "rc-0102-q1-rw1",
+      "source_id": "rc-0102-q1",
+      "schema": "rc.main_point",
+      "section": "RC",
+      "variant_index": 1,
+      "stimulus": "Managers assumed that longer hours boost output. Newer data show the opposite: fatigue lowers productivity over time. A few teams that worked long hours stayed productive, but the author observes they had just adopted new tools, which explained the gain, so the general trend holds.",
+      "question": "Which one most accurately expresses the main point of the passage?",
+      "answer": "Working longer hours generally fails to boost output, and the apparent exceptions are explained by other factors."
+    },
+    {
+      "id": "rc-0103-q1-rw0",
+      "source_id": "rc-0103-q1",
+      "schema": "rc.inference",
+      "section": "RC",
+      "variant_index": 0,
+      "stimulus": "The mapmaker Aiko Tanaka sailed the coast in person to chart its reefs, while most cartographers of her day copied older maps in their offices. She recorded currents and hazards as sailors reported them in real time. Some critics called her charts cluttered, but later navigators valued them for exactly the local detail they preserved.",
+      "question": "The passage most supports which one of the following?",
+      "answer": "Tanaka's firsthand method captured local detail that copying older maps would likely have missed."
+    },
+    {
+      "id": "rc-0103-q1-rw1",
+      "source_id": "rc-0103-q1",
+      "schema": "rc.inference",
+      "section": "RC",
+      "variant_index": 1,
+      "stimulus": "The chef Amara Okoye visited farms to taste crops at harvest, whereas most food writers of her time judged ingredients only from market samples. She noted how soil and weather shaped each flavor. Some editors found her notes excessive, yet later cooks prized them for the growing conditions they captured.",
+      "question": "The passage most strongly supports which one of the following?",
+      "answer": "Okoye's farm visits captured information about growing conditions that judging market samples alone would likely miss."
+    }
+  ]
+}

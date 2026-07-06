@@ -145,7 +145,8 @@ class TransferGapReport:
         lines.extend(
             [
                 f"Cards evaluated: {self.n_cards}",
-                f"Reworded items: {self.n_reworded}",
+                f"Reworded variants available: {self.n_reworded}",
+                f"Real graded reworded attempts (n): {self.n_real_attempts}",
                 f"Transfer source: {source_note}",
                 f"Recall (memory/FSRS): {self.recall_point:.0%} "
                 f"[{self.recall_low:.0%}–{self.recall_high:.0%}]",

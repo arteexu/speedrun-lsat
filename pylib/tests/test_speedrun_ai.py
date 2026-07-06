@@ -479,12 +479,51 @@ def _varied_lr_item_client():
     return _FakeClient
 
 
+def _offtopic_lr_item_client():
+    """A no-network client returning structurally-valid but OFF-TOPIC drafts: the
+    schema tag is real (so the taxonomy gate passes) but the question/answer text
+    has no alignment with the taxonomy gold set, so the card-checker topicality
+    gate must reject them. Varied per call so the dedup gate does not drop them
+    before they reach the checker."""
+    import itertools
+
+    counter = itertools.count()
+
+    def _mk() -> str:
+        i = next(counter)
+        return json.dumps({
+            "stem_type": "qt.flaw",
+            "schemas": ["flaw.causal.correlation_causation", "qt.flaw"],
+            "difficulty": 3,
+            "stimulus": f"The garden {i} has tulips, and the wall {i} was painted last spring.",
+            "question": f"What color is the fence in scene {i}?",
+            "choices": [
+                {"id": "A", "text": f"bright teal fence ({i}).", "correct": True, "trap": None},
+                {"id": "B", "text": f"a wooden gate ({i}).", "correct": False, "trap": "trap.out_of_scope"},
+                {"id": "C", "text": f"seven tulips ({i}).", "correct": False, "trap": "trap.too_weak"},
+                {"id": "D", "text": f"a rainy Tuesday ({i}).", "correct": False, "trap": "trap.too_strong_extreme"},
+                {"id": "E", "text": f"the neighbor's cat ({i}).", "correct": False, "trap": "trap.premise_restatement"},
+            ],
+            "two_answer_fork": {"runner_up": "B", "why_runner_up_wrong": f"B ({i}) is a gate, not a color."},
+        })
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def complete(self, prompt, *, max_tokens=512):
+            return LLMResponse(_mk(), "openai:test")
+
+    return _FakeClient
+
+
 def test_generate_to_target_wires_card_checker_gate(tmp_path, monkeypatch):
     """generate_to_target runs the checker as an additional gate (ON by default)
-    and emits the three-count report into the generation report JSON."""
+    and emits the three-count report into the generation report JSON. Off-topic
+    drafts (no alignment with the gold set) must be blocked by the gate."""
     from speedrun.tools import generate_to_target as g
 
-    monkeypatch.setattr(g, "OpenAILLMClient", _varied_lr_item_client())
+    monkeypatch.setattr(g, "OpenAILLMClient", _offtopic_lr_item_client())
 
     deck = tmp_path / "deck.json"
     deck.write_text(json.dumps({"items": []}), encoding="utf-8")
@@ -505,6 +544,31 @@ def test_generate_to_target_wires_card_checker_gate(tmp_path, monkeypatch):
     # so nothing wrong/weak is written (the whole point of the ship gate).
     assert cc["n_blocked"] == cc["n_checked"]
     assert rep["tally"]["rejects"].get("card_checker", 0) >= 1
+
+
+def test_card_checker_passes_genuinely_good_on_topic_card():
+    """Regression for the topicality fix (spec 7f): a structurally-valid,
+    on-topic, correctly-keyed LSAT flaw card clears the recalibrated cutoff and is
+    kept — the checker no longer blocks every real item the way the old
+    stimulus-diluted keyword score did."""
+    from speedrun.ai.card_checker import PASSING_CUTOFF, check_items, gold_topicality
+    from speedrun.ai.baseline import load_gold_set
+
+    good = {
+        "id": "good-1",
+        "difficulty": 3,
+        "stimulus": "Ice cream sales and drownings rise together, so ice cream must cause drownings.",
+        "question": "The reasoning is most vulnerable to criticism because it",
+        "choices": [
+            {"id": "A", "text": "treats a mere correlation as though it were causation.", "correct": True},
+            {"id": "B", "text": "relies on a biased sample.", "correct": False},
+        ],
+    }
+    assert gold_topicality(good, load_gold_set()) >= PASSING_CUTOFF
+    report = check_items([good])  # offline, keyword/topicality only
+    assert report.n_passed == 1
+    assert report.correct_useful == 1
+    assert report.wrong == 0
 
 
 def test_generate_to_target_card_checker_toggle_off(tmp_path, monkeypatch):

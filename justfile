@@ -182,6 +182,70 @@ clean *args:
 bench:
     PYTHONPATH=out/pylib {{ if os() == "windows" { "out\\pyenv\\Scripts\\python" } else { "out/pyenv/bin/python" } }} speedrun/tools/bench.py
 
+# Speedrun LSAT — run every reproducible PRD test/eval (7a–7h + rest) in sequence with labeled headers (macOS/Linux)
+demo-tests:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    cd "{{ justfile_directory() }}"
+    export PYTHONPATH="out/pylib:$PWD"
+    unset SPEEDRUN_AI_SETTINGS_PATH || true
+    PY="out/pyenv/bin/python"
+    n=0
+    step() { n=$((n+1)); printf '\n\033[1;36m========== [%02d] %s ==========\033[0m\n' "$n" "$1"; }
+    ok()   { printf '\033[1;32m✓ %s\033[0m\n' "$1"; }
+    warn() { printf '\033[1;33m! %s\033[0m\n' "$1"; }
+
+    step "7a · Rust schema-weighted queue unit tests"
+    cargo test -p anki schema_weighted 2>&1 | tail -6 || warn "cargo schema_weighted failed"
+    step "7a · Rust three-score / give-up math tests"
+    cargo test -p anki speedrun_scores 2>&1 | tail -4 || warn "cargo speedrun_scores failed"
+    step "7a · Python-over-RPC test (calls the Rust queue from Python)"
+    $PY -m pytest pylib/tests/test_schema_weighted_queue.py -q 2>&1 | tail -4 || warn "rpc test failed"
+
+    step "7h · One-command 50k benchmark (p50/p95/worst vs §18)"
+    $PY -m speedrun.tools.bench --target 50000 2>&1 | tail -18 || warn "bench failed"
+
+    step "7b · Two-way sync (10+10, none lost/double, conflict winner)"
+    $PY speedrun/tools/sync_test.py 2>&1 | tail -14 || warn "sync_test failed"
+
+    step "7c · Coverage map + give-up abstain"
+    $PY -m pytest pylib/tests/test_speedrun_readiness.py pylib/tests/test_speedrun_guardrail.py -q -k "coverage or abstain or section or give_up" 2>&1 | tail -5 || warn "coverage/give-up tests failed"
+
+    step "7d · Paraphrase / transfer gap (recall vs reworded)"
+    $PY -m pytest pylib/tests/test_speedrun_transfer.py -q 2>&1 | tail -5 || warn "transfer tests failed"
+
+    step "7e · Leakage check — clean run"
+    $PY speedrun/tools/speedrun_cli.py leakage-check 2>&1 | tail -6 || warn "leakage-check failed"
+    step "7e · Leakage check — gate bites (expect non-zero exit)"
+    $PY speedrun/tools/speedrun_cli.py leakage-check --threshold 0.0 2>&1 | tail -4 && warn "expected the gate to bite" || ok "gate correctly rejected (non-zero exit)"
+
+    step "7f · AI card check (3 counts vs pre-set cutoff; blocks failures)"
+    if [ -f .ankidata/speedrun_ai_settings.json ]; then
+        SPEEDRUN_AI_SETTINGS_PATH="$PWD/.ankidata/speedrun_ai_settings.json" $PY -m speedrun.eval.card_check_run 2>&1 | tail -16 || warn "card_check_run failed"
+    else
+        warn "7f needs AI settings at .ankidata/speedrun_ai_settings.json for live generation; offline path generates 0 cards"
+    fi
+
+    step "7g · Crash / durability (≥20 kill-mid-review cycles, zero corruption)"
+    $PY -m speedrun.tools.crash_test 2>&1 | tail -3 || warn "crash_test failed"
+    step "7g · Offline / AI-off still scores"
+    $PY -m speedrun.tools.offline_test 2>&1 | tail -6 || warn "offline_test failed"
+
+    step "AI beats baseline · deterministic grounded eval (no key)"
+    $PY -m speedrun.eval.grounding_eval 2>&1 | tail -10 || warn "grounding_eval failed"
+
+    step "Interleaving 3-build experiment (§15; seeded, honest null)"
+    $PY -m speedrun.eval.interleaving_experiment 2>&1 | tail -10 || warn "interleaving failed"
+
+    step "Memory calibration (held-out; §10.1)"
+    $PY -m pytest pylib/tests/test_speedrun_calibration.py -q 2>&1 | tail -4 || warn "calibration tests failed"
+
+    step "Full deterministic suite"
+    $PY -m pytest pylib/tests/ -k "speedrun or schema" -q 2>&1 | tail -4 || warn "suite has failures (2 expected if a demo profile is seeded — config.json relaxed to 0.73)"
+
+    printf '\n\033[1;36m========== demo-tests complete ==========\033[0m\n'
+    warn "If a demo profile is seeded, the full suite shows 2 known config-relax failures; run 'seed_demo_stats.py --clear' or 'git checkout HEAD -- speedrun/config.json' for the clean 402 passed."
+
 # Helpers to get the right commands for the platform
 
 ninja := if os() == "windows" { "tools\\ninja" } else { "./ninja" }
