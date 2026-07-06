@@ -229,10 +229,11 @@ def build_contrasting_pairs(
 
     ordered_cats = _category_order(col, list(by_category), meta)
 
-    pairs: list[ContrastPair] = []
+    pairs_by_cat: dict[str, list[ContrastPair]] = {}
     for cat in ordered_cats:
         members = sorted(by_category[cat], key=lambda r: r.get("id", ""))
         used: set[str] = set()
+        cat_pairs: list[ContrastPair] = []
 
         # Prefer same-flaw pairs (strongest transfer signal).
         by_flaw: dict[str, list[dict[str, Any]]] = {}
@@ -242,7 +243,7 @@ def build_contrasting_pairs(
             for a, b in combinations(sorted(group, key=lambda r: r["id"]), 2):
                 if a["id"] in used or b["id"] in used:
                     continue
-                pairs.append(_make_pair(cat, "same_flaw", a, b, meta))
+                cat_pairs.append(_make_pair(cat, "same_flaw", a, b, meta))
                 used.update({a["id"], b["id"]})
 
         # Fall back to distinct-flaw pairs within the family (discrimination).
@@ -252,10 +253,32 @@ def build_contrasting_pairs(
                 continue
             if _flaw_of(a["schemas"]) == _flaw_of(b["schemas"]):
                 continue
-            pairs.append(_make_pair(cat, "same_category", a, b, meta))
+            cat_pairs.append(_make_pair(cat, "same_category", a, b, meta))
             used.update({a["id"], b["id"]})
 
-    pairs = pairs[: max(0, count)]
+        if cat_pairs:
+            pairs_by_cat[cat] = cat_pairs
+
+    # Select up to ``count`` while preserving family coverage: give each family
+    # (weakest-first) one representative pair before greedily filling the rest in
+    # family order. Without this, weakness reordering can push a small family's
+    # pairs past the cap entirely when a larger family ranks ahead of it, which
+    # would silently demote a weak family the student most needs to contrast.
+    cap = max(0, count)
+    pairs: list[ContrastPair] = []
+    for cat in ordered_cats:
+        if len(pairs) >= cap:
+            break
+        cat_pairs = pairs_by_cat.get(cat)
+        if cat_pairs:
+            pairs.append(cat_pairs[0])
+    for cat in ordered_cats:
+        if len(pairs) >= cap:
+            break
+        for p in pairs_by_cat.get(cat, [])[1:]:
+            if len(pairs) >= cap:
+                break
+            pairs.append(p)
     stats = {
         "n_pairs": len(pairs),
         "same_flaw": sum(1 for p in pairs if p.relation == "same_flaw"),

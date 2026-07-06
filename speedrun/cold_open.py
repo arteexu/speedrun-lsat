@@ -177,12 +177,32 @@ def build_cold_open_set(
 
     ordered_cats = _category_order(col, list(by_category), meta)
 
+    items_by_cat: dict[str, list[ColdOpenItem]] = {}
+    for cat in ordered_cats:
+        items_by_cat[cat] = [
+            _to_item(raw, meta)
+            for raw in sorted(by_category[cat], key=lambda r: r.get("id", ""))
+        ]
+
+    # Select up to ``count`` while preserving family coverage: give each family
+    # (weakest-first) one representative item before greedily filling the rest in
+    # family order, so weakness reordering never demotes a small family out of
+    # the set when a larger family ranks ahead of it.
+    cap = max(0, count)
     items: list[ColdOpenItem] = []
     for cat in ordered_cats:
-        for raw in sorted(by_category[cat], key=lambda r: r.get("id", "")):
-            items.append(_to_item(raw, meta))
-
-    items = items[: max(0, count)]
+        if len(items) >= cap:
+            break
+        bucket = items_by_cat.get(cat)
+        if bucket:
+            items.append(bucket[0])
+    for cat in ordered_cats:
+        if len(items) >= cap:
+            break
+        for it in items_by_cat.get(cat, [])[1:]:
+            if len(items) >= cap:
+                break
+            items.append(it)
     options = _flaw_options(meta)
     stats = {
         "n_items": len(items),

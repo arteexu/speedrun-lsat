@@ -1,0 +1,50 @@
+{
+  "target": 500,
+  "start_count": 454,
+  "final_count": 492,
+  "added": 38,
+  "elapsed_seconds": 51.8,
+  "tally": {
+    "generated_drafts": 60,
+    "accepted": 38,
+    "rejects": {
+      "solver_mismatch": 13,
+      "solver_ambiguous": 7,
+      "gen_empty_or_unparseable": 2
+    },
+    "solver_calls": 60,
+    "generation_calls": 52
+  },
+  "section_distribution": {
+    "LR": 433,
+    "RC": 59
+  },
+  "stem_type_distribution": {
+    "qt.flaw": 88,
+    "qt.necessary_assumption": 46,
+    "qt.inference_must_be_true": 35,
+    "qt.strengthen": 32,
+    "qt.weaken": 30,
+    "qt.paradox": 29,
+    "qt.most_strongly_supported": 25,
+    "qt.sufficient_assumption": 24,
+    "qt.principle_identify": 18,
+    "qt.main_conclusion": 17,
+    "qt.role_of_statement": 16,
+    "rc.main_point": 15,
+    "qt.parallel_reasoning": 15,
+    "qt.principle_apply": 14,
+    "qt.parallel_flaw": 13,
+    "qt.point_at_issue": 11,
+    "qt.evaluate": 11,
+    "rc.function_of_detail": 10,
+    "qt.method_of_reasoning": 9,
+    "rc.passage_organization": 8,
+    "rc.inference": 8,
+    "rc.viewpoint_attribution": 8,
+    "rc.author_attitude": 7,
+    "rc.comparative_relationship": 3
+  },
+  "dedup_threshold": 0.55,
+  "solver_gate": true
+}
