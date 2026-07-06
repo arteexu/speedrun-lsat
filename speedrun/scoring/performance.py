@@ -40,6 +40,13 @@ class Attempt:
     schema: str
     correct: bool
     latency_ms: int
+    # §8.2 / SPOV2: the wrong-answer *trap type* the student chose on this attempt
+    # (e.g. ``trap.out_of_scope``). First-class but optional: the revlog only
+    # records correctness + latency, so attempts derived from it leave this None;
+    # surfaces that actually capture the distractor pick (the two-answer fork,
+    # future MC capture) populate it so we can model which trap a student
+    # habitually falls for — a more diagnostic signal than which item they missed.
+    chosen_trap_type: str | None = None
 
     def on_budget_hit(self, budget_ms: int) -> bool:
         """A hit that also came in under the time budget (SPOV4)."""
@@ -152,25 +159,36 @@ def _budget_for_schema(schema: str, default_budget_ms: int) -> int:
 
 def collection_attempts(col, schema_tag_prefix: str = SCHEMA_TAG) -> list[Attempt]:
     """Derive attempts from the revlog: ease==1 is a miss, ease>=2 a hit; time is
-    the latency. Only schema-tagged cards are included."""
-    rows = col.db.all(
-        """
-        SELECT n.tags, r.ease, r.time
-        FROM revlog r
-        JOIN cards c ON r.cid = c.id
-        JOIN notes n ON c.nid = n.id
-        WHERE r.ease > 0
-        """
-    )
-    attempts: list[Attempt] = []
-    for tags, ease, time_ms in rows:
-        schema = _schema_from_tags(tags, schema_tag_prefix)
-        if schema is None:
-            continue
-        attempts.append(
-            Attempt(schema=schema, correct=int(ease) != 1, latency_ms=int(time_ms))
+    the latency. Only schema-tagged cards are included.
+
+    Memoized per collection-state token: a single dashboard render asks for the
+    performance model 4-5 times (performance card, readiness, the queue's
+    weakness map, deck coverage, the mastery map), and this collapses all of them
+    onto one revlog scan. The token changes on any new review, so the cache is
+    always consistent with the collection."""
+    from speedrun.score_cache import cached
+
+    def compute() -> list[Attempt]:
+        rows = col.db.all(
+            """
+            SELECT n.tags, r.ease, r.time
+            FROM revlog r
+            JOIN cards c ON r.cid = c.id
+            JOIN notes n ON c.nid = n.id
+            WHERE r.ease > 0
+            """
         )
-    return attempts
+        attempts: list[Attempt] = []
+        for tags, ease, time_ms in rows:
+            schema = _schema_from_tags(tags, schema_tag_prefix)
+            if schema is None:
+                continue
+            attempts.append(
+                Attempt(schema=schema, correct=int(ease) != 1, latency_ms=int(time_ms))
+            )
+        return attempts
+
+    return cached(col, f"attempts::{schema_tag_prefix}", compute)
 
 
 def performance_score(
@@ -218,6 +236,20 @@ def performance_score(
         for schema, group in sorted(by_schema.items())
     }
     return {"overall": overall, "per_schema": per_schema}
+
+
+def chosen_trap_counts(attempts: list[Attempt]) -> dict[str, int]:
+    """Tally the wrong-answer traps a student actually *chose* (SPOV2 / Insight 8).
+
+    Consumes the first-class ``chosen_trap_type`` field. Only attempts that
+    captured a distractor pick contribute; correctness alone (what the revlog
+    records) does not, so this stays empty until a pick-capturing surface (the
+    two-answer fork, MC capture) populates the field."""
+    out: dict[str, int] = {}
+    for a in attempts:
+        if a.chosen_trap_type:
+            out[a.chosen_trap_type] = out.get(a.chosen_trap_type, 0) + 1
+    return out
 
 
 def weakness_map(per_schema: dict[str, PerformanceScore]) -> dict[str, float]:

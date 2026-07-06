@@ -550,13 +550,104 @@ def _start_study(mw) -> None:
 
 
 def _launch_review(mw) -> None:
+    """Enter the Speedrun-native review flow (schema-weighted priority order).
+
+    §9/§11 blocker fix: native Anki filtered decks can't reproduce an arbitrary
+    priority order, so the old path (moveToState("review")) graded cards in native
+    scheduler order and never applied the schema-weighted queue. We now grade the
+    `SchemaWeightedReview` queue (Rust-ordered, graded via col.sched.answerCard),
+    mirroring the iOS ReviewView. On any failure we fall back to the native review
+    state so studying is never blocked."""
+    if not _launch_schema_weighted_review(mw, title="LSAT Speedrun — Schema-weighted review"):
+        try:
+            deck_id = mw.col.decks.id(DECK_NAME)
+            mw.col.decks.select(deck_id)
+            mw.col.startTimebox()
+            mw.moveToState("review")
+        except Exception as exc:  # pragma: no cover
+            tooltip(f"Study error: {exc}")
+
+
+def _review_bridge(mw):
+    """pycmd bridge for the Speedrun-native review surface. Grades/undoes go
+    straight to the stored `SchemaWeightedReview` session (the shared engine)."""
+
+    def bridge(cmd: str):
+        if cmd == "close":
+            dialog = getattr(mw, "_speedrun_html_dialog", None)
+            if dialog is not None:
+                dialog.close()
+            return True
+        session = getattr(mw, "_speedrun_review_session", None)
+        grade_prefix = "speedrun:review:grade:"
+        if cmd.startswith(grade_prefix):
+            import json
+
+            if session is None:
+                return {"ok": False}
+            try:
+                payload = json.loads(cmd[len(grade_prefix) :])
+                session.answer_card_id(
+                    int(payload["card_id"]),
+                    int(payload["ease"]),
+                    latency_ms=payload.get("latency_ms"),
+                )
+                _refresh_score_badge(mw)
+                return {"ok": True}
+            except Exception:  # pragma: no cover - never lose the session on one bad grade
+                return {"ok": False}
+        if cmd == "speedrun:review:undo":
+            if session is None:
+                return {"ok": False}
+            try:
+                ok = session.undo()
+                _refresh_score_badge(mw)
+                return {"ok": bool(ok)}
+            except Exception:  # pragma: no cover
+                return {"ok": False}
+        return
+
+    return bridge
+
+
+def _launch_schema_weighted_review(
+    mw, *, schemas: list | None = None, limit: int = 50, title: str
+) -> bool:
+    """Build and show the Speedrun-native, schema-weighted review dialog.
+
+    Returns True if the dialog was shown (even if empty), False on any failure so
+    the caller can fall back. Scopes to ``schemas`` when given (focused study)."""
+    if not _require_col(mw):
+        return False
     try:
-        deck_id = mw.col.decks.id(DECK_NAME)
-        mw.col.decks.select(deck_id)
-        mw.col.startTimebox()
-        mw.moveToState("review")
-    except Exception as exc:  # pragma: no cover
-        tooltip(f"Study error: {exc}")
+        from aqt.speedrun.reviewer import (
+            build_review_cards,
+            render_schema_weighted_review_html,
+        )
+        from speedrun.scoring.queue import SchemaWeightedReview
+
+        kwargs: dict = {}
+        if schemas:
+            from speedrun.focus import subject_search
+
+            kwargs["search"] = subject_search(schemas)
+        session = SchemaWeightedReview(mw.col, limit=limit, **kwargs)
+        mw._speedrun_review_session = session
+        cards = build_review_cards(mw.col, session)
+        html = render_schema_weighted_review_html(cards, embed=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        tooltip(f"Review error: {exc}")
+        return False
+
+    _show_html(
+        mw,
+        html,
+        title=title,
+        minWidth=780,
+        minHeight=680,
+        bridge=_review_bridge(mw),
+    )
+    return True
 
 
 def _show_preset_briefing(mw, *, set_kind: str, proceed, title: str, **params) -> None:
@@ -897,6 +988,16 @@ def _launch_focused_study(mw, token: str) -> None:
         tooltip("No subject to focus on yet — practice a little first.")
         return
 
+    # Prefer the Speedrun-native review so focused study also grades in
+    # schema-weighted priority order (not native scheduler order).
+    try:
+        if _launch_schema_weighted_review(
+            mw, schemas=schemas, title=f"LSAT Speedrun — Focus: {label}"
+        ):
+            return
+    except Exception:
+        pass  # fall through to filtered-deck / queue view
+
     try:
         if _launch_filtered_study(mw, schemas, label):
             return
@@ -1143,6 +1244,26 @@ def _show_fork_trainer(mw) -> None:
                 record_fork_result(_drill_logger(mw), payload)
             except Exception:  # pragma: no cover - never break the drill on logging
                 pass
+            return
+        reason_prefix = "speedrun:reasoning:"
+        if cmd.startswith(reason_prefix):
+            import json
+
+            from speedrun.ai.reasoning_evaluator import record_reasoning_result
+
+            try:
+                payload = json.loads(cmd[len(reason_prefix) :])
+                # Grades the explanation (AI when enabled, offline heuristic
+                # otherwise) and persists it as diagnostic-only signal.
+                return record_reasoning_result(_drill_logger(mw), payload)
+            except Exception:  # pragma: no cover - never break the drill
+                return {
+                    "feedback": "Explanation recorded.",
+                    "score": None,
+                    "source": "offline",
+                    "weakness_patterns": [],
+                    "ai_used": False,
+                }
         return
 
     _show_html(

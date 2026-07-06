@@ -89,6 +89,23 @@ class TrapHabit:
         return asdict(self)
 
 
+@dataclass
+class ChosenTrapHabit:
+    """A trap the student *chose* (fell for), from a pick-capturing surface.
+
+    Distinct from :class:`TrapHabit` / :func:`trap_profile`, which infer traps
+    from schema *tags on missed cards*. This one uses the actual distractor the
+    student picked (``Attempt.chosen_trap_type``), the sharper SPOV2 signal."""
+
+    trap: str
+    label: str
+    count: int
+    pct: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def _classify_schema(
     mem_point: float | None,
     perf_point: float | None,
@@ -188,6 +205,45 @@ def trap_profile(col, *, top_n: int = 5) -> list[TrapHabit]:
     return [
         TrapHabit(trap=trap, count=count, pct=count / total)
         for trap, count in counter.most_common(top_n)
+    ]
+
+
+def chosen_trap_profile(*, log_path: Path | None = None, top_n: int = 5) -> list[ChosenTrapHabit]:
+    """Rank the traps the student actually *chose* (fell for), across the surfaces
+    that capture a distractor pick (today: the two-answer fork trainer).
+
+    This consumes the first-class ``Attempt.chosen_trap_type`` field via
+    :func:`speedrun.scoring.performance.chosen_trap_counts`, reading it back from
+    the persisted session log. It is deliberately distinct from
+    :func:`trap_profile` and :func:`wrong_answer_patterns` (which count schema
+    tags on Again reviews): naming the trap a student keeps *picking* is a more
+    diagnostic, more transferable signal than which item they missed (Insight 8)."""
+    from speedrun.scoring.performance import Attempt, chosen_trap_counts
+    from speedrun.session_logger import DEFAULT_LOG, load_sessions
+    from speedrun.taxonomy.labels import schema_label
+
+    records = load_sessions(log_path or DEFAULT_LOG, limit=4000)
+    attempts: list[Attempt] = []
+    for r in records:
+        if r.get("type") != "fork":
+            continue
+        extra = r.get("extra", {}) or {}
+        chosen = extra.get("chosen_trap_type")
+        if chosen:
+            attempts.append(
+                Attempt(
+                    schema=extra.get("actual_trap") or chosen,
+                    correct=False,
+                    latency_ms=int(r.get("latency_ms") or 0),
+                    chosen_trap_type=chosen,
+                )
+            )
+    counts = chosen_trap_counts(attempts)
+    total = sum(counts.values()) or 1
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:top_n]
+    return [
+        ChosenTrapHabit(trap=t, label=schema_label(t), count=c, pct=c / total)
+        for t, c in ranked
     ]
 
 

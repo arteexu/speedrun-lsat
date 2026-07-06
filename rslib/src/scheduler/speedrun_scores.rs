@@ -172,6 +172,36 @@ fn scaled_from_fraction(fraction: f64) -> f64 {
     SCALE_MIN + f * (SCALE_MAX - SCALE_MIN)
 }
 
+/// Covered fraction of each scored section's exam weight (schemas with a
+/// non-give-up per-schema score). Sections with no taxonomy weight are skipped
+/// so they impose no gate. Mirrors Python `_section_coverages`: this is the
+/// per-section give-up precondition (PRD §10/§8.3).
+fn section_coverages(
+    per_schema: &HashMap<String, ScoreOut>,
+    weights: &HashMap<String, f64>,
+) -> Vec<(&'static str, f64)> {
+    let mut out = Vec::new();
+    for section in ["LR", "RC"] {
+        let (mut total, mut covered) = (0.0, 0.0);
+        for (sid, w) in weights {
+            let in_section = if section == "RC" { is_rc(sid) } else { !is_rc(sid) };
+            if !in_section {
+                continue;
+            }
+            total += w;
+            if let Some(s) = per_schema.get(sid) {
+                if !s.gave_up {
+                    covered += w;
+                }
+            }
+        }
+        if total > 0.0 {
+            out.push((section, covered / total));
+        }
+    }
+    out
+}
+
 /// Readiness (120-180) from per-schema performance + exam weights.
 pub fn readiness_score(
     per_schema: &HashMap<String, ScoreOut>,
@@ -181,16 +211,36 @@ pub fn readiness_score(
     min_coverage: f64,
 ) -> ScoreOut {
     let (point_frac, coverage) = overall_fraction(per_schema, weights, 0);
-    if (n_attempts as usize) < min_attempts || coverage < min_coverage || point_frac.is_none() {
-        return ScoreOut::gave_up(
-            n_attempts,
+    // PRD §10/§8.3: coverage must clear the line in *each* scored section, not
+    // just on the blended average, so a section-skipping deck can never read
+    // "ready".
+    let sec_cov = section_coverages(per_schema, weights);
+    let under: Vec<(&str, f64)> = sec_cov.iter().copied().filter(|(_, c)| *c < min_coverage).collect();
+    if (n_attempts as usize) < min_attempts
+        || coverage < min_coverage
+        || !under.is_empty()
+        || point_frac.is_none()
+    {
+        let reason = if !under.is_empty() {
+            let detail = under
+                .iter()
+                .map(|(s, c)| format!("{s} {:.0}%", c * 100.0))
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!(
+                "No score yet: need >= {min_attempts} graded attempts (have {n_attempts}) \
+                 and >= {:.0}% schema coverage in each of LR and RC (short: {detail}).",
+                min_coverage * 100.0
+            )
+        } else {
             format!(
                 "No score yet: need >= {min_attempts} graded attempts (have {n_attempts}) \
                  and >= {:.0}% coverage (have {:.0}%).",
                 min_coverage * 100.0,
                 coverage * 100.0
-            ),
-        );
+            )
+        };
+        return ScoreOut::gave_up(n_attempts, reason);
     }
     let pf = point_frac.unwrap();
     let (low_frac, _) = overall_fraction(per_schema, weights, 1);
@@ -275,6 +325,27 @@ mod test {
         w.insert("flaw.causal.post_hoc".to_string(), 1.0);
         let r = readiness_score(&per, &w, 5, 200, 0.5);
         assert!(r.gave_up);
+    }
+
+    #[test]
+    fn readiness_abstains_when_a_section_is_skipped() {
+        // LR fully covered, RC present in the taxonomy but never practiced: the
+        // blended average clears 50%, yet a skipped section must force give-up.
+        let mut per = HashMap::new();
+        let mut w = HashMap::new();
+        for i in 0..4 {
+            let sid = format!("flaw.lr.n{i}");
+            per.insert(
+                sid.clone(),
+                ScoreOut { gave_up: false, point: 0.6, low: 0.5, high: 0.7, n: 50, reason: String::new() },
+            );
+            w.insert(sid, 1.0);
+        }
+        // RC schemas exist (weight present) but have no non-give-up score.
+        w.insert("rc.structure.main_point".to_string(), 2.0);
+        let r = readiness_score(&per, &w, 300, 200, 0.5);
+        assert!(r.gave_up, "a skipped RC section must abstain: {}", r.reason);
+        assert!(r.reason.contains("RC"), "reason names the short section: {}", r.reason);
     }
 
     #[test]

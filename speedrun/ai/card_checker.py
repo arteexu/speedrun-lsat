@@ -165,6 +165,63 @@ def block_failing(
     return kept, report
 
 
+@dataclass
+class GateTally:
+    """Running three-count tally for a streaming card-checker gate."""
+
+    cutoff: float
+    n_checked: int = 0
+    n_passed: int = 0
+    n_blocked: int = 0
+    correct_useful: int = 0
+    wrong: int = 0
+    correct_bad_teaching: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+class CardCheckGate:
+    """Reusable single-item ship gate for the generation pipeline (spec 7f).
+
+    The gold set is loaded once, then :meth:`check` is called on each candidate
+    draft as it is produced. This is the same keyword/cutoff (plus optional LLM
+    correctness veto) logic as :func:`check_items`, exposed as a streaming gate so
+    ``generate_to_target`` can reject failing items *before* they are written and
+    still emit the three-count report (correct_useful / wrong / correct_bad_teaching).
+    """
+
+    def __init__(
+        self,
+        *,
+        gold_path: Path = DEFAULT_GOLD,
+        cutoff: float = PASSING_CUTOFF,
+        client: LLMClient | None = None,
+    ) -> None:
+        self.gold = load_gold_set(gold_path)
+        self.cutoff = cutoff
+        self.client = client
+        self.tally = GateTally(cutoff=cutoff)
+
+    def check(self, item: dict) -> CheckResult:
+        """Check one item, update the running tally, and return its result.
+
+        ``result.passed`` is ``True`` iff the item cleared the pre-set cutoff (and
+        was not vetoed by the optional LLM correctness check)."""
+        result = check_card(item, self.gold, cutoff=self.cutoff, client=self.client)
+        self.tally.n_checked += 1
+        if result.passed:
+            self.tally.n_passed += 1
+        else:
+            self.tally.n_blocked += 1
+        setattr(
+            self.tally,
+            result.category,
+            getattr(self.tally, result.category) + 1,
+        )
+        return result
+
+
 def check_seed_deck(seed_path: Path | None = None) -> CheckerReport:
     path = seed_path or REPO_ROOT / "speedrun" / "data" / "seed_deck.json"
     data = json.loads(path.read_text(encoding="utf-8"))

@@ -218,15 +218,44 @@ _SCHEMA_TAG = "sr:schema:"
 
 def _due_counts(col, schemas: list[str]) -> dict[str, int]:
     """Cards actually due per schema. Best-effort: never raises, returns {} if the
-    collection can't be queried (keeps the offline recommendation working)."""
+    collection can't be queried (keeps the offline recommendation working).
+
+    Single-pass: one ``is:due`` search for the whole deck, then the due cards are
+    bucketed by their schema tag. This is identical to querying each schema
+    separately (a due card counts once per distinct schema tag it carries) but
+    avoids one ``find_cards`` per schema, which was ~40 full searches per render
+    on the 50k deck."""
+    schema_set = set(schemas)
+    if not schema_set:
+        return {}
+    try:
+        cids = list(col.find_cards(f"{_DECK_SEARCH} is:due"))
+    except Exception:
+        return {}
+    if not cids:
+        return {}
+
     out: dict[str, int] = {}
-    for s in schemas:
+    # Chunk the id list so the SQL parameter limit is never exceeded on big decks.
+    for start in range(0, len(cids), 500):
+        chunk = cids[start : start + 500]
+        placeholders = ",".join("?" * len(chunk))
         try:
-            cids = col.find_cards(f'{_DECK_SEARCH} tag:"{_SCHEMA_TAG}{s}" is:due')
-            if cids:
-                out[s] = len(cids)
+            rows = col.db.all(
+                f"SELECT n.tags FROM cards c JOIN notes n ON c.nid = n.id "
+                f"WHERE c.id IN ({placeholders})",
+                *chunk,
+            )
         except Exception:
-            continue
+            return {}
+        for (tags,) in rows:
+            seen: set[str] = set()
+            for tok in tags.split():
+                if tok.startswith(_SCHEMA_TAG):
+                    schema = tok[len(_SCHEMA_TAG) :]
+                    if schema in schema_set and schema not in seen:
+                        out[schema] = out.get(schema, 0) + 1
+                        seen.add(schema)
     return out
 
 
@@ -322,16 +351,21 @@ def recommend(col, *, client=None, limit: int = 5) -> RecommendationSet:
                 from speedrun.ai.client import default_client
 
                 client = default_client()
+            from speedrun.ai.guard import require_source
+
             prompt = build_plan_prompt(recs)
             resp = client.complete(prompt, max_tokens=400)
-            if getattr(resp, "ok", False):
-                ai_used = True
-                ai_plan = resp.text.strip()
-                source = resp.source
-                citations = [
-                    "Grounded in your per-schema accuracy, transfer weakness, "
-                    "exam weights, and due counts"
-                ]
+            # Traceability rule (§19): a plan is shown only if it carries a real,
+            # named source; require_source raises otherwise and we fall back to the
+            # deterministic ranking below (AI-off degradation stays graceful).
+            require_source(resp)
+            ai_used = True
+            ai_plan = resp.text.strip()
+            source = resp.source
+            citations = [
+                "Grounded in your per-schema accuracy, transfer weakness, "
+                "exam weights, and due counts"
+            ]
         except Exception:
             pass  # fall through to the offline recommendation
 

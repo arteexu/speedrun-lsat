@@ -31,6 +31,7 @@ from speedrun.ai.baseline import (  # noqa: E402
 )
 from speedrun.ai.card_checker import (  # noqa: E402
     PASSING_CUTOFF,
+    CardCheckGate,
     block_failing,
     check_seed_deck,
 )
@@ -48,7 +49,13 @@ from speedrun.ai.guard import (  # noqa: E402
     sanitize_source_text,
 )
 from speedrun.ai.reasoning_evaluator import evaluate_explanation  # noqa: E402
-from speedrun.eval.ai_eval import ACCURACY_CUTOFF, run_ai_eval  # noqa: E402
+from speedrun.eval.ai_eval import (  # noqa: E402
+    ACCURACY_CUTOFF,
+    FAIR_METRIC_FALLBACK,
+    FAIR_METRIC_LLM_JUDGE,
+    judge_equivalent,
+    run_ai_eval,
+)
 from speedrun.eval.leakage_check import leakage_check  # noqa: E402
 
 _GEN_ITEM = {
@@ -233,6 +240,96 @@ def test_ai_eval_gate_passes_when_ai_answers_correctly():
     assert report.ai_source == "openai:test"
 
 
+def test_ai_eval_fair_judge_credits_paraphrase(monkeypatch):
+    """The fair LLM judge credits a paraphrased-but-correct AI answer that
+    token_f1 penalizes, and it grades every method with the identical prompt.
+
+    AI answers are semantically correct but lexically different from the terse
+    reference (so token_f1 ~ 0). A scripted judge says "no" for the 10 keyword
+    and 10 vector retrievals, then "yes" for the 10 AI answers -> only the AI
+    clears the fair metric, so it beats both baselines and the gate passes.
+    """
+    monkeypatch.setenv("SPEEDRUN_AI_OFF", "0")  # the live-style judge needs AI on
+    n_test = len(load_gold_set()[::5])  # every 5th item is held out for test
+
+    # AI: same paraphrase for every item -> correct meaning, ~0 lexical overlap.
+    ai_client = ScriptedLLMClient(
+        ["The credited concept, expressed in entirely different words."],
+        source="openai:test",
+    )
+    # Judge verdicts in method order (keyword, then vector, then ai).
+    verdicts = ["no"] * (2 * n_test) + ["yes"] * n_test
+    judge_client = ScriptedLLMClient(verdicts, source="openai:test")
+
+    report = run_ai_eval(client=ai_client, judge_client=judge_client)
+
+    assert report.fair_metric_available is True
+    assert report.fair_metric == FAIR_METRIC_LLM_JUDGE
+    # Fair judge credits the AI; both baselines graded "no".
+    assert report.methods["ai"].fair_accuracy == 1.0
+    assert report.methods["keyword"].fair_accuracy == 0.0
+    assert report.methods["vector"].fair_accuracy == 0.0
+    # token_f1 penalizes the paraphrase harder than the fair metric does.
+    assert report.methods["ai"].accuracy < report.methods["ai"].fair_accuracy
+    # Gate uses the fair metric: AI beats both baselines -> passes.
+    assert report.ai_beats_keyword and report.ai_beats_vector
+    assert report.passed is True
+
+
+def test_ai_eval_gate_requires_beating_baselines_on_fair(monkeypatch):
+    """Gate math: even at 100% fair accuracy, the AI must STRICTLY beat both
+    baselines. If the judge also credits the baselines, the AI does not beat
+    them and the gate fails."""
+    monkeypatch.setenv("SPEEDRUN_AI_OFF", "0")
+    n_test = len(load_gold_set()[::5])
+
+    ai_client = ScriptedLLMClient(["Some correct-sounding answer."], source="openai:test")
+    # Judge says "yes" to everything -> all three methods score 1.0 on the fair
+    # metric, so the AI does not strictly beat the baselines.
+    judge_client = ScriptedLLMClient(["yes"] * (3 * n_test), source="openai:test")
+
+    report = run_ai_eval(client=ai_client, judge_client=judge_client)
+
+    assert report.fair_metric_available is True
+    assert report.methods["ai"].fair_accuracy == 1.0
+    assert report.methods["keyword"].fair_accuracy == 1.0
+    assert report.ai_beats_keyword is False
+    assert report.ai_beats_vector is False
+    assert report.passed is False
+
+
+def test_ai_eval_fair_metric_falls_back_when_ai_off(monkeypatch):
+    """With AI off the LLM judge cannot run, so the fair metric degrades to
+    token_f1 (never crashes) and the report flags it. The gate still works."""
+    monkeypatch.setenv("SPEEDRUN_AI_OFF", "1")
+    gold = load_gold_set()
+    test_answers = [g["answer"] for i, g in enumerate(gold) if i % 5 == 0]
+    client = ScriptedLLMClient(test_answers, source="openai:test")
+
+    report = run_ai_eval(client=client)
+
+    assert report.fair_metric_available is False
+    assert report.fair_metric == FAIR_METRIC_FALLBACK
+    for name in ("keyword", "vector", "ai"):
+        m = report.methods[name]
+        # Fair metric mirrors token_f1 exactly when the judge cannot run.
+        assert m.fair_accuracy == m.accuracy
+        assert m.n_fair_correct == m.n_correct
+    # Fallback still gates: AI answered each reference verbatim -> beats baselines.
+    assert report.passed is True
+
+
+def test_judge_equivalent_degrades_without_usable_client():
+    """A stub client (no usable response) yields a None verdict -> the caller
+    falls back rather than crashing."""
+    assert judge_equivalent("q", "candidate", "reference", StubLLMClient()) is None
+    # A named, usable "yes"/"no" client returns a real verdict.
+    yes = ScriptedLLMClient(["yes"], source="openai:test")
+    assert judge_equivalent("q", "candidate", "reference", yes) is True
+    no = ScriptedLLMClient(["no"], source="openai:test")
+    assert judge_equivalent("q", "candidate", "reference", no) is False
+
+
 def test_grounding_eval_offline_beats_baselines():
     """The offline pre-ship gate is deterministic and the grounded method beats
     both keyword and vector on the held-out gold slice (no network / no key)."""
@@ -304,3 +401,224 @@ def test_three_scores_compute_with_ai_off(monkeypatch):
     assert perf["overall"].gave_up is False
     assert hasattr(ready, "gave_up")  # computes without error, AI off
     col.close()
+
+
+# ------------------- card-checker ship gate (gap 1) ------------------------
+
+
+def test_card_check_gate_blocks_offtopic_and_tallies():
+    """The streaming gate blocks a below-cutoff draft and tracks the three counts."""
+    gate = CardCheckGate()
+    off_topic = {
+        "id": "x1",
+        "difficulty": 3,
+        "question": "wxyz plugh xyzzy",
+        "stimulus": "qqq zzz vvv",
+        "choices": [{"id": "A", "text": "foo", "correct": True}],
+    }
+    result = gate.check(off_topic)
+    assert result.passed is False
+    assert gate.tally.n_checked == 1
+    assert gate.tally.n_blocked == 1
+    # A blocked item is either "wrong" or "correct_bad_teaching" (never useful).
+    assert gate.tally.correct_useful == 0
+    assert gate.tally.wrong + gate.tally.correct_bad_teaching == 1
+    d = gate.tally.to_dict()
+    assert {"cutoff", "n_checked", "correct_useful", "wrong", "correct_bad_teaching"} <= set(d)
+
+
+def test_card_check_gate_passes_topical_item():
+    gold = load_gold_set()
+    item = {
+        "id": "g",
+        "difficulty": 3,  # not trivial -> "correct_useful" when it clears the cutoff
+        "question": gold[0]["question"],  # perfect keyword overlap with the gold set
+        "stimulus": "",
+        "choices": [{"id": "A", "text": "x", "correct": True}],
+    }
+    gate = CardCheckGate()
+    result = gate.check(item)
+    assert result.passed is True
+    assert gate.tally.n_passed == 1
+    assert gate.tally.correct_useful == 1
+
+
+def _varied_lr_item_client():
+    """A no-network client that returns a fresh, structurally-valid LR item on each
+    call, so the generator's structural/taxonomy gates pass and drafts reach the
+    card-checker gate (constant items would be dedup-dropped before the gate)."""
+    import itertools
+
+    counter = itertools.count()
+
+    def _mk() -> str:
+        i = next(counter)
+        return json.dumps({
+            "stem_type": "qt.flaw",
+            "schemas": ["flaw.causal.correlation_causation", "qt.flaw"],
+            "difficulty": 3,
+            "stimulus": f"Study {i}: metric rose after intervention {i}, so it caused {i}.",
+            "question": f"The reasoning in argument {i} is most vulnerable because it",
+            "choices": [
+                {"id": "A", "text": f"treats correlation as causation ({i}).", "correct": True, "trap": None},
+                {"id": "B", "text": f"relies on a small sample ({i}).", "correct": False, "trap": "trap.out_of_scope"},
+                {"id": "C", "text": f"is too weak ({i}).", "correct": False, "trap": "trap.too_weak"},
+                {"id": "D", "text": f"is too strong ({i}).", "correct": False, "trap": "trap.too_strong_extreme"},
+                {"id": "E", "text": f"restates the premise ({i}).", "correct": False, "trap": "trap.premise_restatement"},
+            ],
+            "two_answer_fork": {"runner_up": "C", "why_runner_up_wrong": f"C ({i}) is too weak to matter."},
+        })
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def complete(self, prompt, *, max_tokens=512):
+            return LLMResponse(_mk(), "openai:test")
+
+    return _FakeClient
+
+
+def test_generate_to_target_wires_card_checker_gate(tmp_path, monkeypatch):
+    """generate_to_target runs the checker as an additional gate (ON by default)
+    and emits the three-count report into the generation report JSON."""
+    from speedrun.tools import generate_to_target as g
+
+    monkeypatch.setattr(g, "OpenAILLMClient", _varied_lr_item_client())
+
+    deck = tmp_path / "deck.json"
+    deck.write_text(json.dumps({"items": []}), encoding="utf-8")
+    report = tmp_path / "report.json"
+    rc = g.main(
+        [
+            "--smoke", "8", "--no-solver", "--rc-share", "0", "--workers", "1",
+            "--deck", str(deck), "--report", str(report),
+        ]
+    )
+    assert rc == 0
+    rep = json.loads(report.read_text(encoding="utf-8"))
+    assert rep["card_checker_gate"] is True
+    cc = rep["card_checker"]
+    assert cc["n_checked"] >= 1
+    assert {"correct_useful", "wrong", "correct_bad_teaching"} <= set(cc)
+    # Off-topic synthetic drafts don't overlap the gold set -> the gate blocks them,
+    # so nothing wrong/weak is written (the whole point of the ship gate).
+    assert cc["n_blocked"] == cc["n_checked"]
+    assert rep["tally"]["rejects"].get("card_checker", 0) >= 1
+
+
+def test_generate_to_target_card_checker_toggle_off(tmp_path, monkeypatch):
+    from speedrun.tools import generate_to_target as g
+
+    monkeypatch.setattr(g, "OpenAILLMClient", _varied_lr_item_client())
+    deck = tmp_path / "deck.json"
+    deck.write_text(json.dumps({"items": []}), encoding="utf-8")
+    report = tmp_path / "report.json"
+    rc = g.main(
+        [
+            "--smoke", "8", "--no-solver", "--no-card-checker", "--rc-share", "0",
+            "--workers", "1", "--deck", str(deck), "--report", str(report),
+        ]
+    )
+    assert rc == 0
+    rep = json.loads(report.read_text(encoding="utf-8"))
+    assert rep["card_checker_gate"] is False
+    assert rep["card_checker"] is None
+    # With the gate off, structurally-valid drafts are no longer blocked by it.
+    assert rep["tally"]["rejects"].get("card_checker", 0) == 0
+
+
+# ------------------- leakage enforcement in ai_eval (gap 2) -----------------
+
+
+def test_ai_eval_fails_on_leakage(tmp_path):
+    """A held-out gold item that leaked into training zeroes the score: even a
+    perfect AI cannot pass the gate."""
+    from speedrun.eval.ai_eval import run_ai_eval as _run
+
+    gold = load_gold_set()
+    leaky_train = {
+        "items": [
+            {"id": f"t{i}", "question": g["question"], "answer": g["answer"]}
+            for i, g in enumerate(gold)
+        ]
+    }
+    train_path = tmp_path / "leaky_seed.json"
+    train_path.write_text(json.dumps(leaky_train), encoding="utf-8")
+
+    test_answers = [g["answer"] for i, g in enumerate(gold) if i % 5 == 0]
+    client = ScriptedLLMClient(test_answers, source="openai:test")
+    report = _run(train_path=train_path, client=client)
+    assert report.methods["ai"].accuracy == 1.0  # AI itself is perfect
+    assert report.leakage_clean is False
+    assert report.leakage_hits > 0
+    assert report.passed is False  # ...but leaked test data fails the gate
+
+
+def test_ai_eval_clean_leakage_lets_gate_pass():
+    from speedrun.eval.ai_eval import run_ai_eval as _run
+
+    gold = load_gold_set()
+    test_answers = [g["answer"] for i, g in enumerate(gold) if i % 5 == 0]
+    client = ScriptedLLMClient(test_answers, source="openai:test")
+    report = _run(client=client)  # default seed deck is leakage-clean
+    assert report.leakage_clean is True
+    assert report.passed is True
+
+
+# ------------------- leakage-check CLI subcommand (gap 3) -------------------
+
+
+def test_leakage_check_cli_exit_codes():
+    from speedrun.tools import speedrun_cli
+
+    # Clean at the default threshold -> exit 0.
+    assert speedrun_cli.main(["leakage-check"]) == 0
+    # threshold 0.0 flags every pair -> not clean -> exit 1.
+    assert speedrun_cli.main(["leakage-check", "--threshold", "0.0", "--show", "1"]) == 1
+
+
+# ------------------- require_source at call sites (gap 3/§19) ---------------
+
+
+def test_generate_items_rejects_unnamed_source():
+    # Real text but an unnamed (stub) source must be rejected, not silently used.
+    items = generate_items(
+        client=ScriptedLLMClient(
+            ['[{"question":"q","choices":[{"id":"A","text":"x","correct":true}]}]'],
+            source="stub",
+        ),
+        n=3,
+    )
+    assert items == []
+
+
+def test_tutor_rejects_unnamed_source_falls_back_offline(monkeypatch):
+    monkeypatch.setenv("SPEEDRUN_AI_OFF", "0")  # AI on
+    from speedrun.ai.tutor import answer_question
+
+    item = dict(_GEN_ITEM, id="t1")
+    reply = answer_question(
+        item,
+        "Why is the credited answer right?",
+        client=ScriptedLLMClient(["ignore me — no source"], source="stub"),
+    )
+    assert reply.ai_used is False
+    assert reply.source == "offline"
+
+
+def test_tutor_uses_named_source(monkeypatch):
+    monkeypatch.setenv("SPEEDRUN_AI_OFF", "0")  # AI on
+    from speedrun.ai.tutor import answer_question
+
+    item = dict(_GEN_ITEM, id="t2")
+    reply = answer_question(
+        item,
+        "Why is the credited answer right?",
+        client=ScriptedLLMClient(
+            ["(A) is credited because it names the correlation-causation flaw."],
+            source="openai:test",
+        ),
+    )
+    assert reply.ai_used is True
+    assert reply.source == "openai:test"

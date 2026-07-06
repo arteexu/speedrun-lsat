@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import json
+import time
 from typing import Any
 
 from speedrun.concept_graph import build_concept_graph
@@ -30,10 +31,18 @@ from speedrun.insights import (
     wrong_answer_patterns,
 )
 from speedrun.scoring.guardrail import evidence_gate
-from speedrun.scoring.memory import memory_score
-from speedrun.scoring.performance import performance_score
-from speedrun.scoring.queue import load_schema_weights, ordered_cards
-from speedrun.scoring.readiness import readiness_score
+from speedrun.scoring.memory import MIN_REVIEWED_OVERALL, memory_score
+from speedrun.scoring.performance import MIN_ATTEMPTS_OVERALL, performance_score
+from speedrun.scoring.queue import (
+    dashboard_ordered_cards,
+    load_schema_weights,
+    ordered_cards,
+)
+from speedrun.scoring.readiness import (
+    MIN_ATTEMPTS as READINESS_MIN_ATTEMPTS,
+    MIN_COVERAGE as READINESS_MIN_COVERAGE,
+    readiness_score,
+)
 from speedrun.study_goals import study_goal_report
 from speedrun.taxonomy.labels import schema_display_html
 from speedrun.timeline import progress_timeline
@@ -70,6 +79,79 @@ def _confidence_badge(label: str) -> str:
         label, "badge-low"
     )
     return f'<span class="badge {cls}">{_esc(label)}</span>'
+
+
+def _format_ago(ts: int | None) -> str:
+    """Human 'time since' for a score's last_updated epoch seconds."""
+    if not ts:
+        return "unknown"
+    delta = max(0, int(time.time()) - int(ts))
+    if delta < 60:
+        return "just now"
+    if delta < 3600:
+        return f"{delta // 60}m ago"
+    if delta < 86400:
+        return f"{delta // 3600}h ago"
+    return f"{delta // 86400}d ago"
+
+
+def _updated_meta(ts: int | None) -> str:
+    """The 'last updated: <when>' line the PRD (§10) requires on every score."""
+    return f"<div class='sr-meta sr-updated'>last updated: {_esc(_format_ago(ts))}</div>"
+
+
+def _perf_confidence(coverage: float | None, n_attempts: int) -> str:
+    """Confidence label for the performance score, mirroring readiness thresholds."""
+    if coverage is None:
+        return "low"
+    if coverage >= 0.8 and n_attempts >= 400:
+        return "high"
+    if coverage >= 0.5 and n_attempts >= 100:
+        return "medium"
+    return "low"
+
+
+def _mem_confidence(coverage: float | None, n_reviewed: int) -> str:
+    """Confidence label ("how sure") for the memory score.
+
+    Mirrors the performance/readiness confidence shape so all three cards carry a
+    comparable badge (PRD §10): more exam covered + more reviewed cards => surer."""
+    if coverage is None:
+        return "low"
+    if coverage >= 0.8 and n_reviewed >= 100:
+        return "high"
+    if coverage >= 0.5 and n_reviewed >= 25:
+        return "medium"
+    return "low"
+
+
+def _reason_meta(reason: str | None) -> str:
+    """Render a score's main reason (PRD §10: 'the main reasons behind it').
+
+    Shown on every card when a number is displayed, so the evidence behind the
+    number is always on screen next to it."""
+    if not reason:
+        return ""
+    return f"<div class='sr-meta sr-reason'>{_esc(reason)}</div>"
+
+
+def _giveup_meta(text: str) -> str:
+    """Render a score's give-up rule so it is always falsifiable on screen.
+
+    PRD §1/§10: the rule that would withhold the number must be visible even when
+    a number *is* shown, so a reader can always check it against the evidence."""
+    return f"<div class='sr-meta sr-giveup'>Give-up rule: {_esc(text)}</div>"
+
+
+_MEMORY_GIVEUP = f"no score until \u2265 {MIN_REVIEWED_OVERALL} reviewed cards."
+_PERFORMANCE_GIVEUP = (
+    f"no score until \u2265 {MIN_ATTEMPTS_OVERALL} graded transfer attempts."
+)
+_READINESS_GIVEUP = (
+    f"no score until \u2265 {READINESS_MIN_ATTEMPTS} graded attempts and "
+    f"\u2265 {READINESS_MIN_COVERAGE:.0%} coverage of each of LR and RC "
+    "(deck and attempts)."
+)
 
 
 _DASHBOARD_CSS = """
@@ -272,6 +354,14 @@ table.sr-table tbody tr:hover { background: var(--surface-2); }
 .sr-launch-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sr-launch-label { font-weight: 700; font-size: 0.9rem; }
 .sr-launch-desc { font-size: 0.72rem; color: var(--muted); }
+/* Calibration reliability chart: a small predicted-vs-actual scatter with a
+   y=x reference line. Lightweight inline SVG, no external deps. */
+.sr-calib-chart { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; }
+.sr-reliability { border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.sr-reliability .diag { stroke: var(--muted); stroke-dasharray: 4 3; stroke-width: 1; opacity: 0.6; }
+.sr-reliability .axis { stroke: var(--border); stroke-width: 1; }
+.sr-reliability .pt { fill: var(--accent); fill-opacity: 0.75; }
+.sr-reliability .plabel { fill: var(--muted); font-size: 9px; }
 """
 
 _DASHBOARD_JS = """
@@ -736,47 +826,87 @@ def _heat_bar(value: float | None) -> str:
     return f'<div class="heat-bar"><div class="heat-fill {cls}" style="width:{pct}%"></div></div>'
 
 
-def _memory_card(result: dict[str, Any]) -> str:
+def _memory_card(result: dict[str, Any], *, exam_coverage: float | None = None) -> str:
     o = result["overall"]
     state = _score_state(o.gave_up, o.point)
+    # "How sure" badge (PRD §10) — mirrors performance/readiness. Uses the same
+    # exam-coverage source the readiness/coverage panel uses (not the old
+    # cards-reviewed/deck-cards ratio, which is not exam coverage).
+    confidence = _mem_confidence(exam_coverage, o.n_reviewed)
+    badge = "" if o.gave_up else _confidence_badge(confidence)
     if o.gave_up:
+        # When abstaining, the reason IS the headline; no separate reason line.
         val = f'<div class="sr-value abstain">No score</div><div class="sr-range">{_esc(o.reason)}</div>'
+        reason = ""
     else:
         val = f'<div class="sr-value">{o.point:.0%}</div><div class="sr-range">likely {_pct(o.low)}–{_pct(o.high)} recall</div>'
+        reason = _reason_meta(o.reason)
+    cov_txt = "—" if exam_coverage is None else f"{exam_coverage:.0%}"
+    meta = (
+        f"<div class='sr-meta'>reviewed {o.n_reviewed}/{o.n_cards} · "
+        f"exam covered {cov_txt} · FSRS</div>"
+    )
     return (
-        f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Memory</h2></div>'
-        f"{val}<div class='sr-meta'>reviewed {o.n_reviewed}/{o.n_cards} · coverage {o.coverage:.0%} · FSRS</div></div>"
+        f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Memory</h2>{badge}</div>'
+        f"{val}{reason}{meta}{_giveup_meta(_MEMORY_GIVEUP)}"
+        f"{_updated_meta(o.last_updated)}</div>"
     )
 
 
-def _performance_card(result: dict[str, Any]) -> str:
+def _performance_card(
+    result: dict[str, Any], *, gate: Any = None, best_next_step: str | None = None
+) -> str:
     o = result["overall"]
     state = _score_state(o.gave_up, o.point)
+    # Coverage % and a confidence indicator, mirroring the readiness card. The
+    # performance/transfer signal only speaks to as much of the taxonomy as has
+    # been practiced, so we surface that reach honestly.
+    coverage = getattr(gate, "concept_coverage", None) if gate is not None else None
+    confidence = _perf_confidence(coverage, o.n_attempts)
+    badge = "" if o.gave_up else _confidence_badge(confidence)
     if o.gave_up:
         val = f'<div class="sr-value abstain">No score</div><div class="sr-range">{_esc(o.reason)}</div>'
+        reason = ""
     else:
         val = f'<div class="sr-value">{o.point:.0%}</div><div class="sr-range">likely {_pct(o.low)}–{_pct(o.high)} transfer</div>'
+        reason = _reason_meta(o.reason)
     warn = (
         '<div class="sr-warn">Accurate but slow — would lose points on the clock.</div>'
         if o.speed_flag
         else ""
     )
+    # Best next step is the weakest high-value schema to drill — sensible on the
+    # transfer card too (not only Readiness), since that is exactly what would
+    # raise the transfer number fastest (PRD §10).
+    next_step = (
+        f"<div class='sr-meta'>Best next: {schema_display_html(best_next_step)}</div>"
+        if (best_next_step and not o.gave_up)
+        else ""
+    )
     sub = f"{o.n_attempts} attempts"
+    if coverage is not None:
+        sub += f" · coverage {coverage:.0%}"
     if o.raw_accuracy is not None:
         sub += f" · raw {_pct(o.raw_accuracy)}"
     if o.on_budget_rate is not None:
         sub += f" · on-budget {_pct(o.on_budget_rate)}"
     lr, rc = latency_budget_ms("LR") // 1000, latency_budget_ms("RC") // 1000
     sub += f" · budgets LR {lr}s / RC {rc}s"
-    return f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Performance</h2></div>{val}{warn}<div class="sr-meta">{sub}</div></div>'
+    return (
+        f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Performance</h2>{badge}</div>'
+        f'{val}{warn}{reason}{next_step}<div class="sr-meta">{sub}</div>'
+        f"{_giveup_meta(_PERFORMANCE_GIVEUP)}{_updated_meta(o.last_updated)}</div>"
+    )
 
 
 def _readiness_card(result: Any) -> str:
     state = _score_state(result.gave_up, result.point, lsat=True)
     if result.gave_up:
         val = f'<div class="sr-value abstain">No score</div><div class="sr-range">{_esc(result.reason)}</div>'
+        reason = ""
     else:
         val = f'<div class="sr-value">{result.point:.0f}</div><div class="sr-range">likely {result.low:.0f}–{result.high:.0f} LSAT</div>'
+        reason = _reason_meta(result.reason)
     warn = (
         '<div class="sr-warn">Latency penalty applied.</div>'
         if result.speed_flag
@@ -787,10 +917,21 @@ def _readiness_card(result: Any) -> str:
         if result.best_next_step
         else ""
     )
+    # Per-section coverage makes the give-up rule falsifiable on screen: a deck
+    # that skips a section reads e.g. "LR 62% · RC 0%" so the abstention is
+    # self-explaining (PRD §8.3/§10).
+    section_meta = ""
+    section_cov = getattr(result, "section_coverage", None)
+    if section_cov:
+        parts = " · ".join(f"{s} {c:.0%}" for s, c in sorted(section_cov.items()))
+        section_meta = f"<div class='sr-meta'>section coverage: {_esc(parts)}</div>"
     return (
         f'<div class="sr-card state-{state}"><div class="sr-card-head"><h2>Readiness</h2>'
-        f"{_confidence_badge(result.confidence)}</div>{val}{warn}{next_step}"
-        f"<div class='sr-meta'>coverage {result.coverage:.0%} · {result.n_attempts} attempts</div></div>"
+        f"{_confidence_badge(result.confidence)}</div>{val}{warn}{reason}{next_step}"
+        f"<div class='sr-meta'>coverage {result.coverage:.0%} · {result.n_attempts} attempts</div>"
+        f"{section_meta}"
+        f"{_giveup_meta(_READINESS_GIVEUP)}"
+        f"{_updated_meta(result.last_updated)}</div>"
     )
 
 
@@ -981,7 +1122,12 @@ def _trajectory_table(col) -> str:
 
 def _queue_html(col, *, limit: int = 8, search: str | None = None) -> str:
     try:
-        cards = ordered_cards(col, limit=limit, search=search)
+        # The dashboard preview (no explicit search) uses the pruned fast path,
+        # which returns the identical top-`limit` without ranking all 50k cards.
+        if search is None:
+            cards = dashboard_ordered_cards(col, limit=limit)
+        else:
+            cards = ordered_cards(col, limit=limit, search=search)
     except Exception as exc:  # pragma: no cover
         return f'<div class="sr-empty">Could not build queue: {_esc(exc)}</div>'
     if not cards:
@@ -1378,9 +1524,161 @@ def _recommender_panel(col) -> str:
         return ""
 
 
-def render_dashboard_html(
-    col, *, timeline_days: int = 14, embed: bool = False
-) -> str:
+def _reliability_chart(bins: list[Any]) -> str:
+    """A small inline-SVG reliability chart: mean predicted (x) vs mean actual (y)
+    per bin, with a y=x reference line. Perfect calibration sits on the diagonal.
+
+    Reuses the calibration report's bins (the same data the separate report
+    tabulates) so the scores screen shows the chart §10.1/§17 asks for without a
+    heavy charting dependency. Marker area grows with the bin's sample count."""
+    if not bins:
+        return ""
+    size, pad = 200, 26
+    span = size - 2 * pad
+
+    def px(v: float) -> float:
+        return pad + max(0.0, min(1.0, v)) * span
+
+    def py(v: float) -> float:
+        return size - pad - max(0.0, min(1.0, v)) * span
+
+    axes = (
+        f'<line class="axis" x1="{px(0)}" y1="{py(0)}" x2="{px(1)}" y2="{py(0)}"/>'
+        f'<line class="axis" x1="{px(0)}" y1="{py(0)}" x2="{px(0)}" y2="{py(1)}"/>'
+    )
+    diag = f'<line class="diag" x1="{px(0)}" y1="{py(0)}" x2="{px(1)}" y2="{py(1)}"/>'
+    pts = ""
+    for b in bins:
+        cx, cy = px(b.mean_predicted), py(b.mean_actual)
+        r = max(3.0, min(9.0, 2.0 + b.n**0.5))
+        pts += (
+            f'<circle class="pt" cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}">'
+            f"<title>predicted {b.mean_predicted:.0%} → actual {b.mean_actual:.0%} "
+            f"(n={b.n})</title></circle>"
+        )
+    labels = (
+        f'<text class="plabel" x="{px(0.5):.1f}" y="{size - 6}" '
+        f'text-anchor="middle">predicted →</text>'
+        f'<text class="plabel" x="9" y="{py(0.5):.1f}" text-anchor="middle" '
+        f'transform="rotate(-90 9 {py(0.5):.1f})">actual →</text>'
+    )
+    return (
+        f'<svg class="sr-reliability" width="{size}" height="{size}" '
+        f'viewBox="0 0 {size} {size}" role="img" '
+        f'aria-label="Reliability chart: predicted versus actual recall by bin">'
+        f"{axes}{diag}{pts}{labels}</svg>"
+    )
+
+
+def _calibration_score_panel(col) -> str:
+    """Memory-model calibration shown inline with the three scores.
+
+    The honesty rule (§10) forbids a readiness score without, on the same screen,
+    how accurate past predictions turned out to be. This surfaces the calibration
+    summary (Brier / log loss on the held-out slice, from speedrun.eval.calibration)
+    AND a small reliability chart (§10.1/§17) next to Readiness rather than only
+    as a separate report."""
+    from speedrun.eval.calibration import calibration_report
+
+    r = calibration_report(col)
+    if r.gave_up:
+        body = f'<p class="sr-meta">No calibration yet — {_esc(r.reason)}</p>'
+    else:
+        chart = _reliability_chart(r.bins)
+        text = (
+            f"<div><p><b>Brier {r.brier:.3f}</b> · log loss {r.log_loss:.3f} · "
+            f"{r.n_held_out} held-out reviews (of {r.n_total}).</p>"
+            f'<p class="sr-meta">{_esc(r.reason)}</p>'
+            '<p class="sr-meta">Reliability chart: each dot is a confidence bin; '
+            "dots on the dashed diagonal are perfectly calibrated.</p></div>"
+        )
+        body = f'<div class="sr-calib-chart">{chart}{text}</div>'
+    return (
+        '<div class="sr-section sr-calib"><h3>Calibration — memory model</h3>'
+        '<p class="sr-meta">When the model says 80%, recall should be ≈80%. '
+        "Shown beside Readiness so a score never appears without its track record "
+        "(honesty rule §10).</p>"
+        f"{body}</div>"
+    )
+
+
+def _transfer_gap_panel(col) -> str:
+    """Surface the recall-vs-transfer gap on the main dashboard (§1/§3 SPOV1/§17).
+
+    The single most important metric is the gap between "can recall this card" and
+    "can answer a NEW question with this structure": if they are equal, we have a
+    memory app in an LSAT costume. It lived only in a separate menu report; this
+    puts the number on the dashboard. Read-only use of speedrun.eval.transfer_gap;
+    computed inside the memoized body so it stays covered by the render cache."""
+    try:
+        from speedrun.eval.transfer_gap import transfer_gap_report
+
+        r = transfer_gap_report(col)
+    except Exception:  # pragma: no cover - defensive
+        return ""
+    if r.gave_up or r.gap is None:
+        body = f'<p class="sr-meta">{_esc(r.reason)}</p>'
+    else:
+        body = (
+            f"<p>Recall <b>{r.recall_point:.0%}</b> vs transfer "
+            f"<b>{r.reworded_point:.0%}</b> · gap <b>{r.gap:+.0%}</b> "
+            f'<span class="sr-meta">(source: {_esc(r.source)}; '
+            f"bridge distinct: {r.bridge_distinct}).</span></p>"
+            '<p class="sr-meta">If recall ≈ transfer the bridge is not built '
+            "(SPOV1). A positive gap means memory overstates transfer.</p>"
+        )
+    return (
+        '<div class="sr-section sr-transfer"><h3>Recall vs transfer gap</h3>'
+        f"{body}</div>"
+    )
+
+
+def _deck_coverage_panel(col) -> str:
+    """Deck coverage of the LSAT taxonomy + how much the student has practiced.
+
+    Uses the coverage_map module (§8.3). Below the coverage line the app abstains
+    from a readiness score; this panel makes the number visible on the dashboard."""
+    try:
+        from speedrun.tools.coverage_map import (
+            DEFAULT_DECK,
+            DEFAULT_TAXONOMY,
+            build_report,
+            load_json,
+        )
+
+        taxonomy = load_json(DEFAULT_TAXONOMY)
+        deck = load_json(DEFAULT_DECK)
+        report = build_report(taxonomy, deck)
+    except Exception:
+        return ""
+
+    from speedrun.scoring.performance import collection_attempts
+
+    tax_ids = {s["id"] for s in taxonomy.get("schemas", [])}
+    seen = {a.schema for a in collection_attempts(col)} & tax_ids
+    seen_pct = (len(seen) / len(tax_ids)) if tax_ids else 0.0
+
+    overall = report["overall_count_coverage"]
+    sections = " · ".join(
+        f"{name} {s['schemas_covered']}/{s['schemas_total']} ({s['count_coverage']:.0%})"
+        for name, s in report["per_section"].items()
+    )
+    return (
+        '<div class="sr-section sr-coverage"><h3>Deck coverage</h3>'
+        f"<p>Deck covers <b>{overall:.0%}</b> of the taxonomy "
+        f"({report['schemas_covered']}/{report['schemas_total']} schemas) · "
+        f"you have practiced <b>{seen_pct:.0%}</b> of it.</p>"
+        f'<p class="sr-meta">By section: {_esc(sections)}. '
+        "Below the coverage line the app abstains from a readiness score (§8.3).</p></div>"
+    )
+
+
+def _dashboard_body(col, *, timeline_days: int = 14) -> str:
+    """Assemble the dashboard body (everything inside ``.sr-dash``).
+
+    Memoized by :func:`render_dashboard_html` on the collection-state token so a
+    refresh with unchanged state re-serves the identical body near-instantly,
+    while any review (which changes the token) forces a fresh, correct render."""
     gate = evidence_gate(col)
     mem = memory_score(col, gate=gate)
     perf = performance_score(col, gate=gate)
@@ -1396,7 +1694,13 @@ def render_dashboard_html(
         f"{_launcher_section()}"
         f"{_gate_panel(gate)}"
         f"{_recommender_panel(col)}"
-        f'<div class="sr-grid">{_goal_card(col)}{_memory_card(mem)}{_performance_card(perf)}{_readiness_card(ready)}</div>'
+        f'<div class="sr-grid">{_goal_card(col)}'
+        f"{_memory_card(mem, exam_coverage=ready.coverage)}"
+        f"{_performance_card(perf, gate=gate, best_next_step=ready.best_next_step)}"
+        f"{_readiness_card(ready)}</div>"
+        f"{_calibration_score_panel(col)}"
+        f"{_transfer_gap_panel(col)}"
+        f"{_deck_coverage_panel(col)}"
         f"{_trap_banner(col)}"
         f"{_signals_grid()}"
         f"{_weakness_heatmap(perf_rows)}"
@@ -1407,6 +1711,19 @@ def render_dashboard_html(
         f"{_timeline_chart(col, days=timeline_days)}{_mastery_table(col)}{_wrong_patterns_table(col)}"
         f"{_latency_table(col)}{_trajectory_table(col)}"
         f'<div class="sr-section"><h3>Next up — schema-weighted queue</h3>{_queue_html(col)}</div>'
+    )
+    return body
+
+
+def render_dashboard_html(
+    col, *, timeline_days: int = 14, embed: bool = False
+) -> str:
+    from speedrun.score_cache import cached
+
+    body = cached(
+        col,
+        f"dashboard_body::{timeline_days}",
+        lambda: _dashboard_body(col, timeline_days=timeline_days),
     )
     if embed:
         # Body-only markup for the AnkiWebView/pycmd bridge path (mirrors the
@@ -1475,9 +1792,12 @@ def render_calibration_html(col) -> str:
 def render_memory_report_html(col) -> str:
     gate = evidence_gate(col)
     mem = memory_score(col, gate=gate)
+    # Same exam-coverage source the readiness card/coverage panel uses, so the
+    # memory card shows exam coverage (not the cards-reviewed ratio).
+    ready = readiness_score(col, gate=gate)
     body = (
         _gate_panel(gate)
-        + _memory_card(mem)
+        + _memory_card(mem, exam_coverage=ready.coverage)
         + _schema_table("mem-rpt", _mem_schema_rows(mem), score_label="recall")
     )
     return render_report_html(col, title="Memory report", body_html=body)
@@ -1486,9 +1806,10 @@ def render_memory_report_html(col) -> str:
 def render_performance_report_html(col) -> str:
     gate = evidence_gate(col)
     perf = performance_score(col, gate=gate)
+    ready = readiness_score(col, gate=gate)
     body = (
         _gate_panel(gate)
-        + _performance_card(perf)
+        + _performance_card(perf, gate=gate, best_next_step=ready.best_next_step)
         + _schema_table("perf-rpt", _perf_schema_rows(perf), score_label="transfer")
     )
     return render_report_html(col, title="Performance report", body_html=body)
@@ -1496,7 +1817,11 @@ def render_performance_report_html(col) -> str:
 
 def render_readiness_report_html(col) -> str:
     gate = evidence_gate(col)
-    body = _gate_panel(gate) + _readiness_card(readiness_score(col, gate=gate))
+    body = (
+        _gate_panel(gate)
+        + _readiness_card(readiness_score(col, gate=gate))
+        + _calibration_score_panel(col)
+    )
     return render_report_html(col, title="Readiness report", body_html=body)
 
 
