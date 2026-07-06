@@ -60,6 +60,14 @@ is exposed as a protobuf RPC, and is called identically from desktop (via
 
 - [`docs/speedrun/FILES-TOUCHED.md`](docs/speedrun/FILES-TOUCHED.md) — every file this fork changed vs upstream Anki (grouped by area, reproducible from the merge-base).
 
+### Model descriptions
+
+One short page each for the three scores, including the model, its honest range, and the **give-up rule** enforced in code:
+
+- [`docs/models/memory-model.md`](docs/models/memory-model.md) — memory (FSRS recall); give-up: ≥ 5 reviewed cards overall, ≥ 2 per schema.
+- [`docs/models/performance-model.md`](docs/models/performance-model.md) — performance (memory → transfer); give-up: ≥ 2 graded attempts per schema, ≥ 10 overall.
+- [`docs/models/readiness-model.md`](docs/models/readiness-model.md) — readiness (projected 120–180); give-up: ≥ 200 graded attempts **and** ≥ 50% coverage in each of LR and RC.
+
 ### Results, evaluation, and demo
 
 - [`docs/speedrun/RESULTS.md`](docs/speedrun/RESULTS.md) — honest test numbers from the re-runnable harnesses
